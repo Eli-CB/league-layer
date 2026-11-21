@@ -497,7 +497,7 @@ label [data-photo], #detailBody [data-photo] { cursor: inherit; }
 .link-btn.pp-clear:hover, .link-btn.quiet:hover { color: var(--text); text-decoration: underline; }
 .seg button:disabled { opacity: .45; cursor: default; }
 @media (max-width: 640px) { .pp-row { gap: 6px; } .pp-label { width: 100%; } .pp-foot { flex: 1 0 100%; } } /* (phones: Done under the filters) */
-@media (max-width: 640px) { .perf-when { margin: 0; text-align: left; } .perf-bar { column-gap: 10px; } .perf-bar .perf-q { flex: 1 1 120px; } } /* phones: search, Filters and (i) on one line */
+@media (max-width: 640px) { .perf-bar > .perf-when, .perf-bar > .info-btn { display: none; } .perf-bar { column-gap: 10px; } .perf-bar .perf-q { flex: 1 1 120px; } } /* phones: just the When menu, search and Filters (no (i), no days/count line: the owner's ask, Nov 21, 2026) */
 /* when: the menu, and Totals / Per game beside it (one row, phones too) */
 .perf-when-pick { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .perf-when-pick .ctx-team { width: auto; min-width: 0; flex: 0 1 auto; }
