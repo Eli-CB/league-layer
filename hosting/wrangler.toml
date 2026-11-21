@@ -4,8 +4,10 @@
 name = "leaguelayer-site"
 compatibility_date = "2026-10-01"
 
-# leaguelayer.com is attached in Cloudflare's dashboard (README.md), not here: routes listed here would replace the
-# dashboard's on every deploy, and need more of the token's permissions
+# leaguelayer.com, as a Custom Domain: the deploy (not a terminal: wrangler asks there) replaces whatever record the name
+# had (GitHub Pages' four A records until Nov 21, 2026). The token's Workers Routes permission on the zone allows it.
+# Every deploy sets exactly this list: a domain added in the dashboard and not here is taken off.
+routes = [{ pattern = "leaguelayer.com", custom_domain = true }]
 workers_dev = true
 
 [assets]
