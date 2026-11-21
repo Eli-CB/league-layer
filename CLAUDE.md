@@ -1,7 +1,7 @@
 # League Layer: notes for working on this repo
 
-Fantasy basketball (Fantrax, public ESPN leagues, Sleeper), hockey (Fantrax) and football (Sleeper, part of the site so far) weekly matchup site. Static GitHub Pages site, no build step, no backend.
-Live: https://leaguelayer.com (domain on Cloudflare, DNS only, set in the repo's Pages settings; the old
+Fantasy basketball (Fantrax, public ESPN leagues, Sleeper), hockey (Fantrax) and football (Sleeper, part of the site so far) weekly matchup site. Static site, no build step, no backend.
+Live: https://leaguelayer.com (Cloudflare's static hosting since Nov 21, 2026, GitHub Pages before: `hosting/`; the old
 eli-cb.github.io/courtside-manager/ link redirects there) (repo Eli-CB/league-layer, renamed from courtside-manager Nov 16, 2026:
 GitHub redirects the old name as long as no new repo takes it. The site was Courtside Manager until Oct 2026; its storage keys were
 `courtside-*` until Nov 16, 2026 and are `league-layer-*` now, renamed with nothing carried over, as the owner was the only visitor: with
@@ -56,7 +56,7 @@ line in the notes pointing to it. `docs/` isn't published: the deploy copies onl
 | `sandbox.js` | docs/sandbox.md |
 | `live.js`, the Worker's /live, /espn/ and /injuries/ (the injury watch), injuries | docs/live.md |
 | scripts/update_data.py, data/, how box scores load | docs/data.md |
-| the logo, 404, home-screen install, error log, analytics, hosting (`hosting/`, moving to Cloudflare) | docs/hosting.md |
+| the logo, 404, home-screen install, error log, analytics, hosting (`hosting/`: Cloudflare) | docs/hosting.md |
 
 ## Layout
 - `index.html`, `styles.css`, `js/*.js`. The js files are ONE script split by area and share one global
@@ -116,7 +116,7 @@ line in the notes pointing to it. `docs/` isn't published: the deploy copies onl
   serve.py refuses a port in use, as Windows would otherwise let two servers share one; keep to 5174-5179). Another port is another origin, with its own empty storage: open it as
   `http://localhost:<port>/?league=my19c8mwmoipvhon#dashboard` (`openSharedLink` connects the league; pick "Eli's SGAteam" if it asks), not by typing the ID in the form. The Worker
   answers localhost:5173-5179 (`SITE_ORIGINS`, worker/wrangler.toml; 5174-5179 added Nov 18, 2026, live since the owner's deploy of Nov 21, 2026).
-- Deploy: push to main triggers the site workflow (deploy only); `gh workflow run site.yml` refreshes data. It publishes only what the page reads
+- Deploy: push to main triggers the site workflow (deploy only), which publishes to Cloudflare with the owner's token (`hosting/README.md`); `gh workflow run site.yml` refreshes data. It publishes only what the page reads
   (`index.html`, `404.html`, `styles.css`, `manifest.webmanifest`, `js/`, `data/`, `fonts/`, `icons/`: the deploy job's "Gather" step): a new top-level file or folder the page needs must be added there. Each sport's refresh
   runs apart; one that fails (or NFL projections failing) fails the run at the end, so GitHub says so, and the rest still publishes.
   Commit flow used: `git pull --rebase -q origin main && git push -q origin main`, then `gh run watch`. In a worktree (its own branch) the push is
@@ -126,7 +126,7 @@ line in the notes pointing to it. `docs/` isn't published: the deploy copies onl
   theirs (or `--autostash`): every session shares one stash list, and another's pop or drop took a stashed Trends edit (Nov 18, 2026; got back from
   `git fsck --unreachable`). There: `git fetch`; origin/main already in HEAD (`git merge-base --is-ancestor origin/main HEAD`): push; else rebase in a temporary worktree.
   Commit messages end with the Co-Authored-By line.
-- The repo must stay public on GitHub's free plan: making it private deletes the Pages site at once, and making it public again
-  doesn't bring it back (restoring it: docs/hosting.md).
+- The repo stays public: Actions minutes are free only there, and making it private deletes the GitHub Pages site, which no longer serves
+  the site but still redirects the old github.io links and holds www.leaguelayer.com until www moves (docs/hosting.md).
 - The preview browser sometimes loses localStorage on restart (back to the landing page): reconnect the
   league by ID in the form, then pick "Eli's SGAteam".

@@ -9,7 +9,8 @@ compatibility_date = "2026-10-01"
 # other records hold the name ("externally managed DNS records", Nov 21, 2026), and deleting them first leaves a gap that
 # resolvers may remember for 30 minutes (the zone's negative TTL). Every deploy sets exactly this list of routes.
 routes = [{ pattern = "leaguelayer.com/*", zone_name = "leaguelayer.com" }]
-workers_dev = true
+# no second copy at leaguelayer-site.<subdomain>.workers.dev (the test address before the move)
+workers_dev = false
 
 [assets]
 directory = "../_site"

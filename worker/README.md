@@ -101,9 +101,9 @@ $0.30 a million on the $5 plan). Nothing inside the Worker can stop that, as the
 Cloudflare can, before it arrives, for free: the rate limiting rule `api.leaguelayer.com per visitor` (set up Nov 21,
 2026; dashboard: the leaguelayer.com domain, **Security**, **Security rules**). Per IP address, more than **100**
 requests in **10 seconds** is blocked for **10 seconds** (the free plan's only period and duration; it allows one such rule).
-It matches every path (URI Path starts with `/`): the free plan offers no Hostname field, and it needs none, as the site
-itself is DNS-only (GitHub serves it), so only `api.leaguelayer.com` passes through Cloudflare. Should leaguelayer.com
-ever be proxied, the rule covers its pages too (a page load is about 35 files: still under 100).
+It matches every path (URI Path starts with `/`): the free plan offers no Hostname field. Since Nov 21, 2026 the site
+itself goes through Cloudflare too (hosting/README.md), so the rule covers its pages as well: a first page load is about
+35 files and later ones fewer (the code stays in the browser), still under 100.
 
 A visitor's page makes about one request every 30 seconds, plus a burst of 10-20 on a morning before the daily data
 (last night's box scores through `/espn/`), so 100 in 10 seconds is only ever a script, or many people behind one
