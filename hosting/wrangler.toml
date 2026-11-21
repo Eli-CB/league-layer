@@ -4,10 +4,11 @@
 name = "leaguelayer-site"
 compatibility_date = "2026-10-01"
 
-# leaguelayer.com, as a Custom Domain: the deploy (not a terminal: wrangler asks there) replaces whatever record the name
-# had (GitHub Pages' four A records until Nov 21, 2026). The token's Workers Routes permission on the zone allows it.
-# Every deploy sets exactly this list: a domain added in the dashboard and not here is taken off.
-routes = [{ pattern = "leaguelayer.com", custom_domain = true }]
+# leaguelayer.com, as a route: it answers every address on the name once its DNS records are Proxied (README.md), and
+# Cloudflare never reaches the records' own address (GitHub Pages'). Not a Custom Domain: Cloudflare won't attach one while
+# other records hold the name ("externally managed DNS records", Nov 21, 2026), and deleting them first leaves a gap that
+# resolvers may remember for 30 minutes (the zone's negative TTL). Every deploy sets exactly this list of routes.
+routes = [{ pattern = "leaguelayer.com/*", zone_name = "leaguelayer.com" }]
 workers_dev = true
 
 [assets]

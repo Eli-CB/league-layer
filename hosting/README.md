@@ -24,18 +24,22 @@ sees the token. Claude never runs wrangler for it.
    There the live feed, injury watch, error log and analytics don't answer (they're for leaguelayer.com only), so live
    scores come from ESPN directly: everything else works as on leaguelayer.com.
 
-## Moving leaguelayer.com (a morning with no games: the site is away a minute or two)
+## Moving leaguelayer.com (no gap: any time)
 
-In https://dash.cloudflare.com, the leaguelayer.com domain:
+The deploy already routes `leaguelayer.com/*` to `leaguelayer-site` (`wrangler.toml`); the route only takes over once the
+name's records go through Cloudflare. In https://dash.cloudflare.com, the leaguelayer.com domain:
 
-1. **DNS**, **Records**: delete the four `A` records named `leaguelayer.com` (185.199.108.153, .109, .110, .111: GitHub's).
-2. **Workers & Pages**, `leaguelayer-site`, **Settings**, **Domains & Routes**, **Add**, **Custom domain**:
-   `leaguelayer.com`. Cloudflare adds the record and the certificate itself.
-3. **www**: **DNS**, **Records**, the `www` CNAME (`eli-cb.github.io`), **Edit**, turn **Proxy status** on, **Save**.
-   Then **Rules**, **Templates** (or **Redirect Rules**), "Redirect from WWW to root", **Deploy**. Without it, www
-   goes on to GitHub, whose redirect stops once its certificate can't renew there.
+1. **SSL/TLS**, **Edge Certificates**: turn **Always Use HTTPS** on (it was off: `http://` addresses weren't sent to
+   `https://`, which GitHub Pages did; it covers api.leaguelayer.com too, harmlessly).
+2. **DNS**, **Records**: each of the four `A` records named `leaguelayer.com` (185.199.108.153, .109, .110, .111:
+   GitHub's), **Edit**, turn **Proxy status** on (orange), **Save**. From then on Cloudflare answers for the name and
+   the route serves the site; GitHub's address is never reached.
+3. **www** (when convenient): the `www` CNAME (`eli-cb.github.io`), **Edit**, **Proxy status** on, **Save**; then
+   **Rules**, **Templates** (or **Redirect Rules**), "Redirect from WWW to root", **Deploy**. Until then www goes on to
+   GitHub, which redirects it to leaguelayer.com while its certificate lasts (it can't renew with the name on Cloudflare).
 
-GitHub Pages stays published with its custom domain set (its settings will say the DNS check failed: leave it), so the
-old eli-cb.github.io/courtside-manager/ links still redirect to leaguelayer.com.
+GitHub Pages stays published with its custom domain set (its settings will say the DNS check failed: leave it): the
+old eli-cb.github.io/courtside-manager/ links still redirect to leaguelayer.com, and while www points to
+eli-cb.github.io, unpublishing would let another GitHub user claim www.leaguelayer.com.
 
-**Going back**: remove the custom domain (step 2), add the four `A` records again (DNS only), turn www's proxy off.
+**Going back**: turn the four records' proxy off (DNS only) and GitHub Pages serves the name again (its copy as of its last deploy).
