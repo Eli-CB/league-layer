@@ -526,27 +526,36 @@ function syncLeagueRules() {
 }
 
 // Every league loaded from Fantrax or ESPN is kept on this device (the five most recent). The site's own
-// league uses it until the daily data file is newer; any other league for 6 hours, or until ↻ Reload.
+// league uses it until the daily data file is newer; any other league for 6 hours, or until ↻ Reload. Past that, a kept
+// league is still drawn at once (anyAge) and read again from its site behind it (readLeagueBehind).
 const FX_CACHE_KEY = 'league-layer-fantrax-v2';
 const LEAGUE_FRESH_MS = 6 * 36e5;
 const readLeagueCache = () => store.json(FX_CACHE_KEY, {});
-function cachedLeague(id) {
+function cachedLeague(id, anyAge = false) {
   const c = readLeagueCache()[id];
   if (!c) return null;
   if (c.res.league.scoring === 'ROTO' && !c.res.league.roto) return null; // (an ESPN roto league kept before the site read roto: read again)
   const site = NBA && NBA.siteLeague && NBA.siteLeague.id === id;
-  return (site ? c.at > Date.parse(NBA.updated || 0) : Date.now() - c.at < LEAGUE_FRESH_MS) ? c.res : null;
+  return (site ? c.at > Date.parse(NBA.updated || 0) : anyAge || Date.now() - c.at < LEAGUE_FRESH_MS) ? c.res : null;
 }
+// kept here, but past LEAGUE_FRESH_MS: drawn as it is while it's read again
+const leagueStale = id => !cachedLeague(id) && !!cachedLeague(id, true);
 function saveLeague(id, res) {
   const all = readLeagueCache();
   all[id] = { at: Date.now(), res: { league: res.league, fxPlayers: res.fxPlayers } };
   const keep = Object.entries(all).sort((a, b) => b[1].at - a[1].at).slice(0, 5);
   store.setJson(FX_CACHE_KEY, Object.fromEntries(keep));
 }
-// A league from this device if it's fresh enough, else from its site (force: always from its site)
-async function getLeague(id, force) {
-  const kept = force ? null : cachedLeague(id);
+// A league from this device if it's fresh enough (anyAge: kept at all), else from its site (force: always from its site).
+// A read already on its way is shared (↻ Reload while it's read behind the page: one read, not two).
+const leagueReads = new Map(); // id -> its read from its site in progress
+async function getLeague(id, force, anyAge = false) {
+  const kept = force ? null : cachedLeague(id, anyAge);
   if (kept) return kept;
+  if (!leagueReads.has(id)) leagueReads.set(id, readLeague(id).finally(() => leagueReads.delete(id)));
+  return leagueReads.get(id);
+}
+async function readLeague(id) {
   const src = leagueSourceOf(id);
   const res = await (src === 'espn' ? fetchEspnLeague(id) : src === 'sleeper' ? fetchSleeperLeague(id) : src === 'yahoo' ? fetchYahooLeague(id) : fetchFantraxLeague(id));
   if (!res.league.draftFailed) saveLeague(id, res); // a league missing its draft is asked for again next time
@@ -584,14 +593,17 @@ async function fetchFantraxPicks(L) {
 }
 
 // Pull the league fresh from its site: matchups, rosters and lineups change during the week
-async function refreshLeague(force = true) {
+async function refreshLeague(force = true, anyAge = false) {
   const id = state.fxLeagueId || (NBA.siteLeague && NBA.siteLeague.id);
   if (!id) return false;
+  applyLeagueRead(id, await getLeague(id, force, anyAge));
+  return true;
+}
+function applyLeagueRead(id, res) {
   const same = NBA.league && NBA.league.id === id;
   const before = same && state.fxTeam ? fxOpponentFor(weekStart()) : null;
-  const res = await getLeague(id, force);
   applyFantraxLeague(withSiteExtras(res));
-  if (!state.fxTeam || !NBA.league.teams.some(t => t.id === state.fxTeam)) return true;
+  if (!state.fxTeam || !NBA.league.teams.some(t => t.id === state.fxTeam)) return;
   // follow your real opponent (and their latest roster) unless you'd picked someone else to scout
   const after = fxOpponentFor(weekStart());
   const cur = state.opp.fxId;
@@ -599,7 +611,28 @@ async function refreshLeague(force = true) {
     const o = fxTeamSide(after.id);
     state.opp = { name: o.name, week: weekStart(), fxId: after.id, players: o.players, starters: o.starters, il: o.il };
   }
-  return true;
+}
+
+// A league drawn from this device past LEAGUE_FRESH_MS (opening the page, or picking it in the league menu): read again
+// from its site behind the page, then drawn again. The page used to wait for it: on a visit's first load of the day
+// "Loading" stayed up ~4 s, a Fantrax league being 4-5 requests one after another (Nov 21, 2026). The read goes on the
+// page only if it's still on that league (not another league, the sandbox, the demo or a past season); if it fails, the
+// kept copy stays and says how old it is. Its promise is kept for the tests.
+let leagueBehind = null;
+function readLeagueBehind(id) {
+  const at = (readLeagueCache()[id] || {}).at;
+  return (leagueBehind = getLeague(id, true).then(res => {
+    if (state.fxLeagueId !== id || state.browse || state.demo || ui.season || !NBA || !NBA.league || NBA.league.id !== id) return false;
+    applyLeagueRead(id, res);
+    if (state.fxTeam && !NBA.league.teams.some(t => t.id === state.fxTeam)) state.fxTeam = null;
+    if (state.fxTeam) syncLeagueRules();
+    syncLinked();
+    commit();
+    return true;
+  }, () => {
+    if (state.fxLeagueId === id && at) toast(`Couldn't reach ${SOURCE_NAME[leagueSourceOf(id)]} just now. Showing your league from ${ago(at)}.`);
+    return false;
+  }));
 }
 
 function loadFxTeam(teamId, week = weekStart()) {

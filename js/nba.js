@@ -167,10 +167,11 @@ async function loadNba(fresh = false) {
     // dropped it, Nov 18, 2026)
     const sb = !!state.browse;
     const other = !sb && state.fxLeagueId && (!NBA.league || NBA.league.id !== state.fxLeagueId);
+    // someone else's league: from this device, however old (one past 6 hours is read again behind the page, below), else from its site
+    const behind = other && leagueStale(state.fxLeagueId);
     if (other) {
-      // someone else's league: from this device if it's fresh, else from its site
       try {
-        await refreshLeague(false);
+        await refreshLeague(false, true);
       } catch (e) {
         toast(`Couldn't load your ${SOURCE_NAME[leagueSourceOf(state.fxLeagueId)]} league right now. Showing ${NBA.league ? NBA.league.name : 'the site league'}.`);
       }
@@ -183,6 +184,7 @@ async function loadNba(fresh = false) {
     const folded = foldPastSeasons();
     if (state.browse) clearLeaguePlayers(); // browsing without a league: none of the site league's on the players
     if (syncLinked() || migrate || folded) commit(); else render();
+    if (behind) readLeagueBehind(state.fxLeagueId);
     if (!isFootball()) loadBoxes().then(() => { if (dropPlayedInjuries()) render(); }).catch(() => {}).then(refreshInjuries); // (who's played since his injury entry; then ESPN's report as it is now)
     if (ui.pendingSeason) route(); // a refresh on a past season waited for this data
     return true;

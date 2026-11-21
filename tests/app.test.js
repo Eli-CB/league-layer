@@ -6391,6 +6391,52 @@ test("the league is read again from its site 10-20 minutes before a period's fir
   }
 });
 
+test('a league kept over 6 hours is drawn at once and read again from its site behind the page (opening it, or picking it)', async () => {
+  // yesterday's visit: two leagues connected, a team picked in each
+  const a = loadApp();
+  await a.ready();
+  for (const id of [DAILY, POINTS]) { await a.switchLeague(id); a.adoptTeam(a.fxLeague().teams[0].id); a.commit(); }
+  const stop = x => { x.get('ui').tab = 'standings'; const live = x.get('live'); clearTimeout(live.timer); live.timer = null; }; // (no live scores to keep asking for)
+  stop(a);
+  const KEY = 'league-layer-fantrax-v2', saved = {};
+  for (let i = 0; i < a.localStorage.length; i++) { const k = a.localStorage.key(i); saved[k] = a.localStorage.getItem(k); }
+  const all = JSON.parse(saved[KEY]);
+  for (const id of [DAILY, POINTS]) { all[id].at = a.Date.now() - 7 * 36e5; all[id].res.league.name = 'As kept'; }
+  saved[KEY] = JSON.stringify(all);
+  // the first visit of the day: Fantrax answers only when let through (or not at all)
+  for (const fails of [false, true]) {
+    const b = loadApp(saved), real = b.fetch, held = [], toasts = [];
+    const answer = (u, i) => (fails ? Promise.resolve({ ok: false, status: 404 }) : real(u, i));
+    b.fetch = (u, i) => (String(u).includes('fantrax.com') ? new Promise(r => held.push(() => r(answer(u, i)))) : real(u, i));
+    b.toast = m => toasts.push(m);
+    try {
+      assert.equal(await Promise.race([b.ready(), new Promise(r => setTimeout(r, 2000, 'waited'))]), true, "the page doesn't wait for Fantrax...");
+      assert.equal(b.fxLeague().name, 'As kept', "...it's drawn from the device's copy");
+      assert.equal(held.length, 1, 'and Fantrax is asked behind it');
+      const team = b.get('state').fxTeam;
+      b.fetch = (u, i) => (String(u).includes('fantrax.com') ? answer(u, i) : real(u, i));
+      held.splice(0).forEach(f => f());
+      assert.equal(await b.get('leagueBehind'), !fails);
+      if (!fails) {
+        assert.ok(b.fxLeague().id === POINTS && b.fxLeague().name !== 'As kept' && b.get('state').fxTeam === team, 'then the league as Fantrax has it now, the same team');
+        assert.equal(b.readLeagueCache()[POINTS].at, b.Date.now(), 'kept again from now');
+        assert.deepEqual(toasts, []);
+        // the other league, picked in the league menu: on screen at once too, then read again
+        b.fetch = (u, i) => (String(u).includes('fantrax.com') ? new Promise(r => held.push(() => r(real(u, i)))) : real(u, i));
+        await b.switchLeague(DAILY);
+        assert.equal(b.fxLeague().name, 'As kept');
+        b.fetch = real;
+        held.splice(0).forEach(f => f());
+        assert.ok(await b.get('leagueBehind'));
+        assert.ok(b.fxLeague().id === DAILY && b.fxLeague().name !== 'As kept');
+      } else {
+        assert.equal(b.fxLeague().name, 'As kept', "Fantrax not answering: the kept copy stays...");
+        assert.deepEqual(toasts, ["Couldn't reach Fantrax just now. Showing your league from 7 hr ago."], '...and says how old it is');
+      }
+    } finally { stop(b); }
+  }
+});
+
 test("a hockey team's record keeps its overtime and shootout losses apart (W-L-OT), today's too", async () => {
   const a = await hockeyApp();
   await a.loadBoxes();

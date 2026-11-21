@@ -180,10 +180,11 @@ async function switchLeague(input) {
   if (back) stashLeague(back.id);
   const cur = back ? back.id : currentLeagueId(), was = SPORT.key, fromDemo = !!state.demo;
   let res;
+  const behind = leagueStale(id); // (kept here past 6 hours: on screen at once, read again behind it, below)
   ui.hold = true;
   try {
     if (!['fantrax', 'sleeper'].includes(leagueSourceOf(id))) await useSport('nba');
-    res = await getLeague(id);
+    res = await getLeague(id, false, true);
     await useSport(res.league.sport || 'nba');
   } catch (e) {
     await useSport(was).catch(() => {});
@@ -217,6 +218,7 @@ async function switchLeague(input) {
   syncLinked();
   validateLineup();
   if (!tabList().some(([k]) => k === ui.tab)) location.hash = '#dashboard'; // (out of the sandbox, on one of its own tabs: the Matchup tab)
+  if (behind) readLeagueBehind(id);
   return res.league;
 }
 
