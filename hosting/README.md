@@ -13,10 +13,10 @@ sees the token. Claude never runs wrangler for it.
 ## One-time setup (the owner's)
 
 1. **A Cloudflare token** that can publish Workers: https://dash.cloudflare.com/profile/api-tokens, **Create Token**,
-   the **Edit Cloudflare Workers** template, **Use template**.
-   - Account Resources: Include, your account
-   - Zone Resources: Include, Specific zone, `leaguelayer.com`
-   - **Continue to summary**, **Create Token**, and copy it (it's shown once).
+   the **Edit Cloudflare Workers** template, **Use template**. The page (2026) has no "Account Resources" section any
+   more: each policy under **Permission policies** has its own resource dropdown. The defaults are fine (one account);
+   the zone policy may be narrowed to `leaguelayer.com`. **Continue to summary** (or **Review token**), **Create Token**,
+   and copy it (it's shown once).
 2. **Into GitHub**: the repository's **Settings**, **Secrets and variables**, **Actions**, **New repository secret**.
    Name `CLOUDFLARE_API_TOKEN`, paste the token, **Add secret**.
 3. The next run (any push, or Actions, "Refresh data and publish site", **Run workflow**) publishes the site at
