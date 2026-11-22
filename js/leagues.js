@@ -556,14 +556,12 @@ function landHome(form) {
         <h1><span class="sr-only">Plan your fantasy ${LAND_SPORTS.map(s => s[0]).join(' or ')} week</span><span aria-hidden="true">Plan your fantasy<br><span class="land-sport">${LAND_SPORTS.map(([s, icon], i) => `<span data-sport="${s}"${i ? '' : ' class="on"'}>${lineIcon(icon, 'ls-ico')}<span class="ls-w">${s}</span></span>`).join('')}</span> week</span></h1>
         <p class="land-lead">Your odds for this week's matchup, the best starters, how your categories stack up and a recap the whole league can share.</p>
       </div>
-      <div class="land-start">
-        <div class="land-connect">${form}</div>
-        <div class="land-alt">
-          <p class="land-alt-title">No league to connect?</p>
-          <div class="land-options">
-            ${demo ? option('land-demo', TAB_ICONS.dashboard, 'Explore a basketball demo league', 'Every tab filled in, as one of its teams') : ''}
-            ${option('land-browse', TAB_ICONS.team, 'Try the sandbox', 'A team of any NBA or NHL players, followed live')}
-          </div>
+      <div class="land-connect">${form}</div>
+      <div class="land-alt">
+        <p class="land-alt-title">No league to connect?</p>
+        <div class="land-options">
+          ${demo ? option('land-demo', TAB_ICONS.dashboard, 'Explore a basketball demo league', 'Every tab filled in, as one of its teams') : ''}
+          ${option('land-browse', TAB_ICONS.team, 'Try the sandbox', 'A team of any NBA or NHL players, followed live')}
         </div>
       </div>
     </section>

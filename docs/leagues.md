@@ -22,7 +22,8 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
 - Landing page (Nov 20, 2026): a first visit gets `landHome` (the headline beside the form, the demo and sandbox as option cards; no picture
   in the hero, the owner's ask: the "This week, Win odds 68%" card was removed; the `LAND_FEATURES` grid at the foot with the tabs' own icons,
   Trends among them, the owner's ask; the hero's two columns top-aligned, so opening "Where do I find my league ID?" never moves the headline,
-  the owner's ask); adding a league or season and Step 2 (each team with its initials) stay one card. The head shows the site's mark and name there (`leagueMenu`).
+  the owner's ask; the demo and sandbox cards a row under both columns, not under the form: beside it they left a blank patch under
+  the headline, the owner's ask, Nov 22, 2026); adding a league or season and Step 2 (each team with its initials) stay one card. The head shows the site's mark and name there (`leagueMenu`).
   Under the hero, `landShow`'s rows (Nov 20, 2026, the owner's ask): the Matchup tab live, Plan Ahead, "In-depth cards" (a player's, an NBA team's with
   its playoff games, a fantasy team's, taking turns 4 s each in a CSS loop, `landCards`; a tap on a name above them picks one and stops the turns,
   `land-card`/`ui.landCard`; Trends only in the grid at the foot, not here: the owner's asks), the draft board, and

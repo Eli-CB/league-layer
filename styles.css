@@ -1374,7 +1374,9 @@ body.landing::before {
 
 /* a first visit: what the site does beside the form and the ways in without a league, then a look inside and what it does */
 .landing-wrap.land-home { display: block; place-items: normal; min-height: 0; max-width: 1080px; margin: 0 auto; padding-block: 28px 8px; }
-.land-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: start; } /* (top: the help opening under the form never moves the headline) */
+/* the headline beside the form, the ways in without a league across both under them (beside the form, they left a blank patch under
+   the headline); top-aligned: the help opening under the form never moves the headline */
+.land-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 48px; align-items: start; }
 .land-pill { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 16px; padding: 4px 12px 4px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font-size: .78rem; font-weight: 500; color: var(--muted); }
 .land-pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
 .land-home h1 { font-size: clamp(2.1rem, 1.3rem + 2.4vw, 3.1rem); font-weight: 800; line-height: 1.06; letter-spacing: -.035em; text-wrap: balance; margin: 0 0 14px; }
@@ -1423,9 +1425,9 @@ body.landing::before {
 .land-connect { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 18px 16px; box-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 16px 40px -20px rgb(0 0 0 / .18); }
 .land-connect .land-form { margin-top: 0; }
 .land-connect .land-help { margin-bottom: 12px; }
-.land-alt { margin-top: 22px; }
+.land-alt { grid-column: 1 / -1; margin-top: 22px; }
 .land-alt-title { margin: 0 0 8px; font-size: .78rem; font-weight: 600; color: var(--muted); }
-.land-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; } /* (one above the other beside the headline; side by side under it, 640-900 px) */
+.land-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; } /* (side by side; one above the other on phones) */
 .land-option {
   display: flex; align-items: flex-start; gap: 11px; min-width: 0; padding: 12px 12px 12px 13px; text-align: left; font: inherit; color: var(--text); cursor: pointer;
   background: color-mix(in srgb, var(--surface) 80%, transparent); border: 1px solid var(--border); border-radius: 12px; transition: border-color .15s, background-color .15s, transform .15s;
@@ -1669,6 +1671,7 @@ body.landing::before {
 @media (max-width: 900px) {
   .landing-wrap.land-home { max-width: 640px; } /* one column: what the site does, the form, then the rows */
   .land-hero { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .land-alt { margin-top: 14px; }
   .lf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .land-shows { gap: 56px; margin-top: 52px; padding-top: 44px; }
   .land-show, .land-show.flip { grid-template-columns: minmax(0, 1fr); gap: 22px; }
