@@ -192,6 +192,10 @@ deploying `https://api.leaguelayer.com/injuries/basketball/nba` answers 404 in a
 report from the site (the Matchup or Players tab's Network tab: `injuries/basketball/nba`, about 38 KB, every 3 minutes on
 a game day). Until it's deployed the page gets a 404 and reads ESPN's report, trying the watch again 10 minutes later.
 
+Deployed Nov 21, 2026 (by Claude, at the owner's word in chat; the owner deploys otherwise). Checked: Cloudflare took about
+10 minutes to start the new cron triggers (`/injuries/` said "no report yet" meanwhile); the first basketball run used 6 ms
+of CPU, outcome ok; both sports' reports then answered from the site.
+
 ## Daily data job
 
 The site's data (box scores, players, leagues) comes from the GitHub workflow `.github/workflows/site.yml`. GitHub runs
