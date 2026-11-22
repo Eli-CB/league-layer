@@ -305,6 +305,25 @@ async function errorAllowed(req, url) {
   await caches.default.put(key, new Response(String(n + 1), { headers: { 'Cache-Control': 'public, max-age=3600' } }));
   return true;
 }
+// The same error again (its message and where it came from) is saved at most once every ERROR_REPEAT_HOURS in a data
+// center, and a data center saves at most ERRORS_PER_DAY of the site's reports a day (Nov 21, 2026, the owner's ask): one
+// bug reaching thousands of visitors wrote once per visit, and the account's 1,000 KV writes a day are the injury watch's
+// too (it uses up to ~700). So the log's ×N counts the spells and data centers an error was seen in, not every visit.
+// Counted in Cloudflare's cache, as the per-address limit is (per data center, no writes of its own). The Worker's own
+// reports (the data job, the injury watch) go straight to putError: rare, and never held back by visitors' ones.
+const ERROR_REPEAT_HOURS = 6, ERRORS_PER_DAY = 10;
+const errorId = s => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0; return h.toString(36); };
+async function errorNew(rec, url) {
+  const cache = caches.default, now = Date.now();
+  const seen = new Request(`${url.origin}/__errseen/${errorId(`${rec.msg}|${rec.at}`)}/${Math.floor(now / (ERROR_REPEAT_HOURS * 36e5))}`);
+  if (await cache.match(seen)) return false;
+  const day = new Request(`${url.origin}/__errday/${Math.floor(now / 864e5)}`);
+  const hit = await cache.match(day), n = hit ? +(await hit.text()) || 0 : 0;
+  if (n >= ERRORS_PER_DAY) return false;
+  await cache.put(seen, new Response('1', { headers: { 'Cache-Control': `public, max-age=${ERROR_REPEAT_HOURS * 3600}` } }));
+  await cache.put(day, new Response(String(n + 1), { headers: { 'Cache-Control': 'public, max-age=86400' } }));
+  return true;
+}
 // One error from the site, cut to size
 async function saveError(req, env, origins, url) {
   if (!origins.includes(req.headers.get('Origin') || '') || !env.ERRORS || !(await errorAllowed(req, url))) return;
@@ -315,6 +334,7 @@ async function saveError(req, env, origins, url) {
   if (!e || typeof e.msg !== 'string' || !e.msg) return;
   const rec = { t: Date.now(), country: (req.cf && req.cf.country) || '' };
   for (const [k, n] of Object.entries(ERROR_FIELDS)) rec[k] = String(e[k] == null ? '' : e[k]).slice(0, n);
+  if (!(await errorNew(rec, url))) return;
   await putError(env, rec);
 }
 
@@ -349,7 +369,8 @@ async function errorPage(env) {
 @media(prefers-color-scheme:dark){body{color:#e6e6e6;background:#16181c}li{border-color:#333}}
 ol{list-style:none;padding:0}li{border-bottom:1px solid #ddd;padding:10px 0;overflow-wrap:anywhere}.n{color:#c2410c;font-weight:700}
 .m{font-size:13px;opacity:.75}pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}</style>
-<h1>Errors</h1><p class="m">The last ${ERROR_DAYS} days (${recs.length} reports${keys.length > 300 ? ', the newest 300' : ''}), the same error grouped, newest first.</p>
+<h1>Errors</h1><p class="m">The last ${ERROR_DAYS} days (${recs.length} reports${keys.length > 300 ? ', the newest 300' : ''}), the same error grouped, newest first.
+The same error is saved at most once every ${ERROR_REPEAT_HOURS} hours in each Cloudflare location, so ×N counts those spells, not every visit.</p>
 ${list ? `<ol>${list}</ol>` : '<p>No errors.</p>'}`;
 }
 

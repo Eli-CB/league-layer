@@ -86,12 +86,18 @@ npx wrangler secret put ERRORS_KEY
 npx wrangler deploy
 ```
 
-The log: `https://api.leaguelayer.com/errors?key=<that password>` (each error once, with how many times, when, and on
-which pages and leagues). Until this is set up the site's reports are dropped.
+The log: `https://api.leaguelayer.com/errors?key=<that password>` (each error once, with how many times it was saved, when,
+and on which pages and leagues). Until this is set up the site's reports are dropped.
 
 One address adds at most 20 reports an hour (`ERRORS_PER_IP_HOUR`, Nov 20, 2026): each is a KV write, the free plan
 allows 1,000 a day, and the site's Origin is only what a request says, so anyone could send it. A page sends 5 at most a
 visit, so visitors never reach it. Needs `npx wrangler deploy` to take effect.
+
+The same error (message and where) is saved at most once every 6 hours in each Cloudflare data center, and a data center
+saves at most 10 of the site's reports a day (`ERROR_REPEAT_HOURS`, `ERRORS_PER_DAY`; Nov 21, 2026, deployed that day):
+the account's 1,000 KV writes a day are the injury watch's too (up to ~700), and one bug on every visit wrote once per
+visit. So the log's ×N counts 6-hour spells and data centers, not visits. Both counted in Cloudflare's cache (no writes).
+The Worker's own reports (the data job not started, the injury watch failing) are never held back.
 
 ## Requests from outside the site
 

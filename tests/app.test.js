@@ -5647,6 +5647,56 @@ test("the Worker's injury watch: ESPN's report every 3 minutes, one sport a run,
   } finally { globalThis.fetch = realFetch; globalThis.caches = realCaches; Date.now = realNow; }
 });
 
+test("the Worker's error log: the same error saved once every 6 hours, 10 reports a day at most, so a bug on every visit can't use up KV's writes", async () => {
+  const worker = (await import('../worker/index.js')).default;
+  const realCaches = globalThis.caches, realNow = Date.now;
+  let now = Date.parse('2026-11-22T15:00:00Z');
+  Date.now = () => now;
+  const store = new Map();
+  globalThis.caches = { default: {
+    match: async r => { const e = store.get(r.url); return e && now < e.until ? e.res.clone() : undefined; },
+    put: async (r, res) => { store.set(r.url, { res, until: now + 1e3 * +((res.headers.get('Cache-Control') || '').match(/max-age=(\d+)/) || [0, 0])[1] }); },
+    delete: async r => store.delete(r.url),
+  } };
+  const kv = new Map();
+  const env = { SITE_ORIGINS: 'https://leaguelayer.com', ERRORS_KEY: 'k', ERRORS: {
+    get: async (k, type) => (kv.has(k) ? (type === 'json' ? JSON.parse(kv.get(k)) : kv.get(k)) : null),
+    put: async (k, v) => { kv.set(k, v); },
+    list: async () => ({ keys: [...kv.keys()].sort().map(name => ({ name })), list_complete: true }),
+  } };
+  const send = async (msg, at = 'js/core.js:1', origin = 'https://leaguelayer.com') => {
+    const res = await worker.fetch(new Request('https://api.leaguelayer.com/errors', { method: 'POST', headers: { Origin: origin }, body: JSON.stringify({ msg, at, page: '#dashboard' }) }), env, { waitUntil: p => p });
+    assert.equal(res.status, 204);
+  };
+  try {
+    // one bug on every visit: saved once
+    for (let i = 0; i < 50; i++) await send('x is not defined');
+    assert.equal(kv.size, 1);
+    // another error, or the same message from somewhere else: saved
+    await send('y is not defined');
+    await send('x is not defined', 'js/views.js:9');
+    assert.equal(kv.size, 3);
+    // six hours on, the same bug: saved again (the log's ×2: it's still happening)
+    now += 6 * 36e5;
+    await send('x is not defined');
+    assert.equal(kv.size, 4);
+    // a day's cap: 10 a day, whatever comes
+    for (let i = 0; i < 20; i++) await send(`error ${i}`);
+    assert.equal(kv.size, 10);
+    // the next day (UTC): saved again
+    now = Date.parse('2026-11-23T00:30:00Z');
+    await send('z is not defined');
+    assert.equal(kv.size, 11);
+    // not the site's page: nothing
+    await send('w', 'js/core.js:1', 'https://elsewhere.example');
+    assert.equal(kv.size, 11);
+    // the page says what ×N counts
+    const page = await (await worker.fetch(new Request('https://api.leaguelayer.com/errors?key=k'), env, { waitUntil: p => p })).text();
+    assert.match(page, /x is not defined<\/b> <span class="n">×2/);
+    assert.match(page, /at most once every 6 hours/);
+  } finally { globalThis.caches = realCaches; Date.now = realNow; }
+});
+
 test("the Worker's copies: one request rebuilds an old one, the others take it or wait for the new one, ESPN asked once", async () => {
   const worker = (await import('../worker/index.js')).default;
   const realFetch = globalThis.fetch, realCaches = globalThis.caches, realNow = Date.now;
