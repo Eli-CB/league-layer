@@ -127,6 +127,6 @@ line in the notes pointing to it. `docs/` isn't published: the deploy copies onl
   `git fsck --unreachable`). There: `git fetch`; origin/main already in HEAD (`git merge-base --is-ancestor origin/main HEAD`): push; else rebase in a temporary worktree.
   Commit messages end with the Co-Authored-By line.
 - The repo stays public: Actions minutes are free only there, and making it private deletes the GitHub Pages site, which no longer serves
-  the site but still redirects the old github.io links and holds www.leaguelayer.com until www moves (docs/hosting.md).
+  the site but still redirects the old github.io links (docs/hosting.md).
 - The preview browser sometimes loses localStorage on restart (back to the landing page): reconnect the
   league by ID in the form, then pick "Eli's SGAteam".

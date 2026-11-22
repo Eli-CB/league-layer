@@ -21,16 +21,15 @@ is on (SSL/TLS, Edge Certificates), turned on with the move: GitHub Pages had se
 **Going back**: turn the four records' proxy off (DNS only), and GitHub Pages serves the name again, with its copy from
 its last deploy (Nov 21, 2026): the deploy steps for it would need putting back in site.yml (git history).
 
-## www.leaguelayer.com (the owner's step, not done yet)
+## www.leaguelayer.com
 
-Its CNAME still points to `eli-cb.github.io`, DNS only. `http://www` is sent on to leaguelayer.com, but `https://www`
-fails: GitHub shows its own `*.github.io` certificate there (checked Nov 21, 2026, after the move). To fix: the `www`
-CNAME, **Edit**, **Proxy status** on, **Save**; then **Rules**, **Templates** (or **Redirect Rules**), "Redirect from
-WWW to root", **Deploy**.
+A Cloudflare redirect rule (Rules, Redirect Rules; the owner's, Nov 21, 2026): `https://www.leaguelayer.com/*` to
+`https://leaguelayer.com/${1}`, 301, query string kept, on the `www` CNAME, now **Proxied** (its target,
+`eli-cb.github.io`, is never reached). `http://www` goes to `https://www` first (Always Use HTTPS), then the rule.
+Before it, `https://www` failed: GitHub showed its own `*.github.io` certificate there.
 
 GitHub Pages stays published with its custom domain set (its settings say the DNS check failed: leave it): the old
-eli-cb.github.io/courtside-manager/ links still redirect to leaguelayer.com through it, and while www points to
-eli-cb.github.io, unpublishing it would let another GitHub user claim www.leaguelayer.com.
+eli-cb.github.io/courtside-manager/ links still redirect to leaguelayer.com through it.
 
 ## The token
 

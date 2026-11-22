@@ -14,7 +14,7 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
 - Hosting: Cloudflare's static hosting since Nov 21, 2026 (`hosting/`: the Worker `leaguelayer-site` on a route over the name's
   proxied records; its README has how, going back, www and the deploy token), for the Capacity line below. How long browsers keep
   files: `hosting/_headers`. GitHub Pages is no longer deployed (its deploy step had failed 1 run in 3 that day, "No artifacts named
-  github-pages") but stays published: it still redirects the old github.io links, and www.leaguelayer.com points to it until the owner moves www.
+  github-pages") but stays published: it still redirects the old github.io links. www: a Cloudflare redirect rule (hosting/README.md).
 - The repo stays public: Actions minutes are free only there (the data jobs), and making it private deletes the Pages site at once (leaguelayer.com
   answered 404, Nov 16, 2026, when Pages served it), which would end those redirects. To restore Pages: `gh api -X POST repos/Eli-CB/league-layer/pages
   -f build_type=workflow`, then `gh api -X PUT .../pages -f cname=leaguelayer.com` (it no longer serves the site, so nothing to deploy).
