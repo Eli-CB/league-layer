@@ -5,6 +5,7 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
 - Logo ("Sheet" in "Ink" colors, chosen for now): `scripts/build_icons.py` draws it and writes `icons/logo.svg`,
   `icons/favicon.svg` (also inline in index.html, and drawn by `sharePad`'s `mark` on the share pictures: copy it to both if it changes) and the three PNGs. On a home screen the mark stays inside the middle 80% circle.
   It also draws `icons/og.png` (1200 x 630), the picture a shared link shows: index.html's `og:`/`twitter:` tags, the same for every address (crawlers don't run the script).
+- The `<title>` says what the site is ("League Layer: fantasy basketball and hockey matchup planner", Nov 22, 2026, before advertising it): it's the line Google shows, and nothing in js/ changes it. The home-screen name stays "League Layer" (the manifest and `apple-mobile-web-app-title`).
 - `404.html`: the page for any address that doesn't exist, with a 404 (`not_found_handling`, hosting/wrangler.toml) ("Jahlil Okafor-o-four": his jersey in SVG, Philadelphia's colors only, no team logo or wordmark), self-contained (inline styles, root-relative font and links: it shows at any depth).
 - Home screen: `manifest.webmanifest` + `icons/` + the tags in index.html make the site install full screen (`canInstall`, the settings menu's Install the app:
   the browser's offer, or steps for an iPhone, which keeps the app's storage apart from Safari's, so a league is connected once more there). No service worker on purpose: every
