@@ -23,3 +23,6 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   IP address.' } }` (getDraftResults: 5 s): `getJson` waits what it says and asks again; a draft that still doesn't come
   marks the league `draftFailed` (not kept on the device; Draft tab offers Try again), never "no draft".
 - Fantrax names can differ from NBA.com ("Nicolas"/"Nic"): `matchNicknames` (initial + last name + team).
+- Private Fantrax leagues load like any other, with no login (checked Nov 22, 2026 with the owner's test league "testest" `ywhrlx6smwsawar4`,
+  "Allow public to view league" off): the public API (`fxea/general/`) ignores that setting. Only Fantrax's internal API (`fxpa/req`) and its
+  league pages want a login, for every league. Never ask visitors for a Fantrax cookie: nothing needs one, and a browser couldn't send it anyway (`Access-Control-Allow-Origin: *`).
