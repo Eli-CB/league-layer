@@ -162,7 +162,7 @@ function trendsCard(L, end) {
   const everyone = L ? [] : byValue(players.filter(G.others), TREND_TOP);
   const valueRows = (list, mine) => list.map((row, i) => {
     // his value a game now, and the change under it (from his usual game: the (i) and the hover say so)
-    const num = `<div class="tr-num" title="${esc(`${VAL} a game: ${fmtValue(row.valueNow)} in his last ${TREND_GAMES}, ${fmtValue(row.valueWas)} usually`)}"><b>${fmtValue(row.valueNow)}</b><div class="small ${up ? 'pos-good' : 'pos-bad'}">${fmtValueChange(row.gain)}</div></div>`;
+    const num = `<div class="tr-num" title="${esc(`${VAL} a game: ${fmtValue(row.valueNow)} in his last ${TREND_GAMES}, ${fmtValue(row.valueWas)} usually`)}"><b>${fmtValue(row.valueNow)}</b><div class="small ${up ? 'pos-good' : 'pos-bad'}">${fmtValue(row.gain)}</div></div>`;
     return rowHtml(row, i, num, K.why(row, VS), mine);
   }).join('');
   const valueList = (title, whose, list) => (list.length ? `<section class="tr-cat"><h3 class="sub tr-head">${trendOpen('value', title, whose)}<span class="tr-col">${VAL}</span></h3><ol class="tr-list">${valueRows(list, whose === 'mine')}</ol></section>` : '');
@@ -231,7 +231,7 @@ function trendCardHtml() {
   const arrow = (a, b, d) => `${fmt(a, d)}<span class="muted">→</span>${fmt(b, d)}`;
   const tr = r => {
     const { row, x } = r, raw = row.raw, notes = K.why(row, st, 3);
-    const move = st.value && !isPoints() ? signed(x.move, 2) : signed(x.move, 1);
+    const move = st.value && !isPoints() ? fmtValue(x.move) : signed(x.move, 1); // (VAL with no "+")
     const sub = st.pct ? 'makes' : !st.value && x.was > 0 ? `${x.move > 0 ? '+' : '−'}${Math.round(Math.abs(x.move) / x.was * 100)}%` : '';
     return `<tr><td class="pf-name"><div class="bplayer"><span class="perf-rank">${rank.get(r)}</span>${headshot({ nbaId: row.id, name: raw.name }, 34)}<div class="bmain">
         <div class="bname">${playerBtn(row.id, raw.name)}</div>

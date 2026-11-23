@@ -1348,7 +1348,7 @@ test('player value everywhere is the Dashboard\'s: categories won per game; trad
     ui.tradeGive.add(give.id); get.forEach(x => ui.tradeGet.add(String(x.nbaId)));
     const html = app.viewTrade();
     const net = get.reduce((t, x) => t + app.value(x) - wv, 0) - (app.value(give) - wv);
-    assert.ok(html.includes(`over a waiver player"><b>${app.fmtValueChange(net)}</b>`), 'net over a waiver player, in For your team');
+    assert.ok(html.includes(`over a waiver player"><b>${app.fmtValue(net)}</b>`), 'net over a waiver player, in For your team');
   } finally { ui.tradeGive.clear(); ui.tradeGet.clear(); }
 });
 
@@ -1418,7 +1418,7 @@ test('a trade proposal: both sides with photos and lines, compared per game, sha
     for (const S of [M.A, M.B]) assert.ok(card.includes(`<b>${app.fmtValue(S.sum)}</b><div class="tp-vol">${app.fmtValue(S.value)} over waiver</div>`), S.name);
     const you = card.slice(card.indexOf('For your team')).split('</tr>')[0], Y = app.tradeForYou([mine[0]], theirs.slice(0, 2));
     assert.equal(you.match(/<td class="num/g).length, L.cats.length + 2, 'the net playoff games, a change for each category, then the net value');
-    assert.ok(you.includes(`<b>${app.fmtValueChange(Y.diff)}</b>`), 'a change keeps its "+"');
+    assert.ok(you.includes(`<b>${app.fmtValue(Y.diff)}</b>`) && !you.includes('<b>+'), 'the net value, with no "+"');
     // numbers only: never who wins or whether it's fair (the owner's rule), in the card, its (i) or the share
     const info = app.get('INFO').trade, infoText = `${info[0]} ${info[1]()}`;
     const said = [html, infoText, app.tradeShare(L, T).text].join(' ');
@@ -1642,10 +1642,9 @@ test("player profile: value per game (each game, each season's averages) and thi
     assert.ok(Math.abs(per - app.lineValue(cur)) < 1e-9, 'makes and attempts as they are (season rows have no FG%)');
     const proj = app.nbaStats(raw);
     assert.ok(Math.abs(app.statLine(proj).fgm - proj.fgPct * proj.fga) < 1e-9, 'projections: makes from FG%');
-    // (VAL, a value with no "+": the owner's ask, Nov 23, 2026)
+    // (VAL, a value or a change in value with no "+": the owner's ask, Nov 23, 2026)
     assert.equal(app.fmtValue(0.51), '0.51');
     assert.equal(app.fmtValue(-0.02), '−0.02');
-    assert.equal(app.fmtValueChange(0.51), '+0.51', 'a change keeps its "+"');
     assert.ok(html.includes('VAL per game') && html.includes(`>${app.fmtValue(per)}<`) && !html.includes('Value'), 'this season per game');
     assert.ok(html.includes(`${app.fmtValue(per * Math.round(cur.gp), 1)} <span class="muted small">in ${Math.round(cur.gp)} G</span>`), 'this season in all');
     // linear: an average line is worth the average of its games
