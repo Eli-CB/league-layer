@@ -3802,18 +3802,22 @@ test("Plan Ahead's schedule dots of a period longer than a week come a row a wee
   assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'styles.css'), 'utf8'), /\.dots\.wk \{[^}]*grid-template-columns: repeat\(7, /);
 });
 
-test("Plan Ahead's schedule bubbles carry each day's opponent, shown on a desktop's Lineups card with the days over them (the owner's pick, Nov 23, 2026)", async () => {
+test("Plan Ahead's schedule bubbles carry each day's opponent, shown on a desktop's Lineups card with the days over them (the owner's pick, Nov 23, 2026), a link to his team's card", async () => {
   const L = await app.useLeague(CATS9);
   const days = n => app.periodDates(L.periods.find(q => q.n === n));
   const p = app.nbaPlayers().find(x => x.team && app.get('teamDates').get(x.team) && app.gamesIn(x, days(6)) >= 2);
   assert.doesNotMatch(app.dayDots(p, { dates: days(6) }, true), /class="vs"|days/, 'a data file without opponents: the dots as they were');
   const teams = app.NBA.teams;
-  for (const v of Object.values(teams)) v.vs = (v.dates || []).map((d, i) => (i % 2 ? '@' : '') + 'OPP');
+  for (const v of Object.values(teams)) v.vs = (v.dates || []).map((d, i) => (i % 2 ? '@' : '') + 'BOS');
   app.useData(app.NBA);
   try {
     const html = app.dayDots(p, { dates: days(6) }, true), first = teams[p.team].dates.indexOf(days(6).find(d => app.playsOn(p, d)));
     assert.match(html, /^<span class="dots days">/);
-    assert.match(html, first % 2 ? /<span class="vs"><span class="at">@<\/span>OPP<\/span>/ : /<span class="vs">OPP<\/span>/, "the day's opponent, @ when away");
+    const link = '<button type="button" class="link-btn tm-link" data-action="sport-team" data-team="BOS" title="Boston Celtics">';
+    assert.ok(html.includes(`<span class="vs">${link}${first % 2 ? '<span class="at">@</span>' : ''}BOS</button></span>`), "the day's opponent, @ when away, opening his team's card");
+    // a game still to come: a grey outline, not green till it's played (the owner's ask: the team says there's a game)
+    const css = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'styles.css'), 'utf8');
+    assert.match(css, /\.board \.dots\.days i\.up, \.board \.dots\.days i\.up\.b2b \{ box-shadow: inset 0 0 0 1px color-mix\(in srgb, var\(--muted\)/);
     assert.equal(html.match(/class="vs"/g).length, app.gamesIn(p, days(6)), 'one a game, none on a day off');
     assert.doesNotMatch(app.dayDots(p, { dates: days(7) }, true), /class="vs"|days/, 'a two-week period: dots only');
     assert.match(app.boardHead('Team', { dates: days(6) }), /<span class="dhead" aria-hidden="true">(<i>\w+<\/i>){7}<\/span>/, 'the days over them');

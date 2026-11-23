@@ -1105,17 +1105,21 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: .85em; backgro
    bubbles and games count beside the name and positions (dayCells, matchups.js); narrower, the dots as they are */
 .board-card { container: board / inline-size; }
 .dots .vs, .dhead { display: none; }
-@container board (min-width: 1040px) {
+@container board (min-width: 1084px) { /* (36px bubbles took 1040: 40px ones need 44 more for the names to keep their room) */
   .board .bmain:has(> .bmeta > .dots.days), .board .bhead { display: grid; grid-template-columns: minmax(0, 1fr) auto 22px; column-gap: 8px; align-items: center; }
   .board .bmain:has(> .bmeta > .dots.days) > .bname { grid-area: 1 / 1; }
   .board .bmeta:has(> .dots.days) { display: contents; }
   .board .bmeta:has(> .dots.days) > .bmeta-info { grid-area: 2 / 1; margin-top: 2px; }
   .board .dots.days { grid-area: 1 / 2 / 3; }
   .board .dots.days + .bmeta-g { grid-area: 1 / 3 / 3; }
-  .board .dots.days, .board .dhead { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 36px; gap: 3px; }
+  /* (wide enough for "@GSW" clear of its outline: at 36px it touched) */
+  .board .dots.days, .board .dhead { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 40px; gap: 2px; }
   .board .dots.days i { width: auto; height: 20px; border-radius: 6px; display: grid; place-items: center; font-style: normal; }
-  .board .dots.days .vs { display: inline; font-size: .68rem; font-weight: 600; color: var(--text); letter-spacing: -.01em; }
-  .board .dots.days .at { color: var(--muted); font-weight: 500; font-size: .9em; margin-right: .5px; }
+  .board .dots.days .vs { display: inline; font-size: .66rem; font-weight: 600; color: var(--text); letter-spacing: -.02em; }
+  .board .dots.days .at { color: var(--muted); font-weight: 500; font-size: .85em; }
+  /* a game still to come: a grey outline, green once it's played (the owner's ask: the team says there's a game); a red
+     ring still for a game he's listed Out of, a green one while it's on */
+  .board .dots.days i.up, .board .dots.days i.up.b2b { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--muted) 40%, transparent); }
   .board .dots.days i.none { background: none; }
   .board .dots.days i.none::after { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--border); }
   .board .dots.days i.done, .board .dots.days i.live { background: color-mix(in srgb, var(--good) 22%, transparent); }

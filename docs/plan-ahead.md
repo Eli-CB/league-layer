@@ -30,7 +30,10 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   `dayDots`), at every width: 14 in a line ran the games count into the opponent's column on a phone (Nov 23, 2026).
 - On a desktop the Schedule view's bubbles carry each day's opponent ("@ORL" away), the days over them in the head, beside the
   name instead of under it (the owner's pick from mockups, Nov 23, 2026: the room between a name and his dots was empty; a
-  narrower tab was turned down). By the card's own width (`@container board`, 1040 px; phones keep the dots), never in a period
+  narrower tab was turned down). By the card's own width (`@container board`, 1084 px; phones keep the dots), never in a period
   longer than a week, and only with a data file that has the opponents (`vs`, docs/data.md): `dayCells`, `boardHead`, `vsOn`.
+  The opponent opens his team's card (`teamBtn`); a game to come has a grey outline, green only once played (the owner's ask,
+  Nov 23, 2026: the team says there's a game; a back-to-back is in its tip, Out keeps its red ring). Bubbles are 40 px: at 36
+  "@GSW" touched the outline, and the 1084 px gives the names back the room the extra width took.
 - The Lineups board's Per game and Week total show FG% and FT% to two places, ".49", players and Projected week alike (the owner's
   ask, Nov 20, 2026: `fmtPct(n, 2)`); the Categories table and the tips keep three.

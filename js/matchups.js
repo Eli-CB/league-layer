@@ -202,8 +202,9 @@ function boardHead(name, ctx, show = true) {
 function dayDots(p, ctx, counts) {
   const cells = dayCells(ctx);
   return `<span class="dots${ctx.dates.length > 7 ? ' wk' : ''}${cells ? ' days' : ''}">${ctx.dates.map(d => {
-    const vs = cells ? vsOn(p, d) : '', away = vs.startsWith('@');
-    const dot = (cls, tip) => `<i class="${cls}" data-tip="${esc(tip)}">${vs ? `<span class="vs">${away ? '<span class="at">@</span>' : ''}${esc(away ? vs.slice(1) : vs)}</span>` : ''}</i>`;
+    // (the opponent opens his team's card, as a team's code does everywhere)
+    const vs = cells ? vsOn(p, d) : '', away = vs.startsWith('@'), tri = away ? vs.slice(1) : vs;
+    const dot = (cls, tip) => `<i class="${cls}" data-tip="${esc(tip)}">${vs ? `<span class="vs">${teamBtn(tri, `${away ? '<span class="at">@</span>' : ''}${esc(tri)}`)}</span>` : ''}</i>`;
     if (!playsOn(p, d)) return dot('none', 'No game');
     const bench = counts ? '' : ' bench';
     // a game on now pulses green while he's in it (a line in tonight's box score, or on the floor), a green ring until he
