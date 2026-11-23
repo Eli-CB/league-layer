@@ -62,10 +62,50 @@ test('category lists other than the standard nine', () => {
   assert.equal(eight.cats.join(), 'fgPct,ftPct,tpm,pts,reb,ast,stl,blk');
 
   const eleven = app.fxCategories(withCats([...cfgs, ['3PT%', 'INDIVIDUAL_THREE_POINT_FIELD_GOAL_PERCENTAGE'], ['DD', 'INDIVIDUAL_DOUBLE_DOUBLES'], ['A/TO', 'INDIVIDUAL_ASSIST_TO_TURNOVER_RATIO']]));
-  assert.equal(eleven.cats.join(), 'fgPct,ftPct,tpPct,tpm,pts,reb,ast,stl,blk,to,dd');
+  assert.equal(eleven.cats.join(), 'fgPct,ftPct,tpm,pts,reb,ast,stl,blk,to,tpPct,dd', 'the nine in their order, then the others');
   assert.deepEqual([...eleven.catsOther], ['A/TO'], "ratios aren't projected, and say so");
 
   assert.deepEqual({ ...app.fxCategories(leagueInfo(POINTS).scoringSystem) }, {}, 'points leagues have no category list');
+});
+
+test("basketball's stats are always listed MIN, FG, FT, 3PM, PTS, REB, AST, STL, BLK, TO, then any others, VAL last (the owner's rule, Nov 23, 2026)", async () => {
+  const a = loadApp();
+  await a.ready();
+  const NINE = ['FG', 'FT', '3PM', 'PTS', 'REB', 'AST', 'STL', 'BLK', 'TO'];
+  const rank = l => { const k = l.replace(/%$/, '').replace(/^(FG|FT)(M|A| miss)$/, '$1').replace(/^3P(A| miss)$/, '3PM'); return k === 'MIN' ? -1 : NINE.includes(k) ? NINE.indexOf(k) : ['VAL', 'FP'].includes(k) ? 99 : 50; };
+  const ordered = (labels, what) => assert.deepEqual([...labels], [...labels].sort((x, y) => rank(x) - rank(y)), what);
+  const L = await a.useLeague(CATS9);
+  // a category league, saved on the device in another order, takes this one
+  const cats = L.cats;
+  L.cats = ['pts', 'reb', 'oreb', 'ast', 'stl', 'blk', 'tpm', 'to', 'fgPct', 'ftPct', 'tpPct'];
+  a.set('catsMemo', { L: undefined, cats: [] });
+  assert.equal(a.scoreCats().map(c => c.label).join(), 'FG%,FT%,3PM,PTS,REB,AST,STL,BLK,TO,3P%,OREB');
+  // a points league: each stat it scores, a shooting pair as one in its place, fantasy points last
+  const was = { scoring: L.scoring, points: L.points };
+  Object.assign(L, { cats: undefined, scoring: 'POINTS', points: { oreb: 0.5, reb: 1.2, pts: 1, to: -1, fga: -1, fgm: 2, tpm: 1, ftm: 1, fta: -1, ast: 1.5, stl: 3, blk: 3 } });
+  a.set('catsMemo', { L: undefined, cats: [] });
+  assert.equal(a.lineCats().map(c => c.label).join(), 'FG,FT,3PM,PTS,REB,AST,STL,BLK,TO,OREB,FP');
+  ordered(a.scoreCats().map(c => c.label), 'its columns');
+  Object.assign(L, { cats, ...was });
+  a.set('catsMemo', { L: undefined, cats: [] });
+  // the player card's columns and a game's line (PF after them, in gray)
+  const raw = a.NBA.players.find(r => r.cur && r.cur.gp);
+  assert.equal(a.cardStats(raw).map(c => c[0]).join(), 'MIN,FG%,FT%,3PM,PTS,REB,AST,STL,BLK,TO,PF');
+  const [main, gray] = a.gameStats(raw, { min: 30, fgm: 7, fga: 14, ftm: 3, fta: 4, tpm: 2, pts: 19, reb: 6, ast: 5, stl: 1, blk: 1, to: 2, pf: 3 });
+  assert.equal(main.map(x => x.split(' ').pop()).join(), NINE.join());
+  assert.deepEqual([...gray], ['3 PF']);
+  // past rosters' tables, the sandbox's points editor
+  assert.equal(a.get('SPORT').tableCols.map(x => x[1]).join(), 'MIN,FG%,FT%,3PM,PTS,REB,AST,STL,BLK,TO');
+  const editor = a.get('SB_POINT_STATS').nba[0][1];
+  assert.deepEqual([...editor], [...a.inCatOrder(editor)]);
+  // Trends' lists: minutes, the categories with shooting in its place, shot attempts
+  await a.loadBoxes();
+  assert.equal(a.trendStats().map(x => x.label).join(), 'Minutes,FG%,FT%,Threes,Points,Rebounds,Assists,Steals,Blocks,Shot attempts');
+  // the landing page's samples
+  const land = a.viewLanding();
+  assert.ok(land.includes('<th>Game</th><th>FG</th><th>3PM</th><th>PTS</th><th>REB</th><th>VAL</th>'), "the card's games");
+  for (const [, , , , , tiles] of a.get('LAND_RECAP').filter(x => Array.isArray(x[5]))) ordered(tiles.map(t => t[1]), 'an award');
+  ordered(a.get('LAND_PLAN').chips.map(c => c[0]), "a swap's chips");
 });
 
 test('an 11-category league projects every category', async () => {
@@ -5255,7 +5295,7 @@ test('hockey trades and waivers weigh a goalie by the games he plays; past seaso
   assert.equal(a.nbaById.get(find('Old Winger')).pos[0], 'LW');
   assert.equal(a.isGoalie(a.nbaById.get(find('Old Winger'))), false);
   // table columns follow the sport
-  assert.equal(a.get('SPORT').tableStats.map(x => x[1]).slice(1, 3).join(), 'G,A');
+  assert.equal(a.get('SPORT').tableCols.map(x => x[1]).slice(1, 3).join(), 'G,A');
   assert.ok(a.statCells({ min: 20, g: 0.5, a: 0.5, sog: 3, hit: 1, blk: 1, sv: 0, sa: 0 }).includes('0.5'));
 });
 
@@ -5285,7 +5325,7 @@ test("a season's memos don't cross sports", async () => {
   quiet(a);
   assert.equal(a.get('gameLogs')['2025-26'], undefined);
   assert.equal(a.get('archives')['2025-26'], undefined);
-  assert.equal(a.get('SPORT').tableStats.map(x => x[1]).slice(1, 3).join(), 'PTS,REB');
+  assert.equal(a.get('SPORT').tableCols.map(x => x[1]).slice(1, 3).join(), 'FG%,FT%');
 });
 
 test('the demo: every tab filled in as a team, and leaving it keeps nothing', async () => {

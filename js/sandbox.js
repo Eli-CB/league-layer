@@ -28,7 +28,7 @@ const SB_PRESET_NAME = { espn: 'ESPN', yahoo: 'Yahoo' };
 const SB_POINTS_START = { nba: SB_POINTS.nba.espn, nhl: { g: 2, a: 1, ppp: 0.5, shp: 0.5, sog: 0.1, hit: 0.1, blk: 0.5, w: 4, ga: -2, sv: 0.2, so: 3, otl: 1 } };
 // the stats a league can give points for, in the editor (hockey: skaters', then goalies')
 const SB_POINT_STATS = {
-  nba: [['', ['pts', 'reb', 'oreb', 'dreb', 'ast', 'stl', 'blk', 'tpm', 'tpa', 'to', 'fgm', 'fga', 'fgmi', 'ftm', 'fta', 'ftmi', 'dd', 'td', 'pf']]],
+  nba: [['', ['fgm', 'fga', 'fgmi', 'ftm', 'fta', 'ftmi', 'tpm', 'tpa', 'pts', 'reb', 'ast', 'stl', 'blk', 'to', 'oreb', 'dreb', 'dd', 'td', 'pf']]], // (catOrder's order)
   nhl: [['Skaters', ['g', 'a', 'pts', 'pm', 'pim', 'sog', 'hit', 'blk', 'ppp', 'shp', 'gwg', 'fow', 'fol']], ['Goalies', ['w', 'l', 'otl', 'so', 'ga', 'sv']]],
 };
 // The scoring's choices: categories, each preset, your own

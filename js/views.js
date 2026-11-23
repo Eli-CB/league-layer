@@ -121,9 +121,9 @@ function sortRows(rows, valueOf, dir) {
   });
 }
 
+// a player's per-game row of SPORT.tableCols, then his value (minutes whole, the rest to one place)
 function statCells(p) {
-  return `${SPORT.tableStats.map(([k], i) => `<td class="num">${fmt(p[k] || 0, i ? 1 : 0)}</td>`).join('')}
-    ${SPORT.tablePct.map(([, , m, a]) => `<td class="num">${fmtPct(p[a] ? statVal(p, m) / p[a] : 0)}</td>`).join('')}<td class="num"><b>${fmtValue(value(p))}</b></td>`;
+  return `${SPORT.tableCols.map(([k, , m, a]) => `<td class="num">${a ? fmtPct(p[a] ? statVal(p, m) / p[a] : 0) : fmt(p[k] || 0, k === 'min' ? 0 : 1)}</td>`).join('')}<td class="num"><b>${fmtValue(value(p))}</b></td>`;
 }
 
 /* ---------- Standings ---------- */
@@ -544,7 +544,7 @@ function seasonTotalsCard(standings, S) {
   const tot = (T, k) => (DERIVED[k] ? sum(Object.entries(DERIVED[k]).map(([b, c]) => (T.s[b] || 0) * c)) : T.s[k] || 0);
   const sc = leaguePoints();
   const cols = sc
-    ? [...Object.keys(STAT_LABEL).filter(k => sc[k]).map(k => ({ label: STAT_LABEL[k], neg: sc[k] < 0, val: T => tot(T, k), fmt: v => fmt(v, 0) })),
+    ? [...inCatOrder(Object.keys(STAT_LABEL).filter(k => sc[k])).map(k => ({ label: STAT_LABEL[k], neg: sc[k] < 0, val: T => tot(T, k), fmt: v => fmt(v, 0) })),
       ...(est ? [] : [{ label: 'FP', val: T => sum(Object.entries(sc).map(([k, v]) => tot(T, k) * v)), fmt: v => fmtFp(v) }])]
     : scoreCats().map(c => ({ label: c.label, neg: c.neg,
       val: c.pct ? (T => (tot(T, c.att) ? tot(T, c.made) / tot(T, c.att) : 0)) : T => tot(T, c.key),

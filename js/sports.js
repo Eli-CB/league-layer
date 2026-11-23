@@ -50,17 +50,21 @@ const SPORTS = {
     // [makes, attempts, misses, label]
     shotPairs: [['fgm', 'fga', 'fgmi', 'FG'], ['ftm', 'fta', 'ftmi', 'FT'], ['tpm', 'tpa', 'tpmi', '3PM']],
     negCats: ['to', 'pf', 'fgmi', 'ftmi', 'tpmi'], // fewer is better
-    catOrder: ['fgPct', 'ftPct', 'tpPct', 'tpm', 'tpa', 'pts', 'reb', 'oreb', 'dreb', 'ast', 'stl', 'blk', 'to', 'dd', 'td'],
+    // The order every list of stats takes, categories, points-league columns and tables alike (the owner's rule, Nov 23, 2026):
+    // MIN first, then FG (% or makes/attempts), FT, 3PM, PTS, REB, AST, STL, BLK, TO, then any others (VAL last, where shown)
+    catOrder: ['min', 'fgPct', 'fgm', 'fga', 'fgmi', 'ftPct', 'ftm', 'fta', 'ftmi', 'tpm', 'tpa', 'tpmi', 'pts', 'reb', 'ast', 'stl', 'blk', 'to',
+      'tpPct', 'fg2m', 'fg2a', 'oreb', 'dreb', 'dd', 'td', 'pf', 'pm', 'gp1'],
     // Per-game stats we project. The first 11 have spreads from game logs (raw.sd, same order); the rest are
     // for points leagues that score them (dd/td are per-game rates; gp1 is one per game played).
     countKeys: ['pts', 'reb', 'ast', 'stl', 'blk', 'tpm', 'to', 'fgm', 'fga', 'ftm', 'fta', 'oreb', 'dreb', 'tpa', 'pf', 'pm', 'dd', 'td', 'min', 'gp1'],
     boxCols: ['min', 'pts', 'reb', 'ast', 'stl', 'blk', 'tpm', 'to', 'fgm', 'fga', 'ftm', 'fta', 'oreb', 'dreb', 'tpa', 'pf', 'pm'],
     espn: 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/',
     game: { minutes: 48, periods: 4, tag: 'Q' }, // a game's length and what its periods are called on a live clock
-    // the stat columns of a table of per-game or season stats (past rosters), then its percentages: [key, label, makes, attempts]
     soonTabs: [], // tabs this sport doesn't have yet
-    tableStats: [['min', 'MIN'], ['pts', 'PTS'], ['reb', 'REB'], ['ast', 'AST'], ['stl', 'STL'], ['blk', 'BLK'], ['tpm', '3PM'], ['to', 'TO']],
-    tablePct: [['fgPct', 'FG%', 'fgm', 'fga'], ['ftPct', 'FT%', 'ftm', 'fta']],
+    // the stat columns of a table of per-game or season stats (past rosters), in catOrder's order: [key, label], a percentage
+    // [key, label, makes, attempts]
+    tableCols: [['min', 'MIN'], ['fgPct', 'FG%', 'fgm', 'fga'], ['ftPct', 'FT%', 'ftm', 'fta'], ['tpm', '3PM'], ['pts', 'PTS'], ['reb', 'REB'],
+      ['ast', 'AST'], ['stl', 'STL'], ['blk', 'BLK'], ['to', 'TO']],
     // each team's full name, for its card (a team's code anywhere opens it)
     teamNames: {ATL: 'Atlanta Hawks', BKN: 'Brooklyn Nets', BOS: 'Boston Celtics', CHA: 'Charlotte Hornets', CHI: 'Chicago Bulls',
       CLE: 'Cleveland Cavaliers', DAL: 'Dallas Mavericks', DEN: 'Denver Nuggets', DET: 'Detroit Pistons', GSW: 'Golden State Warriors',
@@ -120,8 +124,7 @@ const SPORTS = {
     espnTeams: { LA: 'LAK', NJ: 'NJD', SJ: 'SJS', TB: 'TBL' }, // ESPN's codes that aren't the NHL's
     game: { minutes: 60, periods: 3, tag: 'P' },
     soonTabs: [],
-    tableStats: [['min', 'MIN'], ['g', 'G'], ['a', 'A'], ['sog', 'SOG'], ['hit', 'HIT'], ['blk', 'BLK'], ['w', 'W'], ['so', 'SO']],
-    tablePct: [['svPct', 'SV%', 'sv', 'sa']],
+    tableCols: [['min', 'MIN'], ['g', 'G'], ['a', 'A'], ['sog', 'SOG'], ['hit', 'HIT'], ['blk', 'BLK'], ['w', 'W'], ['so', 'SO'], ['svPct', 'SV%', 'sv', 'sa']],
     goalieCats: ['gs', 'w', 'l', 'otl', 'sol', 'so', 'ga', 'gaa', 'sv', 'sa', 'svPct'],
     // added to an (i) popup
     infoMore: {
@@ -195,8 +198,7 @@ const SPORTS = {
     negCats: [],
     catOrder: [],
     boxCols: null,
-    tableStats: [],
-    tablePct: [],
+    tableCols: [],
     espn: 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/',
     espnTeams: { WSH: 'WAS' },
     game: { minutes: 60, periods: 4, tag: 'Q' },

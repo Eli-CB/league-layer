@@ -590,16 +590,17 @@ function cardStats(raw) {
     return [['MIN', s => fmt(s.min, 1), o => Math.round(o.min)], two('G', 'g'), two('A', 'a'), two('PTS', 'pts'), ['+/−', s => fmt(s.pm, 2), o => o.pm], two('SOG', 'sog'), two('HIT', 'hit'), two('BLK', 'blk'),
       two('PIM', 'pim'), ['PPP', s => fmt(s.ppg + s.ppa, 2), o => (o.ppg || 0) + (o.ppa || 0)]];
   }
-  // (PF, the owner's ask, Nov 23, 2026; the daily file's few games before the box scores load have none)
-  return [['MIN', s => fmt(s.min, 1), o => Math.round(o.min)], n('pts'), n('reb'), n('ast'), n('stl'), n('blk'), ['3PM', s => fmt(s.tpm), o => o.tpm], n('to'),
-    ['PF', s => fmt(s.pf), o => (o.pf == null ? '—' : o.pf)], ['FG%', s => fmtPct(s.fga ? s.fgm / s.fga : 0), o => `${o.fgm}/${o.fga}`, 'FG'], ['FT%', s => fmtPct(s.fta ? s.ftm / s.fta : 0), o => `${o.ftm}/${o.fta}`, 'FT']];
+  // (in catOrder's order, the owner's rule, Nov 23, 2026; PF, the owner's ask that day: the daily file's few games before the box scores load have none)
+  return [['MIN', s => fmt(s.min, 1), o => Math.round(o.min)], ['FG%', s => fmtPct(s.fga ? s.fgm / s.fga : 0), o => `${o.fgm}/${o.fga}`, 'FG'], ['FT%', s => fmtPct(s.fta ? s.ftm / s.fta : 0), o => `${o.ftm}/${o.fta}`, 'FT'],
+    ['3PM', s => fmt(s.tpm), o => o.tpm], n('pts'), n('reb'), n('ast'), n('stl'), n('blk'), n('to'), ['PF', s => fmt(s.pf), o => (o.pf == null ? '—' : o.pf)]];
 }
-// A game's numbers as words: [the main ones, the ones in gray]
+// A game's numbers as words: [the main ones, the ones in gray] (basketball: the nine categories in their order, then PF)
 function gameStats(raw, o) {
   if (isFootball()) return [footballWords(o), []];
   if (isGoalie(raw)) return [[`${o.sv || 0} saves on ${o.sa || 0}`, `${o.ga || 0} GA`], [o.w ? 'Win' : o.l ? 'Loss' : o.otl ? 'OT loss' : o.sol ? 'Shootout loss' : o.so ? 'Shutout' : ''].filter(Boolean)];
   if (isHockey()) return [[`${o.g || 0} G`, `${o.a || 0} A`, `${o.sog || 0} SOG`, `${o.hit || 0} HIT`, `${o.blk || 0} BLK`], [`${(o.pm > 0 ? '+' : '') + (o.pm || 0)}`, `${o.pim || 0} PIM`]];
-  return [[`${o.pts} PTS`, `${o.reb} REB`, `${o.ast} AST`, `${o.stl} STL`, `${o.blk} BLK`, `${o.tpm} 3PM`, `${o.to} TO`, ...(o.pf == null ? [] : [`${o.pf} PF`])], [`${o.fgm}/${o.fga} FG`, `${o.ftm}/${o.fta} FT`]];
+  return [[`${o.fgm}/${o.fga} FG`, `${o.ftm}/${o.fta} FT`, `${o.tpm} 3PM`, `${o.pts} PTS`, `${o.reb} REB`, `${o.ast} AST`, `${o.stl} STL`, `${o.blk} BLK`, `${o.to} TO`],
+    o.pf == null ? [] : [`${o.pf} PF`]];
 }
 
 let cardOpen = null; // the player whose card is showing
@@ -714,7 +715,7 @@ function showPlayerDetail(nbaId) {
   const gamesNarrow = games.length ? `<ul class="pc-games show-sm pc-games-wrap">${games.map(o => { const v = lineValue(o); return `<li>
       <div class="pc-g-top"><b>${gameTxt(o)}</b><span class="pc-g-val">${gameWorthTxt(v)}</span></div>
       <div>${[...(o.min != null ? [`${Math.round(o.min)} min`] : []), ...gameStats(raw, o)[0]].map(x => `<span>${x}</span>`).join(' · ')}</div>
-      <div class="muted">${gameStats(raw, o)[1].join(' · ')}</div></li>`; }).join('')}</ul>` : '';
+      ${(g => (g.length ? `<div class="muted">${g.join(' · ')}</div>` : ''))(gameStats(raw, o)[1])}</li>`; }).join('')}</ul>` : '';
   const logs = games.map(o => `<tr><td>${gameTxt(o)}</td>${CS.map(([, , g]) => `<td class="num">${g(o)}</td>`).join('')}${valCell(lineValue(o))}</tr>`).join('');
   // the tile after Next game: a goalie's starts still to come, football's projected week (the rest: games left, below)
   const thisWeek = matchDates(weekStartAt(0));

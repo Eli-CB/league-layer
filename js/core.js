@@ -359,7 +359,10 @@ function fantasyPoints(p, sc = leaguePoints()) {
   return sc ? sum(Object.entries(sc).map(([k, v]) => statVal(p, k) * v)) : 0;
 }
 
-// The columns a matchup is decided on: the league's categories, or each scored stat plus total fantasy points
+// Stats in the sport's order (catOrder: basketball's MIN, FG, FT, 3PM, PTS, REB, AST, STL, BLK, TO), any others after as they came
+const inCatOrder = (keys, order = CAT_ORDER) => [...keys].sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99));
+// The columns a matchup is decided on: the league's categories, or each scored stat plus total fantasy points (a league
+// saved on the device before an order changed takes the new one too)
 function catDef(key) {
   if (PCT_CATS[key]) { const [label, made, att, more] = PCT_CATS[key]; return { key, label, pct: true, made, att, ...more }; }
   return { key, label: STAT_LABEL[key] || key.toUpperCase(), neg: NEG_CATS.has(key), dec: key === 'dd' || key === 'td' ? 1 : null };
@@ -370,8 +373,8 @@ function scoreCats() {
   const L = fxLeague(), sc = leaguePoints(); // (the sandbox's scoring can change with no league: its points are part of the key)
   if (catsMemo.L !== L || catsMemo.sc !== sc) {
     catsMemo = { L, sc, cats: sc
-      ? [...Object.keys(STAT_LABEL).filter(k => sc[k]).map(k => ({ key: k, label: STAT_LABEL[k], neg: sc[k] < 0, dec: k === 'dd' || k === 'td' ? 1 : null })), { key: 'fp', label: 'FP', fp: true }]
-      : L && L.cats && L.cats.length ? L.cats.map(catDef) : CATS };
+      ? [...inCatOrder(Object.keys(STAT_LABEL).filter(k => sc[k])).map(k => ({ key: k, label: STAT_LABEL[k], neg: sc[k] < 0, dec: k === 'dd' || k === 'td' ? 1 : null })), { key: 'fp', label: 'FP', fp: true }]
+      : L && L.cats && L.cats.length ? inCatOrder(L.cats).map(catDef) : CATS };
     BASE = baseNow(); // and on the league's size (and, for a past season, that season's stats)
     changed('players'); // player values depend on the categories
   }

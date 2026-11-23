@@ -129,8 +129,9 @@ function whySentence(ex, ctx) {
     const fp = ex.rows.find(r => r.c.fp);
     if (fp) parts.push(`${signed(fp.d, 1)} projected points, ${pctTxt(fp.pA)}→${pctTxt(fp.pB)} to win.`);
   } else if (ctx.hasOpp && !SPORT.oneNumber) {
-    const lifts = ex.rows.filter(r => r.pB - r.pA > 0.015).sort((x, y) => (y.pB - y.pA) - (x.pB - x.pA)).slice(0, 3);
-    const costs = ex.rows.filter(r => r.pA - r.pB > 0.015).sort((x, y) => (y.pA - y.pB) - (x.pA - x.pB)).slice(0, 2);
+    // (the categories that move most, listed in the categories' own order)
+    const most = (moved, n) => { const top = new Set(ex.rows.filter(r => moved(r) > 0.015).sort((x, y) => moved(y) - moved(x)).slice(0, n)); return ex.rows.filter(r => top.has(r)); };
+    const lifts = most(r => r.pB - r.pA, 3), costs = most(r => r.pA - r.pB, 2);
     if (lifts.length) parts.push(`Biggest lift: ${lifts.map(r => `${r.c.label} ${pctTxt(r.pA)}→${pctTxt(r.pB)}`).join(', ')}.`);
     if (costs.length) parts.push(`Costs: ${costs.map(r => `${r.c.label} ${pctTxt(r.pA)}→${pctTxt(r.pB)}${r.pB >= 0.7 ? ' (still safe)' : r.pB <= 0.3 ? ' (likely lost anyway)' : ''}`).join(', ')}.`);
     if (!costs.length && lifts.length) parts.push('No category gets worse in a way that matters.');
@@ -182,8 +183,7 @@ function shortMinutes(p, line, d) {
 function gameTip(p, line, d, bench) {
   const short = shortMinutes(p, line, d);
   return `<div class="tip-head">${Math.round(line.min)} min${bench ? ' <span class="tip-tag">bench, didn\'t count</span>' : ''}</div>
-    <div>${gameStats(p, line)[0].join(' · ')}</div>
-    <div class="tip-dim">${gameStats(p, line)[1].join(' · ')}</div>
+    ${(([main, dim]) => `<div>${main.join(' · ')}</div>${dim.length ? `<div class="tip-dim">${dim.join(' · ')}</div>` : ''}`)(gameStats(p, line))}
     ${isPoints() ? `<div class="tip-head">${fmtFp(lineFp(line))} FP</div>` : ''}
     ${short ? `<div class="tip-warn">Usually ${Math.round(p.min)} min: ${esc(short)}</div>` : ''}`;
 }

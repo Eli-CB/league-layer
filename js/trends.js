@@ -20,15 +20,15 @@ const trendMinutes = () => (isHockey() ? 10 : 15); // a regular's minutes (hocke
 // The lists: [{ key, label, get(line) }] (pct: a shooting category, with the attempts it needs a game; role: minutes, shots)
 function trendStats() {
   const cols = new Set(BOX.cols || []), has = k => cols.has(k) || !!DERIVED[k];
-  const out = [], shooting = [];
+  const out = [];
   if (isPoints()) out.push({ key: 'fp', label: 'Fantasy points', get: s => lineFp(s) });
   else for (const c of scoreCats()) {
     if (c.fp || c.neg || ['dd', 'td', 'gp1'].includes(c.key)) continue; // (turnovers: more isn't heating up; a double-double is yes or no)
-    if (c.pct && !c.rate) { if (!isHockey() && has(c.made) && has(c.att)) shooting.push({ key: c.key, label: c.label, pct: c, minAtt: c.att === 'fta' ? 3 : 8 }); continue; }
+    if (c.pct && !c.rate) { if (!isHockey() && has(c.made) && has(c.att)) out.push({ key: c.key, label: c.label, pct: c, minAtt: c.att === 'fta' ? 3 : 8 }); continue; }
     if (c.rate || !has(c.key)) continue;
     out.push({ key: c.key, label: TREND_NAMES[c.key] || c.label, get: s => lineStat(s, c.key) });
   }
-  out.push(...shooting); // (minutes first, then the counting categories in the league's order, shooting, and shot attempts)
+  // (minutes first, then the categories in the league's order, shooting in its place, and shot attempts)
   if (has('min')) out.unshift({ key: 'min', label: isHockey() ? 'Ice time' : 'Minutes', get: s => s.min || 0, role: true });
   if (has('fga') && !isHockey()) out.push({ key: 'fga', label: 'Shot attempts', get: s => s.fga || 0, role: true });
   return out;
@@ -109,11 +109,13 @@ function trendKit(L, end) {
     return st.pct || x.was <= 0 || Math.abs(x.move) / x.was >= 0.15;
   };
   // why, where the box scores can say: a regular teammate out (heating up), then his minutes moving (a category's
-  // list), or the n stats that moved most his way (by value)
+  // list), or the n stats that moved most his way (by value), listed in the stats' own order
   const minutesNote = row => (Math.abs(row.minNow - row.minBefore) >= 4 ? `minutes ${Math.round(row.minBefore)} → ${Math.round(row.minNow)}` : '');
-  const moved = (row, n) => stats.filter(st => !st.pct && !st.role && row.stats[st.key] && (up ? row.stats[st.key].move > 0 : row.stats[st.key].move < 0) && row.stats[st.key].was > 0)
-    .sort((a, b) => Math.abs(row.stats[b.key].move / row.stats[b.key].was) - Math.abs(row.stats[a.key].move / row.stats[a.key].was)).slice(0, n)
-    .map(st => `${esc(STAT_LABEL[st.key] || st.label)} ${fmt(row.stats[st.key].now, 1)} vs ${fmt(row.stats[st.key].was, 1)}`);
+  const moved = (row, n) => {
+    const most = new Set(stats.filter(st => !st.pct && !st.role && row.stats[st.key] && (up ? row.stats[st.key].move > 0 : row.stats[st.key].move < 0) && row.stats[st.key].was > 0)
+      .sort((a, b) => Math.abs(row.stats[b.key].move / row.stats[b.key].was) - Math.abs(row.stats[a.key].move / row.stats[a.key].was)).slice(0, n));
+    return stats.filter(st => most.has(st)).map(st => `${esc(STAT_LABEL[st.key] || st.label)} ${fmt(row.stats[st.key].now, 1)} vs ${fmt(row.stats[st.key].was, 1)}`);
+  };
   const why = (row, st, n = 2) => [up ? teammateOut(row, regulars) : '', ...(st.value ? moved(row, n) : [st.role ? '' : minutesNote(row)])].filter(Boolean).join(' · ');
   // whose players: a league's teams (Rostered) or the ones it can still have (Waivers); the sandbox's My team or everyone else
   const groups = {

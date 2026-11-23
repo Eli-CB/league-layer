@@ -634,11 +634,11 @@ function viewPastRosters() {
   <p class="page-sub">${esc(fxTeamName(tid))}${r ? ` · ${r.w}-${r.l}${r.t ? '-' + r.t : ''}, ${ordinal(r.rank)} of ${teams.length}` : ''}${graded ? ` · ${seasonCtx.label} per-game stats ${infoBtn('value')}` : ''}</p>
   <div class="card">
     ${rows.length ? `<div class="table-wrap"><table>
-      <thead><tr><th>Player</th><th>Slot</th>${graded ? `<th class="num">GP</th>${[...SPORT.tableStats, ...SPORT.tablePct].map(x => `<th class="num">${x[1]}</th>`).join('')}<th class="num">${valueLabel()}</th>` : ''}</tr></thead>
+      <thead><tr><th>Player</th><th>Slot</th>${graded ? `<th class="num">GP</th>${SPORT.tableCols.map(x => `<th class="num">${x[1]}</th>`).join('')}<th class="num">${valueLabel()}</th>` : ''}</tr></thead>
       <tbody>${rows.map(x => `<tr>
         <td class="player"><div class="bplayer">${headshot({ nbaId: x.raw ? x.raw.id : null, name: x.name }, hsPx(32, 28))}<div class="bmain"><div class="bname">${x.raw ? `${playerBtn(x.raw.id, x.name)}` : esc(x.name)}</div></div></div></td>
         <td>${slotBadge(slotOfItem(x.it))}</td>
-        ${graded ? `<td class="num">${x.gp || '—'}</td>${x.s ? statCells(x.s) : `<td class="num muted" colspan="${SPORT.tableStats.length + SPORT.tablePct.length + 1}">No ${SPORT.name} stats that season</td>`}` : ''}
+        ${graded ? `<td class="num">${x.gp || '—'}</td>${x.s ? statCells(x.s) : `<td class="num muted" colspan="${SPORT.tableCols.length + 1}">No ${SPORT.name} stats that season</td>`}` : ''}
       </tr>`).join('')}</tbody>
     </table></div>` : `<div class="empty"><strong>No roster</strong>Fantrax didn't return a roster for this team.</div>`}
   </div>
@@ -651,10 +651,10 @@ function pastStarters(L, G, tid, r, teams) {
   const per = (P, k) => (total ? P.s[k] || 0 : P.gp ? (P.s[k] || 0) / P.gp : 0);
   // any column sorts, following the Totals / Per game choice
   const so = ui.pastRosterSort;
-  const PCTS = SPORT.tablePct;
+  const COLS = SPORT.tableCols, pctCol = k => COLS.find(x => x[0] === k && x[3]); // ([key, label, makes, attempts])
   const sortVal = P => (so.key === 'name' ? P.name.toLowerCase() : so.key === 'how' ? ['keeper', 'start', 'pickup', 'trade'].indexOf(P.how)
     : so.key === 'weeks' || so.key === 'gp' || so.key === 'missed' ? P[so.key]
-    : PCTS.some(x => x[0] === so.key) ? (([, , m, a]) => (P.s[a] ? P.s[m] / P.s[a] : -1))(PCTS.find(x => x[0] === so.key))
+    : pctCol(so.key) ? (([, , m, a]) => (P.s[a] ? P.s[m] / P.s[a] : -1))(pctCol(so.key))
     : so.key === 'value' ? (total ? P.v : P.gp ? P.v / P.gp : -1e9) : per(P, so.key));
   const list = sortRows([...activeStints(L, G, tid).values()], sortVal, -so.dir);
   const th = (key, label, cls = 'num', tip = '') => sortTh('past-roster-sort', key, label, so, { cls, tip, down: so.dir > 0 });
@@ -662,7 +662,6 @@ function pastStarters(L, G, tid, r, teams) {
   const pct = (P, m, a) => (P.s[a] ? fmtPct(P.s[m] / P.s[a]) : '—');
   const val = P => (!P.gp ? '—' : isPoints() ? fmt(total ? P.v : P.v / P.gp, total ? 0 : 1) : fmtValue(total ? P.v : P.v / P.gp, total ? 1 : 2));
   const seg = segBtns('Show stats as', 'past-roster-mode', 'mode', [['total', 'Totals'], ['game', 'Per game']], ui.pastRosterMode);
-  const STATS = SPORT.tableStats;
   return `
   <div class="page-sub-row">${seg}<p class="page-sub">${esc(fxTeamName(tid))}${r ? ` · ${r.w}-${r.l}${r.t ? '-' + r.t : ''}, ${ordinal(r.rank)} of ${teams.length}` : ''} · everyone who started, and what he did while starting ${infoBtn('pastRoster')}</p></div>
   <div class="card">
@@ -671,7 +670,7 @@ function pastStarters(L, G, tid, r, teams) {
         th('name', 'Player', ''), th('how', 'How', ''),
         th('weeks', 'Wks', 'num', 'Weeks in the starting lineup'), th('gp', 'GP', 'num', 'Games played while starting'),
         th('missed', 'Missed', 'num', `Games his ${SPORT.name} team played without him while he was starting`),
-        ...STATS.map(([k, l]) => th(k, l)), ...PCTS.map(([k, l]) => th(k, l)),
+        ...COLS.map(([k, l]) => th(k, l)),
         th('value', isPoints() ? (total ? 'FP' : 'FP/G') : 'VAL'),
       ].join('')}</tr></thead>
       <tbody>${list.map(P => {
@@ -681,8 +680,7 @@ function pastStarters(L, G, tid, r, teams) {
         <td class="player"><div class="bplayer">${headshot({ nbaId: P.nba, name: P.name }, hsPx(32, 28))}<div class="bmain"><div class="bname">${raw && !raw.inactive ? `${playerBtn(P.nba, P.name)}` : esc(P.name)}</div></div></div></td>
         <td><span class="badge ${cls}">${label}</span></td>
         <td class="num">${P.weeks}</td><td class="num"><b>${P.gp}</b></td><td class="num ${P.missed ? 'pos-bad' : 'muted'}">${P.missed}</td>
-        ${STATS.map(([k]) => `<td class="num">${num(P, k)}</td>`).join('')}
-        ${PCTS.map(([, , m, a]) => `<td class="num">${pct(P, m, a)}</td>`).join('')}<td class="num"><b>${val(P)}</b></td>
+        ${COLS.map(([k, , m, a]) => `<td class="num">${a ? pct(P, m, a) : num(P, k)}</td>`).join('')}<td class="num"><b>${val(P)}</b></td>
       </tr>`;
       }).join('')}</tbody>
     </table></div>` : `<div class="empty"><strong>No starters</strong>Fantrax's weekly rosters show nobody starting for this team.</div>`}

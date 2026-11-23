@@ -343,8 +343,8 @@ function landBoard() {
 }
 // The Recap's picture as it goes to the league chat (recapCanvas in share.js), in its own colors, with each award's photo
 const LAND_RECAP = [
-  ['Player of the period', '4 G, per game', 'V. Wembanyama', 1641705, 'Alley Oops', [['29.5', 'PTS'], ['11.3', 'REB'], ['4.8', 'BLK'], ['.561', 'FG%']]],
-  ['Game of the period', '', 'J. Brunson', 1628973, 'Bench Mob', [['44', 'PTS'], ['6', '3PM'], ['9', 'AST'], ['.684', 'FG%']]],
+  ['Player of the period', '4 G, per game', 'V. Wembanyama', 1641705, 'Alley Oops', [['.561', 'FG%'], ['29.5', 'PTS'], ['11.3', 'REB'], ['4.8', 'BLK']]],
+  ['Game of the period', '', 'J. Brunson', 1628973, 'Bench Mob', [['.684', 'FG%'], ['6', '3PM'], ['44', 'PTS'], ['9', 'AST']]],
   ['Bench regret', '', '', 0, '', '<b>Sixth Men</b>: starting <b>D. Vassell</b> over <b>B. Hield</b> would have won 5–4'],
 ];
 // The Draft Recap's picture beside it (draftShare in draft.js: the same shareCanvas): a player's award, or a team's with
@@ -388,7 +388,7 @@ const LAND_PLAN = {
     ['F', 1630552, 'J. Johnson', ['SF', 'PF'], '0101010'], ['C', 1630578, 'A. Sengun', ['PF', 'C'], '1001012']],
   bench: [1641708, 'A. Thompson', ['PG', 'SG', 'SF', 'PF'], '1001012'],
   swap: 1, // (the starter he replaces: Booker's 2 games for his 4)
-  chips: [['STL', '+2.4', '52%→70%', 'good'], ['REB', '+6.1', '44%→61%', 'good'], ['BLK', '+1.5', '', 'good'], ['3PM', '−2.2', '91%→87%', 'bad']],
+  chips: [['3PM', '−2.2', '91%→87%', 'bad'], ['REB', '+6.1', '44%→61%', 'good'], ['STL', '+2.4', '52%→70%', 'good'], ['BLK', '+1.5', '', 'good']],
 };
 function landPlan() {
   const { rows, bench, swap, chips } = LAND_PLAN, games = d => d.replace(/0/g, '').length;
@@ -415,8 +415,8 @@ function landPlan() {
 const LAND_CARD = { id: 1628983, name: 'Shai Gilgeous-Alexander', team: 'OKC', pos: ['PG'],
   // each category: how far above (+) or below (−) an average rostered player, in the card's half-bar widths (%)
   prof: [['FG%', 5], ['FT%', 13], ['3PM', 8], ['PTS', 50], ['REB', -13], ['AST', 2], ['STL', -11], ['BLK', 14], ['TO', -1]],
-  // each game: as the card's (its date and opponent, green won, red lost), FG, PTS, REB, 3PM, VAL
-  games: [['18/11 vs ATL', 'W', '14/29', 34, 5, 3, '0.20'], ['15/11 @ SAC', 'W', '13/20', 37, 2, 4, '0.45'], ['13/11 @ LAC', 'L', '15/26', 40, 4, 2, '0.31']] };
+  // each game: as the card's (its date and opponent, green won, red lost), FG, 3PM, PTS, REB, VAL
+  games: [['18/11 vs ATL', 'W', '14/29', 3, 34, 5, '0.20'], ['15/11 @ SAC', 'W', '13/20', 4, 37, 2, '0.45'], ['13/11 @ LAC', 'L', '15/26', 2, 40, 4, '0.31']] };
 function landCard() {
   const { id, name, team, pos, prof, games } = LAND_CARD;
   const photo = playerPhoto({ id, name, team }).replace(/ data-photo="[^"]*"/g, '');
@@ -432,7 +432,7 @@ function landCard() {
       <div class="proj"><div class="k">Games next period</div><div class="v">4</div></div>
       <div class="proj"><div class="k">VAL per game</div><div class="v">0.32</div><div class="pc-rank">#13 of 351</div></div>
     </div>
-    <table class="pvc-games"><thead><tr><th>Game</th><th>FG</th><th>PTS</th><th>REB</th><th>3PM</th><th>VAL</th></tr></thead>
+    <table class="pvc-games"><thead><tr><th>Game</th><th>FG</th><th>3PM</th><th>PTS</th><th>REB</th><th>VAL</th></tr></thead>
       <tbody>${games.map(([g, wl, fg, ...v], i) => `<tr style="--i:${i}"><td class="${wl === 'W' ? 'pos-good' : 'pos-bad'}">${g}</td><td>${fg}</td>${v.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table>
   </div>`;
 }

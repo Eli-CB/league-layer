@@ -255,8 +255,6 @@ function fxCategories(ss, sport = 'nba') {
   }
   return keys.size ? { cats: inCatOrder(keys, T.catOrder), catsOther: other } : {};
 }
-// Categories in the usual display order (FG%, FT%, 3PM, PTS...), any others after
-const inCatOrder = (keys, order = CAT_ORDER) => [...keys].sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99));
 const fxScoring = (ss, sport = 'nba') => ({ ...fxPointsScoring(ss), ...fxCategories(ss, sport) });
 
 // Typical length in days of a league's lineup lock periods: about 1 for daily lineups, 7 for weekly
