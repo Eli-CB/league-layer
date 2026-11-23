@@ -23,6 +23,9 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   its days under, sits across the scoreboard under the win chance, a half-circle gauge (`weekPicker`, `.sb-week`, `winGauge`).
   With no scoreboard (a finished week, roto, no opponent yet) it heads the card shown instead, so the week can always be
   changed (`top` in `viewWeek`). The week's notes (lineups locked, whose rosters) end the scoreboard's last line (`.sb-foot`).
+- Each side's starter games sit beside its score, a chip like the Matchup tab's (the number alone on a phone; never in football):
+  the owner's pick, Nov 23, 2026, for the empty room between the scores and the gauge, over the categories each side is favored
+  in or each team's record. Yours counts the lineup the score is for, the suggested one (`gamesChip` in `viewWeek`).
 - Another team picked in place of the real opponent says so in one line across the top of the scoreboard (`fxOppNote`,
   `.sb-hypo`: "Hypothetical", Back to the real one), never under the opponent's menu: there it took two or three lines on a
   phone and pushed that side's score down (the owner found it clunky, Nov 23, 2026).

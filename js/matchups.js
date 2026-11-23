@@ -804,13 +804,16 @@ function viewWeek() {
     : `${sourceName()} has no matchup for you ${when}.`}${fxLeague() && state.fxTeam ? `<div class="sb-pick">Or compare against ${fxOppPicker(ctx)}</div>` : ''}</div></div>`;
   const asSet1 = () => `<span class="muted">Lineup as set</span> <span class="sb-foot-n"><b>${fmt(oSet.expected, isPoints() ? 0 : 1)}</b> ${unit} · <b>${pctTxt(oSet.win)}</b> to win${isFootball() ? '' : ` · <b>${asSet.games}</b> starter games`}</span>`;
   const foot = changed || notes ? `<div class="sb-foot">${changed ? asSet1() : ''}${notes ? `<span class="muted sb-foot-notes">${notes.replace(/^ · /, '')}</span>` : ''}</div>` : '';
+  // each side's starter games beside its score, as the Matchup tab's chips (yours: the lineup the score is for). Football: one game
+  const gamesChip = (n, tip) => (isFootball() ? '' : `<span class="mu-pc sb-games" title="${tip}">${ICON_GAMES}<b>${n}</b> <span class="hide-sm">starter games</span></span>`);
+  const myGames = gamesChip(best.games, `Starter games${changed ? ` with the suggested lineup (as set: ${asSet.games})` : ''}`);
   const scoreboard = hasOpp ? `
     <div class="card scoreboard">
       ${fxLeague() && state.fxTeam ? fxOppNote(ctx) : ''}
       <div class="sb-main">
-        <div class="sb-side"><div class="sb-label">${teamLink(ui.viewing ? ui.viewA : state.fxTeam, esc(state.teamName))}</div><div class="sb-score">${fmt(oBest.expected, isPoints() ? 0 : 1)}</div></div>
+        <div class="sb-side"><div class="sb-label">${teamLink(ui.viewing ? ui.viewA : state.fxTeam, esc(state.teamName))}</div><div class="sb-line"><div class="sb-score">${fmt(oBest.expected, isPoints() ? 0 : 1)}</div>${myGames}</div></div>
         ${winGauge(winPct, `projected ${unit}${changed ? ' with the suggested lineup' : ''}`)}
-        <div class="sb-side right"><div class="sb-label">${fxLeague() && state.fxTeam ? fxOppPicker(ctx) : esc(state.opp.name || 'Opponent')}</div><div class="sb-score">${isPoints() ? fmt(oBest.opp, 0) : fmt(oBest.n - oBest.expected, 1)}</div></div>
+        <div class="sb-side right"><div class="sb-label">${fxLeague() && state.fxTeam ? fxOppPicker(ctx) : esc(state.opp.name || 'Opponent')}</div><div class="sb-line"><div class="sb-score">${isPoints() ? fmt(oBest.opp, 0) : fmt(oBest.n - oBest.expected, 1)}</div>${gamesChip(ctx.them.games, 'Starter games')}</div></div>
         ${weekNav(false)}
       </div>
       ${foot}

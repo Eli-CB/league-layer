@@ -1039,6 +1039,9 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: .85em; backgro
 .sb-hypo .link-btn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; font-weight: 500; }
 .sb-pick { margin-top: 14px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
 .sb-score { font-size: 2.6rem; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+.sb-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; } /* the score, its starter games beside it (under it, short of room) */
+.sb-side.right .sb-line { flex-direction: row-reverse; }
+.mu-pc.sb-games { font-size: .8rem; padding: 2px 9px; }
 /* the win chance between the scores: a half-circle gauge, its foot on the scores' baseline (a button: a tap explains it) */
 .sb-gauge { display: block; padding: 0; margin: 0 0 4px; border: 0; background: none; color: var(--text); cursor: pointer; border-radius: 6px; }
 .sb-gauge svg { display: block; width: 92px; height: auto; overflow: visible; }
