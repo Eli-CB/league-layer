@@ -53,7 +53,7 @@ const INFO = {
   trendCard: ['A trend, player by player', `
     <p>Everyone this list takes, by the same rules as the Trends tab (a regular, and a counting stat that moved 15% or more), ranked by the change per game: the number by each name.</p>
     <p><b>Last 5 games</b>, oldest first: green above his usual game, red below. Hover one for its date, opponent and minutes. <b>Avg</b> is those five games' average, <b>Usual</b> his median game before them, <b>Season</b> every game he's played this season, and <b>MIN</b> his minutes a game, usual → last 5.</p>
-    <p><b>Change</b> is the average less his usual game, with the percentage under it. A shooting percentage shows each game's makes and attempts, its attempts a game (usual → last 5), and the makes a game above or below his usual rate. <b>Value</b> is what a game of his is worth: categories won, or fantasy points in a points league.</p>
+    <p><b>Change</b> is the average less his usual game, with the percentage under it. A shooting percentage shows each game's makes and attempts, its attempts a game (usual → last 5), and the makes a game above or below his usual rate. <b>VAL</b> (value) is what a game of his is worth: categories won, or fantasy points in a points league.</p>
     <p><b>All</b>, <b>Rostered</b> (on one of your league's teams today) or <b>Waivers</b> (on none); in the sandbox, <b>My team</b> or <b>Everyone else</b>. A column's heading sorts by it.</p>`],
   recap: ['Period recap', `
     <p><b>Results</b>: <b>Best</b> marks the period's top team and <b>Worst</b> its bottom one: the most and fewest points in a points league, and in a category league the best and worst record had each team played every other team that period. Hover one for the numbers.</p>
@@ -87,7 +87,7 @@ const INFO = {
     ${fxLeague() ? "<p>By a team's name, a filled dot is a starter and a hollow one is on the bench.</p>" : ''}`;
   }],
   value: ['Player value', `
-    <p>Value is categories won per game: how much an average game of his adds to winning a week's categories, compared with not playing at all (the same as a single game on the Players tab). A typical starter is about +0.2; the best players +0.4 or more.</p>
+    <p>Value (VAL) is categories won per game: how much an average game of his adds to winning a week's categories, compared with not playing at all (the same as a single game on the Players tab). A typical starter is about 0.2; the best players 0.4 or more.</p>
     <p>Each category's share of an average team's week (your league's starters × 3.5 games) is divided by how far apart two teams usually finish in it, so every category weighs the same, as it does in the standings. Counting stats only add; turnovers take away, and FG% and FT% add or take away by shot volume against the league's average.</p>
     <p><b>Points leagues:</b> value is fantasy points per game (FP/G), using your league's points for each stat.</p>`],
   projection: ['Which stats are used', `
@@ -126,13 +126,13 @@ const INFO = {
     <li><b>Wks:</b> weeks in the starting lineup.</li>
     <li><b>GP:</b> games played in those weeks; every stat comes from just these games.</li>
     <li><b>Missed:</b> games his NBA team played in those weeks without him (injury, rest or a coach's decision).</li>
-    <li><b>Value:</b> each game valued like a single game on the Players tab: categories won against not playing (fantasy points in points leagues), added up for Totals or averaged for Per game.</li></ul>`],
+    <li><b>VAL</b> (value): each game valued like a single game on the Players tab: categories won against not playing (fantasy points in points leagues), added up for Totals or averaged for Per game.</li></ul>`],
   // the Trades tab's proposal (tradeCard, views.js): everything its table shows, so the table itself carries no notes
   trade: ['Trade proposal', () => { const P = fxLeague() ? playoffDays() : null; return `
     <p><b>GP</b> and <b>Missed.</b> His games this season, and the games his ${SPORT.name} team has played without him: hurt, resting, out of the rotation, or not on the team yet.${isHockey() ? ' A goalie has none: a healthy backup sits most games.' : ''}</p>
     <p><b>Playoff G.</b> His team's games in your league's playoffs${P ? `, ${playoffWeeks(P)}` : ''}, only those still to play once they've started. A goalie's are his expected starts; in a Sleeper league, where one game a week counts, it's the playoff weeks he plays in.</p>
     <p><b>The stats</b> are each player's average game (the settings menu's Stats used), and each side's total adds them up (a side getting one player: his own row). FG% and FT% count volume: each side's makes and attempts a game are under its percentage, and the side marked is the one with more makes over the league average on its attempts, so a few shots at a high percentage don't outweigh many at a good one.${lineCats().some(c => c.shot) ? ' A points league scoring both makes and attempts (or misses) shows them as one column, "8.2/17.1 FG", with the points they score under each side\'s total: the side marked scores more from them.' : ''}</p>
-    <p><b>Value</b> is each player's value per game (see Player value). Under a side's total is its value over a waiver player, which is what's compared: every player in a deal takes a roster spot someone off waivers could fill, so two good players for one star add more only if they're worth more than the star plus the waiver player you'd otherwise have.</p>
+    <p><b>VAL</b> is each player's value per game (see Player value). Under a side's total is its value over a waiver player, which is what's compared: every player in a deal takes a roster spot someone off waivers could fill, so two good players for one star add more only if they're worth more than the star plus the waiver player you'd otherwise have.</p>
     ${isRoto() ? '<p><b>For your team</b>: what the trade does to your projected roto points at the season\'s end, in each category and in all (see Roto). Hover a category for your projected total and points, now and after.</p>'
       : '<p><b>For your team</b>: what the trade does to your active (non-IR) roster\'s per-game totals in each category, your playoff games, and the net value over a waiver player. Hover a category for now and after.</p>'}
     <p><b>Draft picks</b> aren't in the numbers: next season's draft order isn't known yet.</p>
@@ -145,7 +145,7 @@ const INFO = {
     <p>My team and the players you follow are kept on this device, apart from any league you connect, and stay for your next visit. Your leagues are in the menu at the top left: picking one leaves the sandbox, and Sandbox in that menu brings you back.</p>`],
   watch: ['Live', `
     <p>Each player's game and stat line as it's played: ESPN's box scores, which your browser asks for every 30 seconds while games are on (a minute with your browser's data saver on). ESPN runs a minute or so behind the broadcast. A number flashes green or red as it changes: green for what helps (a make, a rebound), red for what hurts (a miss, a turnover).</p>
-    <p>During a game the dot by the clock is solid while he's on the floor and light while he's on the bench or between periods. <b>Value</b> is what the game has added so far to winning a week's categories, against not playing (see Players).</p>
+    <p>During a game the dot by the clock is solid while he's on the floor and light while he's on the bench or between periods. <b>VAL</b> (value) is what the game has added so far to winning a week's categories, against not playing (see Players).</p>
     <p>Until today's first tip-off it shows the last game day; Today then shows each game's tip-off. Players on a game now come first, then finished games, then games still to come, then players with no game (and their next one).</p>
     <p><b>Week</b>: Monday to Sunday so far. Each player's games played and still to come (a game on now with its clock), his stats from those games added up, and their value; players on a game now first, then by that value.</p>`],
   storage: ['Saved on this device', `

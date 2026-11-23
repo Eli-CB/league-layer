@@ -415,7 +415,8 @@ function landPlan() {
 const LAND_CARD = { id: 1628983, name: 'Shai Gilgeous-Alexander', team: 'OKC', pos: ['PG'],
   // each category: how far above (+) or below (−) an average rostered player, in the card's half-bar widths (%)
   prof: [['FG%', 5], ['FT%', 13], ['3PM', 8], ['PTS', 50], ['REB', -13], ['AST', 2], ['STL', -11], ['BLK', 14], ['TO', -1]],
-  games: [['Wed vs ATL', '14/29', 34, 5, 3, '+0.20'], ['Sun @ SAC', '13/20', 37, 2, 4, '+0.45'], ['Fri @ LAC', '15/26', 40, 4, 2, '+0.31']] };
+  // each game: as the card's (its date and opponent, green won, red lost), FG, PTS, REB, 3PM, VAL
+  games: [['18/11 vs ATL', 'W', '14/29', 34, 5, 3, '0.20'], ['15/11 @ SAC', 'W', '13/20', 37, 2, 4, '0.45'], ['13/11 @ LAC', 'L', '15/26', 40, 4, 2, '0.31']] };
 function landCard() {
   const { id, name, team, pos, prof, games } = LAND_CARD;
   const photo = playerPhoto({ id, name, team }).replace(/ data-photo="[^"]*"/g, '');
@@ -429,10 +430,10 @@ function landCard() {
     <div class="proj-grid pvc-tiles">
       <div class="proj"><div class="k">Next game</div><div class="v">Fri vs NOP</div></div>
       <div class="proj"><div class="k">Games next period</div><div class="v">4</div></div>
-      <div class="proj"><div class="k">Value per game</div><div class="v">+0.32</div><div class="pc-rank">#13 of 351</div></div>
+      <div class="proj"><div class="k">VAL per game</div><div class="v">0.32</div><div class="pc-rank">#13 of 351</div></div>
     </div>
-    <table class="pvc-games"><thead><tr><th>Game</th><th>FG</th><th>PTS</th><th>REB</th><th>3PM</th><th>Value</th></tr></thead>
-      <tbody>${games.map(([g, fg, ...v], i) => `<tr style="--i:${i}"><td>${g}</td><td>${fg}</td>${v.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    <table class="pvc-games"><thead><tr><th>Game</th><th>FG</th><th>PTS</th><th>REB</th><th>3PM</th><th>VAL</th></tr></thead>
+      <tbody>${games.map(([g, wl, fg, ...v], i) => `<tr style="--i:${i}"><td class="${wl === 'W' ? 'pos-good' : 'pos-bad'}">${g}</td><td>${fg}</td>${v.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table>
   </div>`;
 }
 // An NBA team's card (showSportTeamCard): its record and its games in each playoff period, its next games, and its players

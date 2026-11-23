@@ -171,7 +171,7 @@ function recapItems(X) {
   const out = [];
   const add = (label, html, text, more) => out.push({ label, html, text, ...more });
   const name = (p, bold) => playerBtn(p.nbaId, p.name, bold ? `<b>${esc(nameShown(p.name, p.nbaId))}</b>` : undefined);
-  const unit = isPoints() ? 'FP' : 'value';
+  const unit = isPoints() ? 'FP' : 'VAL';
   const stand = (label, x, perGame) => {
     const parts = fullLine(x.line, perGame), head = perGame ? `${x.line.gp1} G, per game: ` : '';
     add(label, '', `${x.p.name} (${team(x.tid)}): ${head}${parts.join(', ')}`, { p: x.p, tid: x.tid, stats: `${head}${parts.join(' · ')}`,

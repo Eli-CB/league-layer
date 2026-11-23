@@ -508,15 +508,13 @@ label [data-photo], #detailBody [data-photo] { cursor: inherit; }
 .pc-rank { font-size: .78rem; color: var(--muted); font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
 /* the season's games: five show, the rest scroll */
 .pc-games-wrap { max-height: 300px; overflow-y: auto; }
-/* the player card's two tables on one column grid: Season + GP as wide as Date + Matchup + W/L, the stat columns the same
-   in both (a fixed layout splits what's left evenly), and room for the games' scrollbar kept in both */
+/* the player card's two tables on one column grid: Season + GP as wide as the Game column ("20/11 @ DET"), the stat columns
+   the same in both (a fixed layout splits what's left evenly), and room for the games' scrollbar kept in both */
 .pc-log { table-layout: fixed; }
 .pc-log th, .pc-log td { padding: 8px 6px; white-space: nowrap; } /* (14-35 on one line) */
-.pc-log .c-label { width: 17%; }
-.pc-log .c-gp { width: 7%; }
-.pc-log .c-date { width: 12%; }
-.pc-log .c-opp { width: 8%; }
-.pc-log .c-wl { width: 4%; }
+.pc-log .c-label { width: 14%; }
+.pc-log .c-gp { width: 6%; }
+.pc-log .c-game { width: 20%; }
 .pc-log td:first-child, .pc-log th:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pc-log-wrap { overflow-y: auto; scrollbar-gutter: stable; }
 .perf-q { display: block; width: 100%; max-width: 280px; margin: 0 0 8px; }

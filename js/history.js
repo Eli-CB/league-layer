@@ -4,7 +4,7 @@
 
 const LOADING_GAMES = loadingCard('Loading the season’s games…');
 // what a player added, in an award's breakdown
-const awardAmount = p => (isPoints() ? `${fmt(p.v, 0)} FP` : signed(p.v, 1));
+const awardAmount = p => (isPoints() ? `${fmt(p.v, 0)} FP` : fmtValue(p.v, 1));
 
 // ----- A past season week by week: who each team had, who started, and how they got them -----
 // Fantrax shares every lineup period's rosters but no transaction log; Sleeper each week's matchups, with every
@@ -634,7 +634,7 @@ function viewPastRosters() {
   <p class="page-sub">${esc(fxTeamName(tid))}${r ? ` · ${r.w}-${r.l}${r.t ? '-' + r.t : ''}, ${ordinal(r.rank)} of ${teams.length}` : ''}${graded ? ` · ${seasonCtx.label} per-game stats ${infoBtn('value')}` : ''}</p>
   <div class="card">
     ${rows.length ? `<div class="table-wrap"><table>
-      <thead><tr><th>Player</th><th>Slot</th>${graded ? `<th class="num">GP</th>${[...SPORT.tableStats, ...SPORT.tablePct].map(x => `<th class="num">${x[1]}</th>`).join('')}<th class="num">Value</th>` : ''}</tr></thead>
+      <thead><tr><th>Player</th><th>Slot</th>${graded ? `<th class="num">GP</th>${[...SPORT.tableStats, ...SPORT.tablePct].map(x => `<th class="num">${x[1]}</th>`).join('')}<th class="num">${valueLabel()}</th>` : ''}</tr></thead>
       <tbody>${rows.map(x => `<tr>
         <td class="player"><div class="bplayer">${headshot({ nbaId: x.raw ? x.raw.id : null, name: x.name }, hsPx(32, 28))}<div class="bmain"><div class="bname">${x.raw ? `${playerBtn(x.raw.id, x.name)}` : esc(x.name)}</div></div></div></td>
         <td>${slotBadge(slotOfItem(x.it))}</td>
@@ -660,7 +660,7 @@ function pastStarters(L, G, tid, r, teams) {
   const th = (key, label, cls = 'num', tip = '') => sortTh('past-roster-sort', key, label, so, { cls, tip, down: so.dir > 0 });
   const num = (P, k) => (P.gp ? (total ? Math.round(per(P, k)) : fmt(per(P, k), 1)) : '—');
   const pct = (P, m, a) => (P.s[a] ? fmtPct(P.s[m] / P.s[a]) : '—');
-  const val = P => (!P.gp ? '—' : isPoints() ? fmt(total ? P.v : P.v / P.gp, total ? 0 : 1) : signed(total ? P.v : P.v / P.gp, total ? 1 : 2));
+  const val = P => (!P.gp ? '—' : isPoints() ? fmt(total ? P.v : P.v / P.gp, total ? 0 : 1) : fmtValue(total ? P.v : P.v / P.gp, total ? 1 : 2));
   const seg = segBtns('Show stats as', 'past-roster-mode', 'mode', [['total', 'Totals'], ['game', 'Per game']], ui.pastRosterMode);
   const STATS = SPORT.tableStats;
   return `
@@ -672,7 +672,7 @@ function pastStarters(L, G, tid, r, teams) {
         th('weeks', 'Wks', 'num', 'Weeks in the starting lineup'), th('gp', 'GP', 'num', 'Games played while starting'),
         th('missed', 'Missed', 'num', `Games his ${SPORT.name} team played without him while he was starting`),
         ...STATS.map(([k, l]) => th(k, l)), ...PCTS.map(([k, l]) => th(k, l)),
-        th('value', isPoints() ? (total ? 'FP' : 'FP/G') : 'Value'),
+        th('value', isPoints() ? (total ? 'FP' : 'FP/G') : 'VAL'),
       ].join('')}</tr></thead>
       <tbody>${list.map(P => {
         const raw = nbaById.get(P.nba);
@@ -727,7 +727,7 @@ function benchDetail(T, txt) {
   const ps = [...(T.benchList || [])].sort((a, b) => b.v - a.v).slice(0, 10);
   if (!ps.length) return '<p class="muted">No bench games yet.</p>';
   return `<p class="aw-break-total"><b>${esc(txt)}</b> from games played on the bench</p>
-    ${awardRows(ps, p => (isPoints() ? `${fmt(p.v, 0)} FP` : signed(p.v, 1)), p => `${p.games} G · ${p.weeks} wk${p.weeks === 1 ? '' : 's'} benched`)}
+    ${awardRows(ps, p => (isPoints() ? `${fmt(p.v, 0)} FP` : fmtValue(p.v, 1)), p => `${p.games} G · ${p.weeks} wk${p.weeks === 1 ? '' : 's'} benched`)}
     <p class="muted small">Every game a player played in a week he wasn't in the starting lineup (games · weeks benched).</p>`;
 }
 function fanDetail(T) {
@@ -875,12 +875,12 @@ function seasonAwards() {
   const olds = startersAge(L) || {};
   for (const T of teams) { const O = olds[T.id]; T.age = O ? O.age : null; T.oldest = O ? O.oldest : null; T.ageList = O ? O.players : []; }
 
-  const total = v => (isPoints() ? `${Math.round(v).toLocaleString()} FP` : `${signed(v, 1)} value`);
+  const total = v => (isPoints() ? `${Math.round(v).toLocaleString()} FP` : `${fmtValue(v, 1)} VAL`);
   const ranked = (key, dir, fmtFn, note) => teams.filter(T => T[key] != null).sort((a, b) => (b[key] - a[key]) * dir).map(T => ({ T, txt: fmtFn(T), note: note ? note(T) : '' }));
   const pickupNote = T => {
     const b = T.waiverTop;
     if (!b) return 'no pickups';
-    return `${T.waiverN} pickup${T.waiverN === 1 ? '' : 's'}, best: ${b.name} (${isPoints() ? `${fmt(b.v, 0)} FP` : signed(b.v, 1)} in ${b.weeks} wk${b.weeks === 1 ? '' : 's'})`;
+    return `${T.waiverN} pickup${T.waiverN === 1 ? '' : 's'}, best: ${b.name} (${isPoints() ? `${fmt(b.v, 0)} FP` : fmtValue(b.v, 1)} in ${b.weeks} wk${b.weeks === 1 ? '' : 's'})`;
   };
   return [
     { title: 'Best draft', info: 'awDraft', detail: draftDetail, list: ranked('draft', 1, T => total(T.draft), T => (T.draftTop ? `best: ${T.draftTop.name} (${total(T.draftTop.v)} over ${T.draftTop.games} games)` : '')) },
@@ -890,7 +890,7 @@ function seasonAwards() {
     { title: 'Best manager', info: 'awManager', detail: managerDetail, list: ranked('luck', 1, T => `${signed(T.luck, 1)} ${each ? 'cats' : 'wins'}`, T => `${T.record}, all-play ${Math.round(T.allPct * 100)}% (${fmt(T.expW, 1)} expected)`) },
     { title: 'Week of the Year', info: 'awWeek', detail: weekDetail, list: ranked('weekBeat', 1, T => `week ${T.bestWeek.n}: beat ${fmt(T.bestWeek.beat, T.bestWeek.beat % 1 ? 1 : 0)} of ${T.bestWeek.of}`, T => (isPoints() ? `${signed(T.bestWeek.edge, 1)} FP a matchup on average` : `${signed(T.bestWeek.edge, 1)} categories a matchup on average`)) },
     { title: 'Heartbreak Hotel', info: 'awHeart', detail: heartDetail, list: ranked('heartN', 1, T => `${T.heartN} close loss${T.heartN === 1 ? '' : 'es'}`, T => (T.heartN ? `weeks ${T.heart.map(x => x.n).join(', ')}` : '')) },
-    { title: 'Waiver Wire Wizard', info: 'awWaiver', detail: waiverDetail, list: ranked('waiver', 1, T => (isPoints() ? `${fmt(T.waiver, 0)} FP` : `${signed(T.waiver, 1)} value`), pickupNote) },
+    { title: 'Waiver Wire Wizard', info: 'awWaiver', detail: waiverDetail, list: ranked('waiver', 1, T => (isPoints() ? `${fmt(T.waiver, 0)} FP` : `${fmtValue(T.waiver, 1)} VAL`), pickupNote) },
     { title: 'Benchwarmer Blues', info: 'awBench', detail: benchDetail, list: ranked('bench', 1, T => total(T.bench), T => (T.benchTop ? `most: ${T.benchTop.name} (${total(T.benchTop.v)} in ${T.benchTop.games} games)` : '')) },
     { title: 'Street Clothes', info: 'awStreet', detail: streetDetail, list: ranked('missed', 1, T => (isOneGame() ? `${T.missed} empty start${T.missed === 1 ? '' : 's'}` : `${T.missed} game${T.missed === 1 ? '' : 's'}`), T => (T.missedTop ? `most: ${T.missedTop.name} (${T.missedTop.games})` : '')) },
     ...(cats.length ? [{ title: 'Biggest punt', info: 'awPunt', list: ranked('punt', 1, T => T.punt.cat, T => `${fmt(-T.punt.z, 1)} spreads below average`).sort((a, b) => a.T.punt.z - b.T.punt.z) },

@@ -375,9 +375,8 @@ function perfTable(rows, picked, shown, W, { opp, who, teamOf }) {
   const so = ui.perfSort;
   const th = (key, label, cls, tip) => sortTh('perf-sort', key, label, so, { cls, tip, down: so.dir < 0 });
   const has = perfCols(W), each = avg || perWeek; // (each: a game's average, not games added up)
-  // the last column, VAL (Value) or fantasy points; Value without a "+" (a number with no "−" is above 0), the room it
-  // saves on a phone, the owner's ask (Nov 23, 2026)
-  const val = r => (pts ? (each ? fmt(r.v, 1) : fmtFp(r.v)) : signed(r.v, 2).replace('+', ''));
+  // the last column, VAL (value: fmtValue, no "+") or fantasy points
+  const val = r => (pts ? (each ? fmt(r.v, 1) : fmtFp(r.v)) : fmtValue(r.v));
   const cell = (r, c) => {
     const b = badges.get(`${r.raw.id}|${c.key}`);
     const emo = b ? `<span class="pf-emo" aria-hidden="true">${b[0]}</span>` : '', tip = b ? ` · ${b[1]}` : '';
@@ -544,11 +543,12 @@ function cardHow(L, raw, tid, fid) {
 // the few the daily file keeps (preseason ones too, before the season starts)
 function cardGames(raw) {
   const box = BOX && BOX.byPlayer.get(raw.id);
-  if (!box || !box.length) return (raw.log || []).map(g => { const o = {}; NBA.logKeys.forEach((k, i) => { o[k] = g[i]; }); return o; });
+  // (the daily file's matchup is NBA.com's "SAC vs. BOS": the opponent alone, as the box scores' "vs BOS")
+  if (!box || !box.length) return (raw.log || []).map(g => { const o = {}; NBA.logKeys.forEach((k, i) => { o[k] = g[i]; }); o.matchup = String(o.matchup || '').replace(/^[A-Z]{2,4} /, '').replace('vs.', 'vs'); return o; });
   const out = box.map(([d, st, margin, team]) => {
     const s = BOX.scores && BOX.scores.get(`${d} ${team}`);
     const matchup = s ? (s.home === team ? `vs ${s.away}` : `@ ${s.home}`) : '';
-    return { ...st, date: d, matchup, wl: margin > 0 ? 'W' : margin < 0 ? 'L' : '' };
+    return { ...st, date: d, matchup, wl: margin > 0 ? 'W' : margin < 0 ? 'L' : '', by: Math.abs(margin || 0) };
   });
   // today's (and any day the saved box scores don't have yet), from ESPN's feed: the matchup from its scoreboard, the
   // result once it's over, and "live" only while it's on
@@ -556,7 +556,7 @@ function cardGames(raw) {
     if (!lines.has(raw.id) || box.some(g => g[0] === d)) continue;
     const g = liveGame(raw, d), home = g && g.home === raw.team;
     const vs = g ? (home ? `vs ${g.away}` : `@ ${g.home}`) : '', diff = g ? (home ? g.hs - g.as : g.as - g.hs) : 0;
-    out.push({ ...lines.get(raw.id), date: d, matchup: g && g.state === 'in' ? `${vs} · live` : vs, wl: g && g.state === 'post' && diff ? (diff > 0 ? 'W' : 'L') : '' });
+    out.push({ ...lines.get(raw.id), date: d, matchup: g && g.state === 'in' ? `${vs} · live` : vs, wl: g && g.state === 'post' && diff ? (diff > 0 ? 'W' : 'L') : '', by: Math.abs(diff) });
   }
   return out.sort((a, b) => b.date.localeCompare(a.date));
 }
@@ -590,15 +590,16 @@ function cardStats(raw) {
     return [['MIN', s => fmt(s.min, 1), o => Math.round(o.min)], two('G', 'g'), two('A', 'a'), two('PTS', 'pts'), ['+/−', s => fmt(s.pm, 2), o => o.pm], two('SOG', 'sog'), two('HIT', 'hit'), two('BLK', 'blk'),
       two('PIM', 'pim'), ['PPP', s => fmt(s.ppg + s.ppa, 2), o => (o.ppg || 0) + (o.ppa || 0)]];
   }
+  // (PF, the owner's ask, Nov 23, 2026; the daily file's few games before the box scores load have none)
   return [['MIN', s => fmt(s.min, 1), o => Math.round(o.min)], n('pts'), n('reb'), n('ast'), n('stl'), n('blk'), ['3PM', s => fmt(s.tpm), o => o.tpm], n('to'),
-    ['FG%', s => fmtPct(s.fga ? s.fgm / s.fga : 0), o => `${o.fgm}/${o.fga}`, 'FG'], ['FT%', s => fmtPct(s.fta ? s.ftm / s.fta : 0), o => `${o.ftm}/${o.fta}`, 'FT']];
+    ['PF', s => fmt(s.pf), o => (o.pf == null ? '—' : o.pf)], ['FG%', s => fmtPct(s.fga ? s.fgm / s.fga : 0), o => `${o.fgm}/${o.fga}`, 'FG'], ['FT%', s => fmtPct(s.fta ? s.ftm / s.fta : 0), o => `${o.ftm}/${o.fta}`, 'FT']];
 }
 // A game's numbers as words: [the main ones, the ones in gray]
 function gameStats(raw, o) {
   if (isFootball()) return [footballWords(o), []];
   if (isGoalie(raw)) return [[`${o.sv || 0} saves on ${o.sa || 0}`, `${o.ga || 0} GA`], [o.w ? 'Win' : o.l ? 'Loss' : o.otl ? 'OT loss' : o.sol ? 'Shootout loss' : o.so ? 'Shutout' : ''].filter(Boolean)];
   if (isHockey()) return [[`${o.g || 0} G`, `${o.a || 0} A`, `${o.sog || 0} SOG`, `${o.hit || 0} HIT`, `${o.blk || 0} BLK`], [`${(o.pm > 0 ? '+' : '') + (o.pm || 0)}`, `${o.pim || 0} PIM`]];
-  return [[`${o.pts} PTS`, `${o.reb} REB`, `${o.ast} AST`, `${o.stl} STL`, `${o.blk} BLK`, `${o.tpm} 3PM`, `${o.to} TO`], [`${o.fgm}/${o.fga} FG`, `${o.ftm}/${o.fta} FT`]];
+  return [[`${o.pts} PTS`, `${o.reb} REB`, `${o.ast} AST`, `${o.stl} STL`, `${o.blk} BLK`, `${o.tpm} 3PM`, `${o.to} TO`, ...(o.pf == null ? [] : [`${o.pf} PF`])], [`${o.fgm}/${o.fga} FG`, `${o.ftm}/${o.fta} FT`]];
 }
 
 let cardOpen = null; // the player whose card is showing
@@ -684,7 +685,7 @@ function showPlayerDetail(nbaId) {
   const lines = [[NBA.season, String(NBA.season).slice(2), statObj(raw.cur)], ['Last 10', 'L10', statObj(raw.l10)], [NBA.prevSeason, String(NBA.prevSeason).slice(2), statObj(raw.prev)]]
     .filter(([, , s]) => s && s.gp);
   // value as Performances counts it (categories won against not playing, or fantasy points): per game, and this season's games added up
-  const VAL = isPoints() ? 'FP' : 'Value';
+  const VAL = isPoints() ? 'FP' : 'VAL';
   const valTip = esc(isPoints() ? 'Fantasy points in your league' : "Categories won: what a game adds to winning a week's categories, against not playing (an even matchup). Below 0: his team would have done better without it");
   const valCell = (v, d) => `<td class="num${v < 0 && !isPoints() ? ' pos-bad' : ''}" data-tip="${valTip}"><b>${fmtValue(v, d)}</b></td>`;
   const perGameVal = s => lineValue(statLine(s));
@@ -703,13 +704,18 @@ function showPlayerDetail(nbaId) {
   const games = sortRows(cardGames(raw).sort((a, b) => (a.date < b.date ? 1 : -1)), sortVal, so.dir); // (ties newest first)
   // phones: each game as a short block
   const preBadge = o => (o.type === 'PRE' ? ' <span class="badge">Pre</span>' : '');
-  const wlBadge = o => (o.wl ? `<span class="badge ${o.wl === 'W' ? 'good' : 'bad'}">${o.wl}</span>` : '');
-  const gameWorthTxt = v => `<span class="${v < 0 && !isPoints() ? 'pos-bad' : ''}" data-tip="${valTip}">${fmtValue(v)} ${isPoints() ? 'FP' : 'value'}</span>`;
+  // a game in one piece, "20/11 @ DET" (day/month): green won, red lost, by how much on hover (the owner's ask, Nov 23, 2026:
+  // one column for the date, opponent and result, the room PF takes)
+  const gameTxt = o => {
+    const tip = o.wl ? ` title="${o.wl === 'W' ? 'Won' : 'Lost'}${o.by ? ` by ${o.by}` : ''}"` : '';
+    return `<span class="pc-game${o.wl === 'W' ? ' pos-good' : o.wl === 'L' ? ' pos-bad' : ''}"${tip}>${o.date.slice(8, 10)}/${o.date.slice(5, 7)} ${linkTeams(esc(o.matchup))}</span>${preBadge(o)}`;
+  };
+  const gameWorthTxt = v => `<span class="${v < 0 && !isPoints() ? 'pos-bad' : ''}" data-tip="${valTip}">${fmtValue(v)} ${VAL}</span>`;
   const gamesNarrow = games.length ? `<ul class="pc-games show-sm pc-games-wrap">${games.map(o => { const v = lineValue(o); return `<li>
-      <div class="pc-g-top"><b>${esc(fmtDay(o.date))}</b>${preBadge(o)} <span class="muted">${linkTeams(esc(o.matchup))}</span>${o.wl ? ' ' + wlBadge(o) : ''}<span class="pc-g-val">${gameWorthTxt(v)}</span></div>
+      <div class="pc-g-top"><b>${gameTxt(o)}</b><span class="pc-g-val">${gameWorthTxt(v)}</span></div>
       <div>${[...(o.min != null ? [`${Math.round(o.min)} min`] : []), ...gameStats(raw, o)[0]].map(x => `<span>${x}</span>`).join(' · ')}</div>
       <div class="muted">${gameStats(raw, o)[1].join(' · ')}</div></li>`; }).join('')}</ul>` : '';
-  const logs = games.map(o => `<tr><td>${esc(fmtDay(o.date))}${o.type === 'PRE' ? ' <span class="badge">Pre</span>' : ''}</td><td>${linkTeams(esc(o.matchup))}</td><td>${o.wl ? `<span class="badge ${o.wl === 'W' ? 'good' : 'bad'}">${o.wl}</span>` : ''}</td>${CS.map(([, , g]) => `<td class="num">${g(o)}</td>`).join('')}${valCell(lineValue(o))}</tr>`).join('');
+  const logs = games.map(o => `<tr><td>${gameTxt(o)}</td>${CS.map(([, , g]) => `<td class="num">${g(o)}</td>`).join('')}${valCell(lineValue(o))}</tr>`).join('');
   // the tile after Next game: a goalie's starts still to come, football's projected week (the rest: games left, below)
   const thisWeek = matchDates(weekStartAt(0));
   const statCols = [...CS, VAL].map(() => '<col>').join(''); // (the same stat columns in both tables, so they line up)
@@ -742,7 +748,7 @@ function showPlayerDetail(nbaId) {
           const R = valueRanks(), per = R.per.get(raw.id), tot = R.tot.get(raw.id);
           const rank = (n, of, tip) => `<div class="pc-rank" data-tip="${esc(tip)}">${n ? `#${n} of ${of}` : season ? `ranked with ${R.minGp}+ G` : ''}</div>`;
           return `<div class="proj pc-val" data-tip="${valTip}"><div class="k">${VAL} per game</div><div class="v${season && season.per < 0 && !isPoints() ? ' pos-bad' : ''}">${season ? fmtValue(season.per) : '—'}</div>${rank(per, R.perN, `Among the ${R.perN} ${SPORT.name} players with ${R.minGp}+ games this season, keepers and free agents included (the Draft tab ranks only the league's draft picks)`)}</div>
-        <div class="proj pc-val" data-tip="${valTip}"><div class="k">${VAL} this season</div><div class="v">${season ? `${fmtValue(season.per * season.gp, 1)} <span class="muted small">in ${season.gp} G</span>` : '—'}</div>${tot ? rank(tot, R.totN, `Among the ${R.totN} ${SPORT.name} players who've played this season, by ${VAL.toLowerCase()} added up`) : ''}</div>`;
+        <div class="proj pc-val" data-tip="${valTip}"><div class="k">${VAL} this season</div><div class="v">${season ? `${fmtValue(season.per * season.gp, 1)} <span class="muted small">in ${season.gp} G</span>` : '—'}</div>${tot ? rank(tot, R.totN, `Among the ${R.totN} ${SPORT.name} players who've played this season, by ${isPoints() ? 'fantasy points' : 'value'} added up`) : ''}</div>`;
         })()}
       </div>
     </div>
@@ -750,7 +756,7 @@ function showPlayerDetail(nbaId) {
     <h3 class="sub" style="margin-top:16px">Per-game averages</h3>
     ${avgNarrow}${rows ? `<div class="table-wrap hide-sm pc-log-wrap"><table class="pc-log"><colgroup><col class="c-label"><col class="c-gp">${statCols}</colgroup><thead><tr><th></th>${AVG.map(([h]) => `<th class="num">${h}</th>`).join('')}<th class="num">${VAL}</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="muted small">No ${SPORT.name} regular-season stats yet.</p>`}
     <h3 class="sub" style="margin-top:16px">Games${games.length ? ` <span class="muted small">${games.length}</span>` : ''}</h3>
-    ${gamesNarrow}${logs ? `<div class="table-wrap hide-sm pc-games-wrap pc-log-wrap"><table class="pc-log"><colgroup><col class="c-date"><col class="c-opp"><col class="c-wl">${statCols}</colgroup><thead><tr>${sortTh('card-sort', 'date', 'Date', so, { cls: '', down: so.dir < 0 })}<th>Matchup</th><th></th>${CS.map(([h, , , gh], i) => sortTh('card-sort', String(i), gh || h, so, { down: so.dir < 0 })).join('')}${sortTh('card-sort', 'val', VAL, so, { down: so.dir < 0 })}</tr></thead><tbody>${logs}</tbody></table></div>` : '<p class="muted small">No games played yet this season.</p>'}`;
+    ${gamesNarrow}${logs ? `<div class="table-wrap hide-sm pc-games-wrap pc-log-wrap"><table class="pc-log"><colgroup><col class="c-game">${statCols}</colgroup><thead><tr>${sortTh('card-sort', 'date', 'Game', so, { cls: '', down: so.dir < 0 })}${CS.map(([h, , , gh], i) => sortTh('card-sort', String(i), gh || h, so, { down: so.dir < 0 })).join('')}${sortTh('card-sort', 'val', VAL, so, { down: so.dir < 0 })}</tr></thead><tbody>${logs}</tbody></table></div>` : '<p class="muted small">No games played yet this season.</p>'}`;
   const d = $('#detailDialog');
   cardOpen = nbaId;
   sportCardOpen = null;

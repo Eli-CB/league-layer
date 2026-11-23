@@ -1348,7 +1348,7 @@ test('player value everywhere is the Dashboard\'s: categories won per game; trad
     ui.tradeGive.add(give.id); get.forEach(x => ui.tradeGet.add(String(x.nbaId)));
     const html = app.viewTrade();
     const net = get.reduce((t, x) => t + app.value(x) - wv, 0) - (app.value(give) - wv);
-    assert.ok(html.includes(`over a waiver player"><b>${app.fmtValue(net)}</b>`), 'net over a waiver player, in For your team');
+    assert.ok(html.includes(`over a waiver player"><b>${app.fmtValueChange(net)}</b>`), 'net over a waiver player, in For your team');
   } finally { ui.tradeGive.clear(); ui.tradeGet.clear(); }
 });
 
@@ -1418,7 +1418,7 @@ test('a trade proposal: both sides with photos and lines, compared per game, sha
     for (const S of [M.A, M.B]) assert.ok(card.includes(`<b>${app.fmtValue(S.sum)}</b><div class="tp-vol">${app.fmtValue(S.value)} over waiver</div>`), S.name);
     const you = card.slice(card.indexOf('For your team')).split('</tr>')[0], Y = app.tradeForYou([mine[0]], theirs.slice(0, 2));
     assert.equal(you.match(/<td class="num/g).length, L.cats.length + 2, 'the net playoff games, a change for each category, then the net value');
-    assert.ok(you.includes(`<b>${app.fmtValue(Y.diff)}</b>`));
+    assert.ok(you.includes(`<b>${app.fmtValueChange(Y.diff)}</b>`), 'a change keeps its "+"');
     // numbers only: never who wins or whether it's fair (the owner's rule), in the card, its (i) or the share
     const info = app.get('INFO').trade, infoText = `${info[0]} ${info[1]()}`;
     const said = [html, infoText, app.tradeShare(L, T).text].join(' ');
@@ -1642,14 +1642,18 @@ test("player profile: value per game (each game, each season's averages) and thi
     assert.ok(Math.abs(per - app.lineValue(cur)) < 1e-9, 'makes and attempts as they are (season rows have no FG%)');
     const proj = app.nbaStats(raw);
     assert.ok(Math.abs(app.statLine(proj).fgm - proj.fgPct * proj.fga) < 1e-9, 'projections: makes from FG%');
-    assert.ok(html.includes('Value per game') && html.includes(app.signed(per, 2)), 'this season per game');
-    assert.ok(html.includes(`${app.signed(per * Math.round(cur.gp), 1)} <span class="muted small">in ${Math.round(cur.gp)} G</span>`), 'this season in all');
+    // (VAL, a value with no "+": the owner's ask, Nov 23, 2026)
+    assert.equal(app.fmtValue(0.51), '0.51');
+    assert.equal(app.fmtValue(-0.02), '−0.02');
+    assert.equal(app.fmtValueChange(0.51), '+0.51', 'a change keeps its "+"');
+    assert.ok(html.includes('VAL per game') && html.includes(`>${app.fmtValue(per)}<`) && !html.includes('Value'), 'this season per game');
+    assert.ok(html.includes(`${app.fmtValue(per * Math.round(cur.gp), 1)} <span class="muted small">in ${Math.round(cur.gp)} G</span>`), 'this season in all');
     // linear: an average line is worth the average of its games
     const games = raw.log.map(g => Object.fromEntries(app.NBA.logKeys.map((k, i) => [k, g[i]])));
-    for (const o of games) assert.ok(html.includes(app.signed(app.lineValue(o), 2)), `${o.date}: its value`);
+    for (const o of games) assert.ok(html.includes(app.fmtValue(app.lineValue(o))), `${o.date}: its value`);
     const avg = Object.fromEntries(['pts', 'reb', 'ast', 'stl', 'blk', 'tpm', 'to', 'fgm', 'fga', 'ftm', 'fta'].map(k => [k, games.reduce((t, o) => t + o[k], 0) / games.length]));
     assert.ok(Math.abs(app.lineValue(avg) - games.reduce((t, o) => t + app.lineValue(o), 0) / games.length) < 1e-9);
-    assert.ok(html.includes(`<th class="num">Value</th></tr></thead><tbody><tr><td><b>${app.NBA.season}</b>`), 'a Value column for each season, this one first');
+    assert.ok(html.includes(`<th class="num">VAL</th></tr></thead><tbody><tr><td><b>${app.NBA.season}</b>`), 'a VAL column for each season, this one first');
     assert.ok(!html.includes('Projection') && !html.includes('(NBA:'), 'no projection row, no NBA position');
     // his rank among everyone this season: per game (regulars) and added up
     const R = app.valueRanks();
@@ -1677,15 +1681,27 @@ test("player profile: value per game (each game, each season's averages) and thi
     assert.ok(full.includes(`Games <span class="muted small">${box.length}</span>`), `all ${box.length} games`);
     assert.ok(full.includes('pc-games-wrap'));
     const gamesTable = full.split('pc-games-wrap pc-log-wrap"><table class="pc-log">')[1];
-    const dates = [...gamesTable.matchAll(/<tr><td>([^<]+)<\/td>/g)].map(m => m[1]);
-    assert.equal(dates.length, box.length);
-    // both tables on one column grid: the same stat columns after Season + GP / Date + Matchup + W/L
+    // each game in one cell, "20/11 @ DET" (day/month), green won and red lost (the owner's ask, Nov 23, 2026)
+    const cells = [...gamesTable.matchAll(/<tr><td><span class="pc-game( pos-good| pos-bad|)"[^>]*>(\d\d)\/(\d\d) (vs|@) /g)];
+    assert.equal(cells.length, box.length);
+    const newest = [...box].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+    cells.forEach((m, i) => {
+      const [d, , margin] = newest[i];
+      assert.equal(`${m[2]}/${m[3]}`, `${d.slice(8, 10)}/${d.slice(5, 7)}`, d);
+      assert.equal(m[1], margin > 0 ? ' pos-good' : margin < 0 ? ' pos-bad' : '', `${d}: its result`);
+    });
+    assert.match(gamesTable, /data-key="date"[^>]*>Game ↓<\/th><th/, 'one Game column, newest first');
+    assert.ok(!gamesTable.includes('>Matchup<'), 'no Matchup column');
+    // PF, after TO (the owner's ask, Nov 23, 2026)
+    const labels = app.cardStats(raw).map(c => c[0]);
+    assert.equal(labels.indexOf('PF'), labels.indexOf('TO') + 1);
+    // both tables on one column grid: the same stat columns after Season + GP / Game
     const cols = t => (t.match(/<colgroup>([\s\S]*?)<\/colgroup>/) || [])[1];
     const [avgCols, gameCols] = [full.split('Per-game averages')[1], gamesTable].map(cols);
-    assert.equal(avgCols.replace('<col class="c-label"><col class="c-gp">', ''), gameCols.replace('<col class="c-date"><col class="c-opp"><col class="c-wl">', ''), 'the same stat columns in both');
+    assert.equal(avgCols.replace('<col class="c-label"><col class="c-gp">', ''), gameCols.replace('<col class="c-game">', ''), 'the same stat columns in both');
     // sorted by a column: most points first, then the other way
     const ptsCol = app.cardStats(raw).findIndex(c => c[0] === 'PTS');
-    const order = () => { const t = els['#detailBody'].innerHTML.split('pc-games-wrap pc-log-wrap"><table class="pc-log">')[1]; return [...t.matchAll(/<tr><td>[^<]+<\/td>[\s\S]*?<\/tr>/g)].map(m => +[...m[0].matchAll(/<td class="num">([^<]*)<\/td>/g)][ptsCol][1]); };
+    const order = () => { const t = els['#detailBody'].innerHTML.split('pc-games-wrap pc-log-wrap"><table class="pc-log">')[1]; return [...t.matchAll(/<tr><td><span class="pc-game[\s\S]*?<\/tr>/g)].map(m => +[...m[0].matchAll(/<td class="num">([^<]*)<\/td>/g)][ptsCol][1]); };
     app.actions['card-sort']({ dataset: { key: String(ptsCol) } });
     const most = order();
     assert.deepEqual(most, [...most].sort((x, y) => y - x), 'most points first');

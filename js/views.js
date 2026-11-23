@@ -807,7 +807,7 @@ function tradeCard(T, Y) {
         return `<td class="num ${Math.abs(d) < 0.05 ? 'muted' : d > 0 ? 'pos-good' : 'pos-bad'}" title="${c.label}: ${vb} now, ${va} after; ${signed(d, 1)} FP">${signed(Y.after[c.made] - Y.before[c.made], 1)}/${signed(Y.after[c.att] - Y.before[c.att], 1)}</td>`;
       }
       const b = Y.before[c.key], a = Y.after[c.key], d = a - b, shown = change(c, d); return `<td class="num ${zero(shown) ? 'muted' : (c.neg ? d < 0 : d > 0) ? 'pos-good' : 'pos-bad'}" title="${c.label}: ${dealShow(c, b)} now, ${dealShow(c, a)} after">${shown}</td>`; }).join('')}
-    <td class="num tp-v ${zero(fmtValue(Y.diff)) ? 'muted' : Y.diff > 0 ? 'pos-good' : 'pos-bad'}" title="Net ${valueLabel().toLowerCase()} over a waiver player"><b>${fmtValue(Y.diff)}</b></td></tr>` : '';
+    <td class="num tp-v ${zero(fmtValueChange(Y.diff)) ? 'muted' : Y.diff > 0 ? 'pos-good' : 'pos-bad'}" title="Net ${isPoints() ? 'fp/g' : 'value'} over a waiver player"><b>${fmtValueChange(Y.diff)}</b></td></tr>` : '';
   return `<div class="card tp">
     <div class="card-head"><div class="tp-head"><h2>Trade proposal ${infoBtn('trade')}</h2></div>
       <div class="tp-btns">${seen ? '<button type="button" class="btn sm" data-action="trade-seen-close">Close</button>' : ''}${shareable ? shareBtn('trade-share') : ''}</div></div>

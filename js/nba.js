@@ -222,7 +222,7 @@ function seasonTotal(raw) {
   return { gp, v: gp ? value({ ...s, pos: raw.pos }) * gp : 0 };
 }
 // how it's shown: fantasy points, or categories won to a tenth; the column's name and what it says
-const fmtTotal = v => (isPoints() ? fmtFp(v) : signed(v, 1));
+const fmtTotal = v => (isPoints() ? fmtFp(v) : fmtValue(v, 1));
 const totalLabel = () => (isPoints() ? 'FP' : 'Total');
 const seasonTotalTip = () => (isPoints() ? 'Fantasy points this season, in your league\'s scoring: his average game times his games'
   : "Categories won this season: what his average game adds to winning a week's categories, times his games");

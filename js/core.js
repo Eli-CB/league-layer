@@ -414,8 +414,11 @@ function value(p) {
 // Highest first by what fn says of each: worked out once per item, not at every comparison (a sort by value(p) asked
 // for it some 37,000 times in one draw of Plan Ahead). A new list; ties keep their order.
 const sortDesc = (list, fn) => list.map(x => [fn(x), x]).sort((a, b) => b[0] - a[0]).map(x => x[1]);
-const valueLabel = () => (isPoints() ? 'FP/G' : 'Value');
-const fmtValue = (v, d = 2) => (isPoints() ? fmt(v, 1) : signed(v, d));
+// A value reads VAL, with no "+" (a number with no "−" is above 0), the owner's ask (Nov 23, 2026); a change in value (a
+// trade's net, a trend's move) keeps its "+": it says which way
+const valueLabel = () => (isPoints() ? 'FP/G' : 'VAL');
+const fmtValue = (v, d = 2) => (isPoints() ? fmt(v, 1) : signed(v, d).replace('+', ''));
+const fmtValueChange = (v, d = 2) => (isPoints() ? fmt(v, 1) : signed(v, d));
 const statOf = (p, c) => (c.fp ? fantasyPoints(p) : c.pct ? pctOf(p, c) : statVal(p, c.key));
 
 // Typical fantasy points per game for a rostered player (the 200 who score the most), for shading the FP column; with part,

@@ -394,7 +394,7 @@ function draftRow(p, mine) {
   </tr>`;
 }
 
-const draftValueLabel = () => (ui.draftMode === 'total' ? (isPoints() ? 'Total FP' : 'Total value') : valueLabel());
+const draftValueLabel = () => (ui.draftMode === 'total' ? (isPoints() ? 'Total FP' : 'Total VAL') : valueLabel());
 
 // ----- One team's draft: its keepers and every pick, opened from its name in Team drafts -----
 const draftTeamCards = new Map(); // team id -> { title, html }, written as the Draft tab draws

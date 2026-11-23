@@ -153,7 +153,7 @@ function trendsCard(L, end) {
 
   // By what a player's games are worth (categories won, or fantasy points, a game): the rostered players who moved most
   // either way, and the same for the ones a league can still have (no fantasy team). Value is the column's label, said once.
-  const VAL = isPoints() ? 'FP' : 'Value', VS = trendValueStat(), G = K.groups;
+  const VAL = isPoints() ? 'FP' : 'VAL', VS = trendValueStat(), G = K.groups;
   const byValue = (list, n) => list.filter(row => K.takes(VS, row)).sort((a, b) => (up ? b.gain - a.gain : a.gain - b.gain)).slice(0, n);
   const rostered = L ? byValue(players.filter(G.rostered), TREND_TOP) : [];
   const waivers = L ? byValue(players.filter(G.waivers), TREND_WAIVERS) : [];
@@ -162,7 +162,7 @@ function trendsCard(L, end) {
   const everyone = L ? [] : byValue(players.filter(G.others), TREND_TOP);
   const valueRows = (list, mine) => list.map((row, i) => {
     // his value a game now, and the change under it (from his usual game: the (i) and the hover say so)
-    const num = `<div class="tr-num" title="${esc(`${VAL} a game: ${fmtValue(row.valueNow)} in his last ${TREND_GAMES}, ${fmtValue(row.valueWas)} usually`)}"><b>${fmtValue(row.valueNow)}</b><div class="small ${up ? 'pos-good' : 'pos-bad'}">${fmtValue(row.gain)}</div></div>`;
+    const num = `<div class="tr-num" title="${esc(`${VAL} a game: ${fmtValue(row.valueNow)} in his last ${TREND_GAMES}, ${fmtValue(row.valueWas)} usually`)}"><b>${fmtValue(row.valueNow)}</b><div class="small ${up ? 'pos-good' : 'pos-bad'}">${fmtValueChange(row.gain)}</div></div>`;
     return rowHtml(row, i, num, K.why(row, VS), mine);
   }).join('');
   const valueList = (title, whose, list) => (list.length ? `<section class="tr-cat"><h3 class="sub tr-head">${trendOpen('value', title, whose)}<span class="tr-col">${VAL}</span></h3><ol class="tr-list">${valueRows(list, whose === 'mine')}</ol></section>` : '');
