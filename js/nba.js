@@ -138,6 +138,7 @@ function useData(data) {
   nbaById.clear(); nbaByName.clear();
   for (const raw of NBA.players) { nbaById.set(raw.id, raw); nbaByName.set(normName(raw.name), raw.id); }
   teamDates = new Map(Object.entries(NBA.teams || {}).map(([t, v]) => [t, new Set(v.dates || [])]));
+  teamVs = new Map(Object.entries(NBA.teams || {}).filter(([, v]) => Array.isArray(v.vs)).map(([t, v]) => [t, new Map((v.dates || []).map((d, i) => [d, v.vs[i]]))]));
   countNames();
   projMemo.clear();
   baseMemo.clear(); // new stats, new baselines
@@ -304,6 +305,8 @@ function fillSlots(cands, slots) {
    Weekly matchup engine
    ========================================================= */
 let teamDates = new Map();
+// team -> date -> its opponent that day ('ORL' at home, '@ORL' away: the data's vs); empty with a data file from before Nov 23, 2026
+let teamVs = new Map();
 
 const isoDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 // Football's day is the schedule's: US time, turning over at 9:00 UTC (4 or 5 a.m. Eastern). Monday night's game stays in its
@@ -428,6 +431,7 @@ function periodOver(p) {
 }
 const playsOn = (p, d) => !!(teamDates.get(p.team) && teamDates.get(p.team).has(d));
 const gamesIn = (p, dates) => dates.filter(d => playsOn(p, d)).length;
+const vsOn = (p, d) => (teamVs.get(p.team) && teamVs.get(p.team).get(d)) || '';
 
 // ----- Who starts in goal -----
 // A team's game isn't each of its goalies' game. From the team's last game on, each game of its schedule passes on who

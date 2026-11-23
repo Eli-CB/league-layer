@@ -188,11 +188,22 @@ function gameTip(p, line, d, bench) {
     ${short ? `<div class="tip-warn">Usually ${Math.round(p.min)} min: ${esc(short)}</div>` : ''}`;
 }
 
+// Each day's opponent in its bubble, where the Lineups card is wide enough (a desktop: .dots.days, styles.css; the owner's
+// pick from mockups, Nov 23, 2026, to fill the room between a name and his dots); never in a period longer than a week
+const dayCells = ctx => !SPORT.oneNumber && ctx.dates.length <= 7 && teamVs.size > 0;
+// The board's head over a team's column: its name, and the days over the bubbles
+function boardHead(name, ctx, show = true) {
+  if (!dayCells(ctx) || !show) return name;
+  const days = ctx.dates.map(d => `<i>${esc(new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' }))}</i>`).join('');
+  return `<span class="bhead"><span class="bhead-name">${name}</span><span class="dhead" aria-hidden="true">${days}</span></span>`;
+}
 // (a period longer than a week, the NBA Cup's or the All-Star break's, a row a week: .dots.wk; 14 in a line ran into the
 // opponent's column on a phone)
 function dayDots(p, ctx, counts) {
-  const dot = (cls, tip) => `<i class="${cls}" data-tip="${esc(tip)}"></i>`;
-  return `<span class="dots${ctx.dates.length > 7 ? ' wk' : ''}">${ctx.dates.map(d => {
+  const cells = dayCells(ctx);
+  return `<span class="dots${ctx.dates.length > 7 ? ' wk' : ''}${cells ? ' days' : ''}">${ctx.dates.map(d => {
+    const vs = cells ? vsOn(p, d) : '', away = vs.startsWith('@');
+    const dot = (cls, tip) => `<i class="${cls}" data-tip="${esc(tip)}">${vs ? `<span class="vs">${away ? '<span class="at">@</span>' : ''}${esc(away ? vs.slice(1) : vs)}</span>` : ''}</i>`;
     if (!playsOn(p, d)) return dot('none', 'No game');
     const bench = counts ? '' : ' bench';
     // a game on now pulses green while he's in it (a line in tonight's box score, or on the floor), a green ring until he
@@ -493,7 +504,7 @@ function matchupBoard(ctx) {
     const theirs = html => (solo ? '' : `<td>${ctx.hasOpp ? html : ''}</td>`);
     body = `<div class="table-wrap"><table class="board${solo ? ' solo' : ''}">
         <colgroup><col class="c-slot"><col>${solo ? '' : '<col>'}</colgroup>
-        <thead><tr><th></th><th>${teamLink(ui.viewing ? ui.viewA : state.fxTeam, esc(state.teamName))}</th>${solo ? '' : `<th>${state.opp.fxId ? teamLink(state.opp.fxId, esc(state.opp.name)) : esc(state.opp.name || 'Opponent')}</th>`}</tr></thead>
+        <thead><tr><th></th><th>${boardHead(teamLink(ui.viewing ? ui.viewA : state.fxTeam, esc(state.teamName)), ctx)}</th>${solo ? '' : `<th>${boardHead(state.opp.fxId ? teamLink(state.opp.fxId, esc(state.opp.name)) : esc(state.opp.name || 'Opponent'), ctx, ctx.hasOpp)}</th>`}</tr></thead>
         <tbody>${rows}
           ${SPORT.oneNumber ? `<tr class="board-tot"><th scope="row"></th><td><b>${fmt(fpTotals(ctx.asSet).a, 1)}</b> projected</td>${theirs(`<b>${fmt(fpTotals(ctx.them).a, 1)}</b> projected`)}</tr>`
     : `<tr class="board-tot"><th scope="row"></th><td><b>${ctx.asSet.games}</b> starter games${ctx.bestIds && ctx.best.games !== ctx.asSet.games ? ` <span class="muted">(${ctx.best.games} suggested)</span>` : ''}</td>${theirs(`<b>${ctx.them.games}</b> starter games`)}</tr>`}

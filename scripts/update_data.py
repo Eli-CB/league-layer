@@ -392,8 +392,11 @@ def schedule(today, games):
         week = {'num': cur, 'start': weeks[cur][0], 'end': weeks[cur][1]}
     for g in games:
         for side, opp, home in ((g['home'], g['away'], True), (g['away'], g['home'], False)):
-            t = teams.setdefault(side, {'week': 0, 'left': 0, 'next': None, 'dates': []})
+            # vs: each game's opponent, in step with dates ('ORL' at home, '@ORL' away, '' not known yet: the NBA Cup's
+            # knockout games are listed before their teams are; Plan Ahead's day cells)
+            t = teams.setdefault(side, {'week': 0, 'left': 0, 'next': None, 'dates': [], 'vs': []})
             t['dates'].append(g['date'])
+            t['vs'].append((opp if home else '@' + opp) if opp else '')
             if cur is not None and g['week'] == cur:
                 t['week'] += 1
                 if g['date'] >= today_s:

@@ -11,6 +11,9 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   `data/boxscores.json` from NBA.com CDN / ESPN / Fantrax / Sleeper's player list (each player's `nat`: NBA.com country as ISO, for the card's flag from flagcdn.com; `slpNames`, Sleeper players with no NBA.com match: docs/sleeper.md). `scripts/build_images.py`: headshot sprite (80px faces, WebP at quality 72 with its see-through edges at 60: a quarter smaller than 80, no different on screen; Nov 21, 2026)
   + logos, monthly or when >5 players lack one. `scripts/archive_season.py`: one-time past-season archives.
 
+- Each team's schedule (`teams`, `schedule()` in update_data.py, hockey's too) is `dates` and, in step with them since Nov 23, 2026, `vs`:
+  the opponent ("ORL" at home, "@ORL" away, "" for an NBA Cup knockout game listed before its teams are), read as `teamVs`/`vsOn` (nba.js).
+
 ## Gotchas
 - cdn.nba.com answers GitHub runners 403: `get_json` falls back to the same files on NBA's S3 storage (`CDN_MIRROR`), so box
   scores stay NBA.com's (official; ESPN keeps stats the NBA later takes away, Fantrax follows the NBA). The last 3 days'

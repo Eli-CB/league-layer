@@ -1101,6 +1101,30 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: .85em; backgro
 .dots i.live.wait { background: none; box-shadow: inset 0 0 0 1.5px var(--good); } /* (he hasn't played yet) */
 @media (prefers-reduced-motion: reduce) { .dots i.live { animation: none; } }
 .dots i.none { background: var(--border); }
+/* A Lineups card wide enough (by its own width: a desktop's), each day's opponent in its bubble with the days over them, the
+   bubbles and games count beside the name and positions (dayCells, matchups.js); narrower, the dots as they are */
+.board-card { container: board / inline-size; }
+.dots .vs, .dhead { display: none; }
+@container board (min-width: 1040px) {
+  .board .bmain:has(> .bmeta > .dots.days), .board .bhead { display: grid; grid-template-columns: minmax(0, 1fr) auto 22px; column-gap: 8px; align-items: center; }
+  .board .bmain:has(> .bmeta > .dots.days) > .bname { grid-area: 1 / 1; }
+  .board .bmeta:has(> .dots.days) { display: contents; }
+  .board .bmeta:has(> .dots.days) > .bmeta-info { grid-area: 2 / 1; margin-top: 2px; }
+  .board .dots.days { grid-area: 1 / 2 / 3; }
+  .board .dots.days + .bmeta-g { grid-area: 1 / 3 / 3; }
+  .board .dots.days, .board .dhead { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 36px; gap: 3px; }
+  .board .dots.days i { width: auto; height: 20px; border-radius: 6px; display: grid; place-items: center; font-style: normal; }
+  .board .dots.days .vs { display: inline; font-size: .68rem; font-weight: 600; color: var(--text); letter-spacing: -.01em; }
+  .board .dots.days .at { color: var(--muted); font-weight: 500; font-size: .9em; margin-right: .5px; }
+  .board .dots.days i.none { background: none; }
+  .board .dots.days i.none::after { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--border); }
+  .board .dots.days i.done, .board .dots.days i.live { background: color-mix(in srgb, var(--good) 22%, transparent); }
+  .board .dots.days i.done.short { background: color-mix(in srgb, var(--b2b) 30%, transparent); }
+  .board .dots.days i.dnp { background: color-mix(in srgb, var(--bad) 16%, transparent); opacity: 1; }
+  .board .dots.days i.dnp .vs { color: var(--muted); }
+  .board .bhead-name { overflow: hidden; text-overflow: ellipsis; }
+  .board .dhead i { font-style: normal; text-align: center; font-size: .68rem; font-weight: 500; color: var(--muted); }
+}
 /* tooltips (data-tip) */
 .tip {
   position: fixed; z-index: 60; pointer-events: none; max-width: 260px;

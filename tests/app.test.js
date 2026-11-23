@@ -3786,6 +3786,28 @@ test("Plan Ahead's schedule dots of a period longer than a week come a row a wee
   assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'styles.css'), 'utf8'), /\.dots\.wk \{[^}]*grid-template-columns: repeat\(7, /);
 });
 
+test("Plan Ahead's schedule bubbles carry each day's opponent, shown on a desktop's Lineups card with the days over them (the owner's pick, Nov 23, 2026)", async () => {
+  const L = await app.useLeague(CATS9);
+  const days = n => app.periodDates(L.periods.find(q => q.n === n));
+  const p = app.nbaPlayers().find(x => x.team && app.get('teamDates').get(x.team) && app.gamesIn(x, days(6)) >= 2);
+  assert.doesNotMatch(app.dayDots(p, { dates: days(6) }, true), /class="vs"|days/, 'a data file without opponents: the dots as they were');
+  const teams = app.NBA.teams;
+  for (const v of Object.values(teams)) v.vs = (v.dates || []).map((d, i) => (i % 2 ? '@' : '') + 'OPP');
+  app.useData(app.NBA);
+  try {
+    const html = app.dayDots(p, { dates: days(6) }, true), first = teams[p.team].dates.indexOf(days(6).find(d => app.playsOn(p, d)));
+    assert.match(html, /^<span class="dots days">/);
+    assert.match(html, first % 2 ? /<span class="vs"><span class="at">@<\/span>OPP<\/span>/ : /<span class="vs">OPP<\/span>/, "the day's opponent, @ when away");
+    assert.equal(html.match(/class="vs"/g).length, app.gamesIn(p, days(6)), 'one a game, none on a day off');
+    assert.doesNotMatch(app.dayDots(p, { dates: days(7) }, true), /class="vs"|days/, 'a two-week period: dots only');
+    assert.match(app.boardHead('Team', { dates: days(6) }), /<span class="dhead" aria-hidden="true">(<i>\w+<\/i>){7}<\/span>/, 'the days over them');
+    assert.equal(app.boardHead('Team', { dates: days(6) }, false), 'Team', 'nothing over an empty column');
+  } finally {
+    for (const v of Object.values(teams)) delete v.vs;
+    app.useData(app.NBA);
+  }
+});
+
 test("Plan Ahead's schedule bubble of a game on now flashes green while he's in it; your own team's name is orange wherever it's drawn", async () => {
   const L = await app.useLeague(CATS9);
   await app.loadBoxes();

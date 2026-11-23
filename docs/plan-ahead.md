@@ -26,5 +26,9 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   phone and pushed that side's score down (the owner found it clunky, Nov 23, 2026).
 - A period longer than a week (the NBA Cup's, the All-Star break's) draws each player's schedule dots a row a week (`.dots.wk`,
   `dayDots`), at every width: 14 in a line ran the games count into the opponent's column on a phone (Nov 23, 2026).
+- On a desktop the Schedule view's bubbles carry each day's opponent ("@ORL" away), the days over them in the head, beside the
+  name instead of under it (the owner's pick from mockups, Nov 23, 2026: the room between a name and his dots was empty; a
+  narrower tab was turned down). By the card's own width (`@container board`, 1040 px; phones keep the dots), never in a period
+  longer than a week, and only with a data file that has the opponents (`vs`, docs/data.md): `dayCells`, `boardHead`, `vsOn`.
 - The Lineups board's Per game and Week total show FG% and FT% to two places, ".49", players and Projected week alike (the owner's
   ask, Nov 20, 2026: `fmtPct(n, 2)`); the Categories table and the tips keep three.
