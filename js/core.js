@@ -421,6 +421,9 @@ const sortDesc = (list, fn) => list.map(x => [fn(x), x]).sort((a, b) => b[0] - a
 // the owner's ask (Nov 23, 2026). Trends keeps the "+" on a value's move, as on its every list's (trends.js)
 const valueLabel = () => (isPoints() ? 'FP/G' : 'VAL');
 const fmtValue = (v, d = 2) => (isPoints() ? fmt(v, 1) : signed(v, d).replace('+', ''));
+// a total over many games (an award's, a pick's, a pickup's), with its unit: "1,234 FP" or "12.3 VAL", one way everywhere
+// (the owner's pick, Nov 23, 2026: Awards had written it four ways)
+const fmtAmount = v => (isPoints() ? `${Math.round(v).toLocaleString()} FP` : `${fmtValue(v, 1)} VAL`);
 const statOf = (p, c) => (c.fp ? fantasyPoints(p) : c.pct ? pctOf(p, c) : statVal(p, c.key));
 
 // Typical fantasy points per game for a rostered player (the 200 who score the most), for shading the FP column; with part,

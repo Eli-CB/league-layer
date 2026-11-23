@@ -1,4 +1,4 @@
-const { test, assert, sharedApp, CATS9, ESPN, onDay } = require('./helpers');
+const { test, assert, sharedApp, CATS9, POINTS, ESPN, onDay } = require('./helpers');
 
 let app;
 test.before(async () => { app = await sharedApp(); });
@@ -139,6 +139,10 @@ test('Awards: a team name in Waiver Wire Wizard and Old opens its breakdown', as
   assert.ok((st.html.match(/<li>/g) || []).length <= 10 && /out \d+ of \d+ · \d+ wk/.test(st.html), 'the starters who missed most');
   const u = [...D.entries()].find(([k]) => k.startsWith('Old|'))[1];
   assert.ok((u.html.match(/<li>/g) || []).length <= 10 && /\+\d\.\d\d yrs/.test(u.html), 'up to 10 players and how much each moved the average');
+  // a total over games is written one way (fmtAmount, the owner's pick): the lists, their notes and each breakdown's players
+  for (const h of [html, w.html, dr[1].html]) assert.match(h, /−?\d+\.\d VAL/);
+  await app.useLeague(POINTS);
+  try { assert.equal(app.fmtAmount(1234.4), '1,234 FP'); } finally { await app.useLeague(CATS9); }
 });
 
 test('Best draft credits picks until first dropped, through trades', async () => {

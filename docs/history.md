@@ -22,3 +22,5 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   tab's Season totals; keepers excluded), Week of the Year (best all-play week), Heartbreak Hotel (losses by one
   category; points: under 5% of the winner), Benchwarmer Blues (bench players' games), Fan Boy (biggest share of
   starts from one NBA team). Seasons never mix.
+- An award's total over games (a team's, a pick's, a pickup's, in the lists and each breakdown) is written one way, `fmtAmount` (core.js):
+  "1,234 FP" or "12.3 VAL" (the owner's pick, Nov 23, 2026; it had been written four ways).
