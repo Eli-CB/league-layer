@@ -261,6 +261,7 @@ test("a finished week never shows projections, even where its lineups can't be r
   try {
     const page = app.viewWeek();
     assert.ok(page.includes('That week is over') && !/projected|today's|to win the week|class="sb-score"|class="stab"/i.test(page), page.slice(-600));
+    assert.ok(/<div class="card"><div class="sb-week solo">.*?<span>Last period<\/span>.*?That week is over/s.test(page), "the week's picker heads the card, to step back out");
   } finally { ui.weekShift = 0; }
   assert.ok(!app.viewWeek().includes('That week is over'), 'only a finished week');
 });
@@ -1047,7 +1048,7 @@ test('ESPN roto: Standings, the Matchup tab, Plan Ahead and a team card, all wit
   const week = a.viewWeek();
   assert.ok(week.includes('Season outlook') && /Projected <b>\d+(st|nd|rd|th)<\/b> of 10/.test(week), "the season's outlook where an opponent would be");
   assert.ok(!week.includes('Load your opponent') && !week.includes('>Opponent<') && !week.includes('compare against'), 'no opponent to load or pick');
-  assert.ok(/<h1>(This|Next) week<\/h1>/.test(week));
+  assert.ok(/<div class="card rt-outlook"><div class="sb-week solo"><div class="wk-nav">.*?class="wk-pick"><span>(This|Next) week<\/span>/s.test(week), "no scoreboard: the week's picker heads the outlook card");
 
   const title = a.teamCardTitle('4');
   assert.ok(title.includes('roto points') && !/This week vs|No matchup this week/.test(title));
@@ -6223,6 +6224,8 @@ test('football tabs: the board, swaps, Roster, Players and adds speak in project
   const week = a.withViewedTeam(a.viewWeek, true);
   quiet(a);
   assert.match(week, /class="sb-gauge"[^>]*aria-label="\d+% to win the week/, 'the win chance: a gauge between the scores');
+  assert.match(week, /class="sb-main">[\s\S]*?class="sb-gauge"[\s\S]*?<div class="sb-week"><div class="wk-nav">[\s\S]*?<span>Next period<\/span>[\s\S]*?<div class="wk-dates">Week \d+ · [A-Z][a-z]{2} \d+ – /, 'the week under it, across the scoreboard');
+  assert.ok(!week.includes('page-head'), 'no title row above');
   assert.match(week, /<b>[\d.]+<\/b> projected/);
   assert.ok(!/starter games|schedule dots|Per game<\/button>/i.test(week));
   // a starter out for the week: the swap says what it's worth

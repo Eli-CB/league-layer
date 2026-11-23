@@ -211,12 +211,12 @@ function rotoPace(R, used, rest) {
 
 // Plan Ahead's card (no weekly opponent in roto): your projected finish, your games against the limit, and each category now
 // and at the season's end
-function rotoOutlookCard() {
+function rotoOutlookCard(top = '') {
   const L = fxLeague(), R = L.roto, me = myTeamId(), r = standingOf(me), o = r && rotoOutlook().get(me);
   if (!o) return '';
   const n = L.standings.length, cats = scoreCats().filter(c => !c.fp);
   const finOf = (t, c) => (c.pct ? (t[c.att] ? t[c.made] / t[c.att] : null) : lineStat(t, c.key));
-  return `<div class="card rt-outlook">
+  return `<div class="card rt-outlook">${top}
     <div class="card-head"><h2>Season outlook ${infoBtn('roto')}</h2><span class="muted small">to ${fmtMonthDay(R.end)}</span></div>
     <p class="rt-finish">Projected <b>${ordinal(o.rank)}</b> of ${n} with <b>${fmt(o.total, 1)}</b> roto points <span class="muted">(now ${ordinal(r.rank)}, ${fmtRotoPts(r.pts)})</span></p>
     <p class="muted small rt-pace">${rotoPace(R, r.tot.gp1 || 0, o.rest)}</p>

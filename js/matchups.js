@@ -632,13 +632,13 @@ function pastWeeksOf(L, period) {
   }
   return P;
 }
-function pastWeekCard(start) {
+function pastWeekCard(start, top = '') {
   const L = fxLeague(), period = fxPeriodFor(start);
   if (!L || !period || !hasWeekLineups(L) || !periodOver(period)) return '';
   const leftId = ui.viewing ? ui.viewA : state.fxTeam;
   const pair = (L.matchups[String(period.n)] || []).find(m => m.includes(leftId));
   if (!pair) return '';
-  const head = ''; // (no heading: the week's name is at the top of the page)
+  const head = top; // (the week's picker: no other heading)
   const note = msg => `<div class="card">${head}<p class="muted small" style="margin:0">${msg}</p></div>`;
   const P = pastWeeksOf(L, period);
   if (P.state === 'loading') return note(`${loaderMark('sm')}Loading the week's lineups from ${sourceName(L)}…`);
@@ -716,19 +716,25 @@ function pastWeekCard(start) {
   </div>`;
 }
 
-// The weeks to step through: the league's matchup numbers (else the week's Monday), this one marked like the
-// opponent picker marks this week's opponent
+// The week shown, by name: Last / This / Next period, else its matchup number (else its Monday)
+const weekPeriod = s => (fxLeague() && fxLeague().periods ? fxPeriodFor(weekStartAt(s)) : null);
+function weekName(s = ui.weekShift) {
+  const rel = { '-1': 'Last', 0: 'This', 1: 'Next' }[s], p = weekPeriod(s);
+  return rel ? `${rel} ${spanWord()}` : p ? `Week ${p.n}` : `Week of ${fmtMonthDay(weekStartAt(s))}`;
+}
+
+// The weeks to step through: ‹ the week's name › (a tap on the name opens a menu of every week: the league's matchup
+// numbers, else each week's Monday, this one marked like the opponent picker marks this week's opponent)
 function weekPicker() {
   const shifts = weekShifts();
-  // (phones: just the week, so the picker fits beside the heading, which already says this period or next)
-  const phone = isPhone();
   const opts = shifts.map(s => {
-    const p = fxLeague() && fxLeague().periods ? fxPeriodFor(weekStartAt(s)) : null;
+    const p = weekPeriod(s);
     const playoffs = p && fxLeague().playoffPeriod && p.n >= fxLeague().playoffPeriod;
-    return `<option value="${s}" ${s === ui.weekShift ? 'selected' : ''}>${p ? `Week ${p.n}` : `Week of ${fmtMonthDay(weekStartAt(s))}`}${phone ? '' : s === 0 ? ` (this ${spanWord()})` : playoffs ? ' (playoffs)' : ''}</option>`;
+    return `<option value="${s}" ${s === ui.weekShift ? 'selected' : ''}>${p ? `Week ${p.n}` : `Week of ${fmtMonthDay(weekStartAt(s))}`}${s === 0 ? ` (this ${spanWord()})` : playoffs ? ' (playoffs)' : ''}</option>`;
   });
-  return stepper('week-shift', 'week', `<select class="ctx-team" data-change="week-pick" aria-label="Week">${opts.join('')}</select>`,
-    { first: ui.weekShift <= shifts[0], last: ui.weekShift >= shifts[shifts.length - 1] });
+  const ends = { '-1': ui.weekShift <= shifts[0], 1: ui.weekShift >= shifts[shifts.length - 1] };
+  const btn = dir => `<button type="button" class="wk-step" data-action="week-shift" data-step="${dir}" aria-label="${dir < 0 ? 'Previous' : 'Next'} week" title="${dir < 0 ? 'Previous' : 'Next'} week"${ends[dir] ? ' disabled' : ''}>${chev(dir)}</button>`;
+  return `<div class="wk-nav">${btn(-1)}<label class="wk-pick"><span>${weekName()}</span><svg class="wk-caret" viewBox="0 0 10 6" width="10" height="6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><select class="wk-sel" data-change="week-pick" aria-label="Week">${opts.join('')}</select></label>${btn(1)}</div>`;
 }
 
 // The scoreboard's win chance: a half-circle gauge between the two scores (the owner's pick over a bar across the card,
@@ -752,10 +758,15 @@ function viewWeek() {
   const { start, dates, weekly, hasOpp, asSet, best, oSet, oBest, mine } = ctx;
   const today = todayIso();
   const staleOpp = hasOpp && state.opp.week && state.opp.week !== start;
-  // the week's days (phones: Nov 9 – 15, short enough for the week picker beside it)
+  // the week: ‹ its name ›, its days under it ("Week 6 · Nov 23 – 29"; phones just the days). Under the gauge, across the
+  // scoreboard; with no scoreboard (a finished week, roto, no opponent yet) at the top of the card shown instead, with
+  // the week's notes (lineups locked, whose rosters), which are otherwise on the scoreboard's last line
   const first = dates[0], last = dates[dates.length - 1];
-  const range = isPhone()
-    ? `${fmtMonthDay(first)} – ${first.slice(0, 7) === last.slice(0, 7) ? +last.slice(8) : fmtMonthDay(last)}` : `${fmtDay(first)} – ${fmtDay(last)}`;
+  const wp = weekPeriod(ui.weekShift), named = Math.abs(ui.weekShift) <= 1;
+  const range = `${named && wp && !isPhone() ? `Week ${wp.n} · ` : ''}${fmtMonthDay(first)} – ${first.slice(0, 7) === last.slice(0, 7) ? +last.slice(8) : fmtMonthDay(last)}`;
+  const notes = fxWeekNotes(ctx);
+  const weekNav = solo => `<div class="sb-week${solo ? ' solo' : ''}">${weekPicker()}<div class="wk-dates">${range}${solo ? notes : ''}</div></div>`;
+  const top = weekNav(true);
   const winPct = Math.round(oBest.win * 100);
   const changed = weekly ? ctx.bestIds && ([...ctx.bestIds].some(id => !ctx.setIds.has(id)) || ctx.bestIds.size !== ctx.setIds.size) : best.games !== asSet.games;
 
@@ -770,16 +781,17 @@ function viewWeek() {
       : !L || !hasWeekLineups(L) ? `That week is over, so there's nothing to project.${L ? ` Past weeks' results come from each week's real lineups, which the site doesn't read from ${esc(sourceName(L))}${isFootball() ? ' football' : ''} leagues yet.` : ''}`
       : period && !periodOver(period) ? `That week's games are over. Its result and lineups show here once the last night's box scores are in.`
       : `That week is over, and ${ui.viewing ? 'this team' : 'you'} had no matchup in it.`;
-    return `<div class="card"><p class="muted small" style="margin:0">${msg}</p></div>`;
+    return `<div class="card">${top}<p class="muted small" style="margin:0">${msg}</p></div>`;
   };
-  const past = over ? pastWeekCard(start) || pastNote() : '';
+  const past = over ? pastWeekCard(start, top) || pastNote() : '';
   const unit = isPoints() ? 'points' : 'cats';
   const when = ui.weekShift === 1 ? 'next week' : ui.weekShift ? 'that week' : 'this week';
   const real = hasOpp ? null : fxOpponentFor(start); // (no opponent loaded: who the league says you play)
-  const noOpp = () => `<div class="card"><div class="empty"><strong>Load your opponent to see who's favored</strong>${real
+  const noOpp = () => `<div class="card">${top}<div class="empty"><strong>Load your opponent to see who's favored</strong>${real
     ? `${when[0].toUpperCase() + when.slice(1)} you play <b>${esc(real.name)}</b>.<br><br><button class="btn primary" data-action="fx-load-opp">Load ${esc(real.name)} from ${sourceName()}</button>`
     : `${sourceName()} has no matchup for you ${when}.`}${fxLeague() && state.fxTeam ? `<div class="sb-pick">Or compare against ${fxOppPicker(ctx)}</div>` : ''}</div></div>`;
-  const asSetLine = () => `<div class="sb-foot"><span class="muted">Lineup as set</span> <span class="sb-foot-n"><b>${fmt(oSet.expected, isPoints() ? 0 : 1)}</b> ${unit} · <b>${pctTxt(oSet.win)}</b> to win${isFootball() ? '' : ` · <b>${asSet.games}</b> starter games`}</span></div>`;
+  const asSet1 = () => `<span class="muted">Lineup as set</span> <span class="sb-foot-n"><b>${fmt(oSet.expected, isPoints() ? 0 : 1)}</b> ${unit} · <b>${pctTxt(oSet.win)}</b> to win${isFootball() ? '' : ` · <b>${asSet.games}</b> starter games`}</span>`;
+  const foot = changed || notes ? `<div class="sb-foot">${changed ? asSet1() : ''}${notes ? `<span class="muted sb-foot-notes">${notes.replace(/^ · /, '')}</span>` : ''}</div>` : '';
   const scoreboard = hasOpp ? `
     <div class="card scoreboard">
       ${fxLeague() && state.fxTeam ? fxOppNote(ctx) : ''}
@@ -787,9 +799,10 @@ function viewWeek() {
         <div class="sb-side"><div class="sb-label">${teamLink(ui.viewing ? ui.viewA : state.fxTeam, esc(state.teamName))}</div><div class="sb-score">${fmt(oBest.expected, isPoints() ? 0 : 1)}</div></div>
         ${winGauge(winPct, `projected ${unit}${changed ? ' with the suggested lineup' : ''}`)}
         <div class="sb-side right"><div class="sb-label">${fxLeague() && state.fxTeam ? fxOppPicker(ctx) : esc(state.opp.name || 'Opponent')}</div><div class="sb-score">${isPoints() ? fmt(oBest.opp, 0) : fmt(oBest.n - oBest.expected, 1)}</div></div>
+        ${weekNav(false)}
       </div>
-      ${changed ? asSetLine() : ''}
-    </div>` : isRoto() ? rotoOutlookCard() : noOpp(); // (roto: no one to face; the season's outlook instead, roto.js)
+      ${foot}
+    </div>` : isRoto() ? rotoOutlookCard(top) || `<div class="card">${top}</div>` : noOpp(); // (roto: no one to face; the season's outlook instead, roto.js)
 
   // Daily-lineup leagues keep the day-by-day swap list (not one-game leagues: more games don't count there)
   let dailyCards = '';
@@ -808,14 +821,9 @@ function viewWeek() {
     </div>`;
   }
 
+  // (no page title: the week's name is in its picker, the owner's pick, Nov 2026; one for screen readers)
   return `
-  <div class="page-head">
-    <div>
-      <h1>${ui.weekShift === 0 ? `This ${spanWord()}` : ui.weekShift === 1 ? `Next ${spanWord()}` : ui.weekShift === -1 ? `Last ${spanWord()}` : 'Week of ' + fmtDay(start)}</h1>
-      <p>${range}${fxWeekNotes(ctx)}</p>
-    </div>
-    <div class="week-nav">${weekPicker()}</div>
-  </div>
+  <h1 class="sr-only">Plan Ahead: ${weekName()}, ${fmtDay(first)} – ${fmtDay(last)}</h1>
   ${staleOpp && fxOpponentFor(start) ? `<div class="sample-banner"><span>Showing your opponent from the week of <b>${fmtDay(state.opp.week)}</b>.</span><button class="btn sm" data-action="fx-load-opp">Load this week's opponent</button></div>` : ''}
   <div class="week-stack">
     ${fxNoTeam()}

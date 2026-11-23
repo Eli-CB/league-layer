@@ -17,6 +17,10 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   and Yahoo's midnight "lock" is a placeholder, skipped). Before it, Plan Ahead opens on the new period as Next period, its
   lineups open, and the Matchup tab still shows the period just played, as Fantrax does. `lockTime` is the same moment.
   A week turning with Plan Ahead open loads the new week's real opponent (`planAheadWeek`).
+- No title row (the owner's pick from mockups, Nov 23, 2026): the week's picker, ‹ its name › (a menu of every week) with
+  its days under, sits across the scoreboard under the win chance, a half-circle gauge (`weekPicker`, `.sb-week`, `winGauge`).
+  With no scoreboard (a finished week, roto, no opponent yet) it heads the card shown instead, so the week can always be
+  changed (`top` in `viewWeek`). The week's notes (lineups locked, whose rosters) end the scoreboard's last line (`.sb-foot`).
 - Another team picked in place of the real opponent says so in one line across the top of the scoreboard (`fxOppNote`,
   `.sb-hypo`: "Hypothetical", Back to the real one), never under the opponent's menu: there it took two or three lines on a
   phone and pushed that side's score down (the owner found it clunky, Nov 23, 2026).
