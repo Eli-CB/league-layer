@@ -296,7 +296,8 @@ function planAheadWeek() {
   if (ui.weekChosen && (!ui.weekAt || ui.weekAt === weekPickAt())) return; // (a week picked, and still this week's)
   const next = planAheadShift();
   ui.weekChosen = true; ui.weekAt = weekPickAt();
-  if (ui.weekShift !== next) goWeek(next);
+  // (the same shift is another week once the week turns, at its first game, maybe with the page open: its real opponent)
+  if (ui.weekShift !== next || (state.opp.week && state.opp.week !== weekStartAt(next))) goWeek(next);
 }
 // The Matchup and Players tabs' When picks hold for the day they were made in (core.js, picks): a new day, their default again
 function dropOldPicks() {
@@ -414,10 +415,11 @@ function fxTime(str) {
 }
 const draftTime = L => fxTime(L.draftAt);
 
-// Weekly lineups lock when the Fantrax scoring period starts (else at the start of the first matchup day)
+// Weekly lineups lock when the period's first game starts (a Fantrax period's start: periodFirstGame), as the week
+// becomes this week (weekStartAt); a week without games at the start of its first day
 function lockTime(start) {
-  const p = fxPeriodFor(start);
-  return (p && fxTime(p.lock)) || new Date(matchDates(start)[0] + 'T00:00:00');
+  const p = (fxLeague() && fxLeague().periods && fxPeriodFor(start)) || { start }, t = periodFirstGame(p);
+  return t != null ? new Date(t) : new Date(matchDates(start)[0] + 'T00:00:00');
 }
 
 function draftWhen(L) {

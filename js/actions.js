@@ -686,20 +686,6 @@ async function reloadLeague() {
   changed('league', fxLeague().id);
 }
 
-// 7 PM in New York that day (the data file has no tip-off times)
-function etEvening(d) {
-  const hour = t => new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', hourCycle: 'h23' }).format(t);
-  return ['-05:00', '-04:00'].map(o => Date.parse(`${d}T19:00:00${o}`)).find(t => hour(t) === '19') || Date.parse(`${d}T19:00:00-05:00`);
-}
-// When a period's first game starts: Fantrax starts a period at its first tip-off (its lock); ESPN's scoreboard says
-// once that day's is here; else 7 PM ET on the period's first game day
-function periodFirstGame(p) {
-  const day = matchDates(String(p.start).slice(0, 10)).find(d => [...teamDates.values()].some(ds => ds.has(d)));
-  if (!day) return null;
-  const lock = /T\d/.test(String(p.lock || '')) && fxTime(p.lock);
-  const times = [...live.games.filter(g => g.d === day).map(g => +g.start), ...(lock ? [+lock] : [])].filter(Number.isFinite);
-  return times.length ? Math.min(...times) : etEvening(day);
-}
 // The moments to read the league again, for the periods starting from two days ago to a week ahead
 function autoReloadMarks(L = fxLeague()) {
   if (!L || !L.periods) return [];

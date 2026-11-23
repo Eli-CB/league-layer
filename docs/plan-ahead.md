@@ -11,5 +11,14 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   lineups also load next period's rosters (`L.nextRosters`, one more request; the daily job too), and the Matchups tab
   shows them on next week (`withViewedTeam(viewWeek, true)`, `nextRosterPeriod()`, `fxTeamSide(tid, period)`). Every
   other tab and the saved lineup stay on this week's.
+- A new period becomes this period at its first game, not at midnight (the owner's ask, Nov 23, 2026: people set Monday's
+  lineups up to the evening's tip-off, and "next period" had already moved on): `weekStartAt` asks `weekBegun` (nba.js),
+  which reads `periodFirstGame` (Fantrax's lock, its first tip-off; else ESPN's scoreboard; else 7 PM ET; ESPN's, Sleeper's
+  and Yahoo's midnight "lock" is a placeholder, skipped). Before it, Plan Ahead opens on the new period as Next period, its
+  lineups open, and the Matchup tab still shows the period just played, as Fantrax does. `lockTime` is the same moment.
+  A week turning with Plan Ahead open loads the new week's real opponent (`planAheadWeek`).
+- Another team picked in place of the real opponent says so in one line across the top of the scoreboard (`fxOppNote`,
+  `.sb-hypo`: "Hypothetical", Back to the real one), never under the opponent's menu: there it took two or three lines on a
+  phone and pushed that side's score down (the owner found it clunky, Nov 23, 2026).
 - The Lineups board's Per game and Week total show FG% and FT% to two places, ".49", players and Projected week alike (the owner's
   ask, Nov 20, 2026: `fmtPct(n, 2)`); the Categories table and the tips keep three.

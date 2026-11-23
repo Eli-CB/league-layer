@@ -314,6 +314,44 @@ test('the tabs: Matchup is this week, Plan Ahead opens on next week until a week
   assert.ok(!app.tabList().some(([, l]) => /info/.test(l)));
 });
 
+test("a new period is this period from its first game: before it, Plan Ahead's next period is the one whose lineups are being set", async () => {
+  const L = await app.useLeague(CATS9);
+  useTeam(L.standings[0].id);
+  const ui = app.get('ui');
+  app.savePick('week');
+  try {
+    // Monday noon: period 2 starts at 7 PM ET (Fantrax's lock, its first tip-off)
+    app.setClock('2026-10-26T12:00:00-04:00');
+    assert.equal(app.fxPeriodFor(app.weekStartAt(0)).n, 1, 'this period: the one that ended last night');
+    assert.equal(app.fxPeriodFor(app.weekStartAt(1)).n, 2, 'next period: the one starting tonight');
+    Object.assign(ui, { tab: 'week', weekShift: 0, weekChosen: false, weekAt: null });
+    app.planAheadWeek();
+    assert.equal(ui.weekShift, 1, 'Plan Ahead opens on it');
+    const ctx = app.weekContext();
+    assert.equal(ctx.locked, false, 'its lineups still to set');
+    assert.match(app.fxOppPicker(ctx), / \(next period\)<\/option>/);
+    assert.match(app.weekPicker(), />Week 1 \(this period\)</);
+    // tip-off: period 2 is this period, its lineups locked, and Plan Ahead opens on period 3
+    app.setClock('2026-10-26T19:00:00-04:00');
+    assert.equal(app.fxPeriodFor(app.weekStartAt(0)).n, 2);
+    assert.equal(app.weekContext(app.weekStartAt(0)).locked, true);
+    app.planAheadWeek();
+    assert.equal(app.fxPeriodFor(app.weekStart()).n, 3);
+    // another team picked in place of the real opponent: one line across the top of the scoreboard says so, with the way
+    // back, so both sides' scores stay level (it used to stack under the opponent's menu, two or three lines on a phone)
+    const real = app.fxOpponentFor(app.weekStart()), other = L.teams.find(t => t.id !== real.id && t.id !== L.standings[0].id);
+    assert.doesNotMatch(app.viewWeek(), /sb-hypo/, 'the real opponent: nothing to say');
+    app.loadFxTeam(other.id);
+    const board = app.viewWeek();
+    assert.match(board, /<div class="card scoreboard">\s*<div class="sb-hypo"><span class="badge warn">Hypothetical<\/span><button class="link-btn quiet" data-action="fx-load-opp"[^>]*>Back to [^<]+<\/button><\/div>\s*<div class="sb-main">/);
+    assert.ok(board.includes(`>Back to ${app.esc(real.name)}<`));
+    app.loadFxTeam(real.id);
+  } finally {
+    app.setClock(); app.savePick('week');
+    Object.assign(ui, { tab: 'dashboard', weekShift: 0, weekChosen: false, weekAt: null });
+  }
+});
+
 test("a pick on Matchup's or Players' When menu and Plan Ahead's week hold over a refresh, until a new day or matchup week brings the defaults back", async () => {
   const L = await app.useLeague(CATS9);
   useTeam(L.standings[0].id);
@@ -1176,16 +1214,22 @@ test("the Dashboard's matchup: this matchup's days only", async () => {
   await app.useLeague(CATS9);
   useTeam(app.fxLeague().teams[0].id);
   const days = async iso => JSON.parse(JSON.stringify(await onDay(iso, () => app.dashDays())));
-  // Monday before tip-off: last night was last week's matchup, so no Yesterday; it opens on today
+  // Monday before tip-off: the period that ended last night is still this one, as on Fantrax until the new one's first
+  // game (7 PM ET): its last night is Yesterday, and no Today
   const mon = await days('2026-10-26');
-  assert.equal(mon.today, '2026-10-26');
-  assert.equal(mon.day, null);
-  assert.deepEqual(mon.week, ['2026-10-26']);
-  await onDay('2026-10-26', () => {
+  assert.equal(mon.today, null);
+  assert.equal(mon.day, '2026-10-25');
+  assert.equal(mon.week.length, 6, 'last period, all of it (Oct 20-25)');
+  // from tip-off: last night was last week's matchup, so no Yesterday; it opens on today
+  try {
+    app.setClock('2026-10-26T19:00:00-04:00');
+    const now = JSON.parse(JSON.stringify(app.dashDays()));
+    assert.equal(now.today, '2026-10-26');
+    assert.equal(now.day, null);
+    assert.deepEqual(now.week, ['2026-10-26']);
     const m = app.dashMatchupCard();
     assert.ok(m.includes('class="on" data-action="dash-range" data-range="today"') && !m.includes('data-range="day"'));
-    assert.ok(!m.includes('mu-chip'), 'nobody has played yet');
-  });
+  } finally { app.setClock(); }
   // Wednesday: yesterday is Tuesday
   assert.equal((await days('2026-10-28')).day, '2026-10-27');
   // a day without NBA games (Election Day): it opens on yesterday, and Today is still there to say so
@@ -6201,6 +6245,11 @@ test("football's day: Monday night's game stays in its week past midnight, and a
   assert.equal(a.weekStart(), '2026-10-20');
   a.setClock('2026-10-27T06:00:00-04:00');
   assert.equal(a.todayIso(), '2026-10-27');
+  // the new week is this week from its first game (Thursday night's): lineups are set for it until then
+  assert.equal(a.weekStart(), '2026-10-20');
+  const kick = a.periodFirstGame(a.fxPeriodFor('2026-10-27'));
+  assert.equal(new Date(kick).toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'short' }), 'Thu', 'Thursday night, not the midnight Sleeper gives as its lock');
+  a.setClock(new Date(kick).toISOString());
   assert.equal(a.weekStart(), '2026-10-27');
   a.setClock();
   // the other sports go by the device's clock

@@ -688,12 +688,13 @@ function fxOppPicker(ctx) {
     .map(t => `<option value="${esc(t.id)}" ${t.id === cur ? 'selected' : ''}>${esc(t.name)}${opp && t.id === opp.id && !phone ? ` (${when})` : ''}</option>`).join('')}</select>`;
 }
 
-// Under the opponent: a team that isn't the week's real opponent says so, with the way back
+// A team that isn't the week's real opponent says so, with the way back: one line across the top of the scoreboard, so
+// both sides stay level (under the opponent's menu it took two or three lines on a phone, pushing that side's score down)
 function fxOppNote(ctx) {
   const leftId = ui.viewing ? ui.viewA : state.fxTeam;
   const opp = fxOpponentFor(ctx.start, leftId), cur = state.opp.fxId;
   if (!cur || (opp && cur === opp.id)) return '';
-  return `<div class="sb-opp-note"><span class="badge warn">Hypothetical</span>${opp ? ` <button class="link-btn small" data-action="${ui.viewing ? 'fx-view-actual' : 'fx-load-opp'}">Back to ${esc(opp.name)}</button>` : ''}</div>`;
+  return `<div class="sb-hypo"><span class="badge warn">Hypothetical</span>${opp ? `<button class="link-btn quiet" data-action="${ui.viewing ? 'fx-view-actual' : 'fx-load-opp'}" title="Back to ${esc(opp.name)}, the real opponent">Back to ${esc(opp.name)}</button>` : ''}</div>`;
 }
 
 // Next to the week's dates: lineups locked (weekly leagues, once the week starts) and whose rosters these are

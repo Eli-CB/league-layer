@@ -92,7 +92,7 @@ line in the notes pointing to it. `docs/` isn't published: the deploy copies onl
 - Everything follows each league's own settings on Fantrax or ESPN (category list or point values, slots, daily
   vs weekly lineups, playoffs). Never hard-code the owner's league.
 - Weekly lineups lock when the week starts, so the lineup people are setting is next week's: Plan Ahead shows next week's rosters;
-  every other tab and the saved lineup stay on this week's (docs/plan-ahead.md).
+  every other tab and the saved lineup stay on this week's (docs/plan-ahead.md). A week starts at its first game, not at midnight (`weekStartAt`).
 - Fantrax: minimize requests (league data cached on the device, a manual ↻ Reload, one automatic reload around a period's start spread
   over minutes, weekly rosters once per finished period: docs/fantrax.md). Fantrax and Sleeper are asked straight from each browser on
   purpose: their limits are per IP, and a proxy would pool everyone's.

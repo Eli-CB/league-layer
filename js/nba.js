@@ -314,12 +314,26 @@ function addDays(iso, n) { const d = new Date(iso + 'T12:00:00'); d.setDate(d.ge
 const dayOffset = iso => (new Date(iso + 'T12:00:00').getDay() + 6 - (SPORT.weekShift || 0)) % 7;
 const mondayOf = iso => addDays(iso, -dayOffset(iso));
 
-// The matchup week to show: this week, or next week once this week's matchup days are over
+// The matchup week to show: this week, or next week once this week's matchup days are over. A week is this week from its
+// first game on, as a Fantrax period starts at its first tip-off: until then the week just played is still this one, and
+// the new one, whose lineups are still being set, is next week (the owner's ask, Nov 23, 2026: Plan Ahead's "next period"
+// turned at midnight, while people set Monday's lineups up to the evening's first game)
 function weekStart() { return weekStartAt(ui.weekShift); }
 function weekStartAt(shift) {
-  const t = todayIso();
-  const base = dayOffset(t) > Math.max(...state.matchDays) ? addDays(mondayOf(t), 7) : mondayOf(t);
+  const t = todayIso(), mon = mondayOf(t);
+  const base = dayOffset(t) > Math.max(...state.matchDays) ? addDays(mon, 7) : weekBegun(mon) ? mon : addDays(mon, -7);
   return addDays(base, 7 * shift);
+}
+// Whether the week from mon has had its first game (or its period's, when the period began a week before), kept for the
+// same week, league, schedule and scoreboard: weekStartAt is asked many times a drawing
+let weekBegunAt = null;
+function weekBegun(mon) {
+  const L = fxLeague(), games = typeof live === 'undefined' ? null : live.games, n = games ? games.length : 0, m = weekBegunAt;
+  if (!(m && m.mon === mon && m.L === L && m.dates === teamDates && m.games === games && m.n === n)) {
+    const p = (L && L.periods && fxPeriodFor(mon)) || { start: mon };
+    weekBegunAt = { mon, L, dates: teamDates, games, n, at: periodFirstGame(p) };
+  }
+  return weekBegunAt.at == null || Date.now() >= weekBegunAt.at;
 }
 const WEEK_SHIFTS = 4; // weeks back and ahead the Matchups tab goes for a league without matchup weeks
 // The weeks Matchups can show, as shifts from this week: every one of the league's matchup weeks (playoffs too),
@@ -347,6 +361,23 @@ function periodDates(p) {
   const out = [];
   for (let d = p.start; d < p.end || (d === p.end && endHour >= 21); d = addDays(d, 1)) out.push(d);
   return out;
+}
+
+// 7 PM in New York that day (the data file has no tip-off times)
+function etEvening(d) {
+  const hour = t => new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', hourCycle: 'h23' }).format(t);
+  return ['-05:00', '-04:00'].map(o => Date.parse(`${d}T19:00:00${o}`)).find(t => hour(t) === '19') || Date.parse(`${d}T19:00:00-05:00`);
+}
+// When a period's first game starts: Fantrax starts a period at its first tip-off (its lock); ESPN's scoreboard says
+// once that day's is here; else 7 PM ET on the period's first game day. (ESPN's, Sleeper's and Yahoo's periods are
+// given a lock at midnight, which says no time: not counted.) null: no game in it.
+function periodFirstGame(p) {
+  const day = matchDates(String(p.start).slice(0, 10)).find(d => [...teamDates.values()].some(ds => ds.has(d)));
+  if (!day) return null;
+  const lock = /T(?!00:00:00)\d/.test(String(p.lock || '')) && fxTime(p.lock);
+  const games = typeof live === 'undefined' ? [] : live.games;
+  const times = [...games.filter(g => g.d === day).map(g => +g.start), ...(lock ? [+lock] : [])].filter(Number.isFinite);
+  return times.length ? Math.min(...times) : etEvening(day);
 }
 
 // The league's fantasy playoffs: its playoff periods (from L.playoffPeriod on) and their game days still to come (all of

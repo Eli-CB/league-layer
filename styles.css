@@ -1030,7 +1030,8 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: .85em; backgro
 .sb-label { font-weight: 600; color: var(--text); font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sb-label .sb-opp { max-width: 100%; font-size: .85rem; font-weight: 700; padding-top: 3px; padding-bottom: 3px; text-overflow: ellipsis; } /* the opponent, picked in place */
 .sb-side.right .sb-label { overflow: visible; }
-.sb-opp-note { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px 8px; margin-top: 4px; font-size: .78rem; }
+.sb-hypo { display: flex; align-items: center; gap: 8px; margin: -4px 0 12px; min-width: 0; } /* (another team than the real opponent: one line, the name cut short on a phone) */
+.sb-hypo .link-btn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; font-weight: 500; }
 .sb-pick { margin-top: 14px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
 .sb-score { font-size: 2.6rem; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
 .sb-vs { text-align: center; color: var(--muted); font-size: .8rem; white-space: nowrap; padding-bottom: 12px; }

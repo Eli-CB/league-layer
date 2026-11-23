@@ -774,10 +774,11 @@ function viewWeek() {
   const asSetLine = () => `<div class="sb-foot"><span class="muted">Lineup as set</span> <span class="sb-foot-n"><b>${fmt(oSet.expected, isPoints() ? 0 : 1)}</b> ${unit} · <b>${pctTxt(oSet.win)}</b> to win${isFootball() ? '' : ` · <b>${asSet.games}</b> starter games`}</span></div>`;
   const scoreboard = hasOpp ? `
     <div class="card scoreboard">
+      ${fxLeague() && state.fxTeam ? fxOppNote(ctx) : ''}
       <div class="sb-main">
         <div class="sb-side"><div class="sb-label">${teamLink(ui.viewing ? ui.viewA : state.fxTeam, esc(state.teamName))}</div><div class="sb-score">${fmt(oBest.expected, isPoints() ? 0 : 1)}</div></div>
         <div class="sb-vs">projected ${unit}${changed ? '<span class="sb-vs-extra"> with suggested lineup</span>' : ''}</div>
-        <div class="sb-side right"><div class="sb-label">${fxLeague() && state.fxTeam ? fxOppPicker(ctx) : esc(state.opp.name || 'Opponent')}</div>${fxLeague() && state.fxTeam ? fxOppNote(ctx) : ''}<div class="sb-score">${isPoints() ? fmt(oBest.opp, 0) : fmt(oBest.n - oBest.expected, 1)}</div></div>
+        <div class="sb-side right"><div class="sb-label">${fxLeague() && state.fxTeam ? fxOppPicker(ctx) : esc(state.opp.name || 'Opponent')}</div><div class="sb-score">${isPoints() ? fmt(oBest.opp, 0) : fmt(oBest.n - oBest.expected, 1)}</div></div>
       </div>
       <div class="odds" role="img" aria-label="Win chance ${winPct}%"><span class="odds-you" style="width:${winPct}%"></span></div>
       <div class="odds-legend"><span><b>${winPct}%</b> to win the week ${infoBtn('win')}</span><span>${100 - winPct}%</span></div>
