@@ -431,6 +431,7 @@ const actions = {
     store.set(BOARD_KEY, ui.boardMode);
     render();
   },
+  'past-sort'(el) { nextSort(ui.pastSort, el.dataset.key, -1); render(); }, // a finished week's Lineups, by a column
   'past-mode'(el) { // a finished week's Lineups: Per game or Week total
     ui.pastMode = el.dataset.mode;
     store.set(PAST_KEY, ui.pastMode);

@@ -262,7 +262,14 @@ test('a finished week: its real result, and the bench swaps that would have chan
     assert.ok(page.includes('Against their averages') && page.includes('class="on" data-action="past-mode" data-mode="week"'), 'Week total first, and who beat his averages');
     ui.pastMode = 'game';
     assert.ok(app.pastWeekCard(app.weekStart()).includes('class="on" data-action="past-mode" data-mode="game"'), 'Per game');
-  } finally { ui.weekShift = 0; ui.pastMode = 'week'; }
+    // sortable by any column, starters and bench apart: points, most first
+    ui.pastSort = { key: 'pts', dir: -1 };
+    const sorted = app.pastWeekCard(app.weekStart()), body = sorted.slice(sorted.indexOf('<tbody>') + 7, sorted.indexOf('</tbody>'));
+    assert.match(sorted, /class="sortable sc sorted" data-action="past-sort" data-key="pts"[^>]*aria-sort="descending"/);
+    const ptsAt = 2 + app.lineCats().findIndex(c => c.key === 'pts');
+    const shown = body.split('</tr>').filter(r => r.includes('<td')).map(r => +((r.split('<td').slice(1)[ptsAt] || '').replace(/<[^>]*>/g, '').replace(/^[^>]*>/, '')));
+    assert.ok(shown.length > 1 && shown.every((v, i) => !i || shown[i - 1] >= v), `starters by points: ${shown}`);
+  } finally { ui.weekShift = 0; ui.pastMode = 'week'; ui.pastSort = { key: '#g', dir: -1 }; }
   assert.equal(app.pastWeekCard(app.weekStart()), '', 'not for a week still being played');
 });
 

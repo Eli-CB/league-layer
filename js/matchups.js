@@ -431,9 +431,14 @@ function statRow(p, ctx, side, starter) {
 const colShares = cols => sum(cols.map(c => (c.shot ? 2.5 : 1)));
 const colWidth = (c, shares) => (c.shot ? ` style="width:${(63 * 2.5 / shares).toFixed(1)}%"` : '');
 
+// A stat table's sortable head (this week's and a finished week's boards): its arrow under the label, in room the head always
+// keeps (.sort-dir): beside it, "FG% ↓" ran into the next column's label
+const stabTh = (action, key, label, s, { arrow = true, ...o } = {}) =>
+  sortTh(action, key, `${label}${s.key === key && arrow ? `<span class="sort-dir">${s.dir < 0 ? '↓' : '↑'}</span>` : ''}`, s, { ...o, down: s.dir < 0, arrow: false });
+
 function statTable(ctx, side, title, rows, { bench = false, totals = '', games = 0 } = {}) {
   const s = ui.statSort, shares = colShares(lineCats());
-  const th = (key, label, cls = '', attrs = '') => sortTh('stat-sort', key, label, s, { cls, attrs, down: s.dir < 0, arrow: key !== 'slot' });
+  const th = (key, label, cls = '', attrs = '') => stabTh('stat-sort', key, label, s, { cls, attrs, arrow: key !== 'slot' });
   return `<table class="stab">
     <thead><tr>${th('name', bench ? `${esc(title)} <span class="muted">bench</span>` : esc(title), 'st-name')}${th('g', 'G', 'num st-g')}${lineCats().map(c => th(c.key, c.label, 'sc', colWidth(c, shares))).join('')}</tr></thead>
     <tbody>${sortStatRows(rows, ctx).map(p => statRow(p, ctx, side, !bench)).join('') || `<tr><td colspan="11" class="muted small">${bench ? 'Nobody on the bench' : side === 'them' ? 'No opponent loaded' : 'No starters'}</td></tr>`}</tbody>
@@ -648,6 +653,7 @@ function pastWeeksOf(L, period) {
 // The finished week's Lineups board: Per game or Week total (kept on the device, apart from this week's board)
 const PAST_KEY = 'league-layer-past-board';
 ui.pastMode = store.get(PAST_KEY) === 'game' ? 'game' : 'week';
+ui.pastSort = { key: '#g', dir: -1 }; // its column order: most games first ('#g': hockey's goals are 'g')
 
 // How far apart rostered players' values a game are: VAL's shading on a finished week, as BASE's spreads shade a stat
 let valSpreadMemo = { base: null, w: null, sd: 0.15 };
@@ -800,10 +806,26 @@ function pastWeekCard(start, top = '', nav = top) {
     }).join('');
     return `<tr class="${bench ? 'bench' : ''}"><td class="st-name"><div class="bplayer">${headshot(x.p, hsPx(30, 24))}<div class="bmain"><div class="bname">${playerName(x.p)}</div></div></div></td>${gCell(x, bench)}${cells}</tr>`;
   };
+  // A column's order, a tap on its head (starters and bench apart, the team's rows in place): the number shown, best first
+  // on the first tap, as this week's board sorts (fewer turnovers; a percentage by its makes over the league's average on its
+  // shots, so volume counts; a points league's shooting pair by its points)
+  const sortVal = (x, key) => {
+    const g = x.line.gp1 || 0, c = cols.find(y => y.key === key), s = x.line, k = per ? 1 / g : 1;
+    if (key === '#g') return g;
+    if (!c || (per && !g)) return null;
+    if (c.val) return valOf(s) * k;
+    if (c.shot) return shotFp(s, c) * k;
+    const sign = c.neg ? -1 : 1;
+    if (c.pct) { const att = lineStat(s, c.att); return att ? sign * (lineStat(s, c.made) - (BASE[c.key] || [0])[0] * att) * k : null; }
+    return sign * lineStat(s, c.key) * k;
+  };
+  const ps = ui.pastSort; // (no arrow on the first order, most games)
+  const th = (key, label, cls, attrs = '') => stabTh('past-sort', key, label, ps, { cls, attrs, arrow: key !== '#g' || ps.dir > 0 });
   const table = (S, O) => {
     const sc = weekScore(S.tot, O.tot), mine = S === A;
     const lead = i => (sc.lead[i] > 0 ? ' pos-good' : sc.lead[i] < 0 ? ' pos-bad' : '');
     const byG = list => [...list].sort((a, b) => (b.line.gp1 || 0) - (a.line.gp1 || 0) || valOf(b.line) - valOf(a.line));
+    const order = list => sortRows(byG(list), x => sortVal(x, ui.pastSort.key), ui.pastSort.dir); // (ties: most games, then VAL)
     // the week's real total (green won, red lost); the projection going in, shaded by its chance (as this week's Projected week)
     const totCell = c => {
       if (c.val) return `<td class="sc${pts ? lead(0) : ''}" title="${esc(`${unitWord} of the starters' games${pts && S.fix ? `, with the rest of Sleeper's score` : ''}`)}">${est && pts ? '≈ ' : ''}${num(S.tot, c, 1, 'tot')}</td>`;
@@ -816,12 +838,12 @@ function pastWeekCard(start, top = '', nav = top) {
       return `<td class="sc" style="${Number.isFinite(p) ? shadeProb(p) : ''}"${Number.isFinite(p) ? ` title="${pctTxt(p)} to win it, going in"` : ''}>${num(S.proj.tot, c, 1, 'proj')}</td>`;
     };
     return `<table class="stab pw-table">
-      <thead><tr><th class="st-name">${name(S.tid)}</th><th class="num st-g">G</th>${cols.map(c => `<th class="sc"${width(c)}>${c.val ? valLabel : c.label}</th>`).join('')}</tr></thead>
-      <tbody>${byG(S.starters).map(x => row(x, false)).join('')}</tbody>
+      <thead><tr><th class="st-name">${name(S.tid)}</th>${th('#g', 'G', 'num st-g')}${cols.map(c => th(c.key, c.val ? valLabel : c.label, 'sc', width(c))).join('')}</tr></thead>
+      <tbody>${order(S.starters).map(x => row(x, false)).join('')}</tbody>
       <tbody class="pw-total">${S.fix && Math.abs(S.fix) >= 0.05 ? `<tr class="bench"><td class="st-name" title="Sleeper's own score for the week, less these lineups' games: Lock-In counts a lineup spot's game day by day, and these are the week's final lineups">Rest of Sleeper's score</td><td class="num st-g"></td>${cols.map(c => `<td class="sc">${c.val ? signed(S.fix, 1) : ''}</td>`).join('')}</tr>` : ''}
         <tr><td class="st-name"><b>Week total</b></td><td class="num st-g"><b>${S.tot.gp1 || 0}</b></td>${cols.map(totCell).join('')}</tr>
         ${projOk ? `<tr class="pw-proj"><td class="st-name" title="Each starter's averages before the week, over his team's games while he started">Projected</td><td class="num st-g">${fmt(S.proj.games, 0)}</td>${cols.map(projCell).join('')}</tr>` : ''}</tbody>
-      ${S.bench.length ? `<tbody>${byG(S.bench).map(x => row(x, true)).join('')}</tbody>` : ''}
+      ${S.bench.length ? `<tbody>${order(S.bench).map(x => row(x, true)).join('')}</tbody>` : ''}
     </table>`;
   };
   const board = `<div class="card board-card">

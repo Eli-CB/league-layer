@@ -1286,7 +1286,9 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: .85em; backgro
 .stab th.st-name, .stab td.st-name { width: 31%; padding-left: 6px; }
 .stab .st-g { width: 6%; }
 .stab th.sc { text-align: center; }
-.stab thead th { font-size: .7rem; }
+.stab thead th { font-size: .7rem; position: relative; padding-bottom: 13px; }
+.stab thead .sort-dir { position: absolute; left: 0; right: 0; bottom: 2px; font-size: .65rem; line-height: 1; text-align: center; } /* (stabTh: under the label) */
+.stab thead th.st-name .sort-dir { text-align: left; padding-left: 6px; }
 .stab thead th.st-name { font-size: .82rem; color: var(--text); text-transform: none; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; }
 .stab td.sc { text-align: center; font-size: .82rem; font-variant-numeric: tabular-nums; color: var(--text); border-bottom: 2px solid var(--surface); }
 .stab .bname { flex-wrap: nowrap; }
