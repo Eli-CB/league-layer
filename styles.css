@@ -1275,10 +1275,11 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: .85em; backgro
 .cs-chev { display: inline-block; width: 1em; color: var(--muted); font-size: .75rem; transition: transform .15s; }
 .cs-row[aria-expanded="true"] .cs-chev { transform: rotate(90deg); }
 .cs-row[aria-expanded="true"] td { border-bottom-color: transparent; }
-.cs-detail td { padding: 0 0 10px; }
-/* an opened category: who helped and who hurt, in a panel under its row */
+.cs-table .cs-detail td { padding: 0 10px 10px 0; }
+/* an opened category: who helped and who hurt, in a panel under its row. The row and its panel are one tinted block
+   (hovered or not), so the row's highlight never stops at the panel's edge and leaves a gap under it */
 .cs-who { font-size: .85rem; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px; margin-left: 1.3em; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
-.cs-detail:hover { background: none; } /* the panel isn't a row: hovering it, or its category's row, doesn't run one into the other */
+.cs-row[aria-expanded="true"], .cs-row[aria-expanded="true"] + .cs-detail { background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
 .cs-grp { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
 .cs-p { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; } /* photo, name and number on one line */
 .cs-name { display: inline-flex; align-items: center; font-weight: 600; color: var(--text); } /* a player: black, as everywhere; orange is for your team */
