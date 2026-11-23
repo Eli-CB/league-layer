@@ -26,13 +26,13 @@ const INFO = {
     <p><b>Week total.</b> The player's weekly number is compared with an average starter's week of about 3.5 games: (weekly total − average × 3.5) ÷ (spread × 3.5). The same weekly total always gets the same shade.</p>
     <p><b>Colors.</b> Green helps the category, red hurts it, getting stronger up to ±2.5 spreads. The Projected week row is shaded by your chance to win each category instead. Hover any number for the exact value.</p>`],
   dots: ['Schedule dots', `
-    <p>One dot per matchup day, from the NBA schedule. <b>Filled</b> dots are games already played; <b>rings</b> are games still to come.</p>
+    <p>One dot per matchup day, from the NBA schedule (a period longer than a week: a row a week). <b>Filled</b> dots are games already played; <b>rings</b> are games still to come.</p>
     <ul><li><b>Green:</b> a game. A bench player's games look the same, in his shaded row; they count only if he starts.</li>
     <li><b>Yellow:</b> a regular (20+ minutes a game) played well under his usual minutes: under 70% of his average and at least 8 fewer. Hover it for his minutes and the likely reason: an <b>injury</b> (he's been on the ESPN injury report since that game), a <b>blowout</b> (decided by 20 or more), <b>foul trouble</b> (5 or more fouls), or none of those, which usually means the coach's call.</li>
     <li><b>Light green ring:</b> an upcoming back-to-back night (the team also plays the day before or after). Players sometimes rest one of those nights.</li>
     <li><b>Flashing green:</b> a game on now he's playing in; a flashing ring, his team's game is on and he hasn't played yet.</li>
     <li><b>Red:</b> filled, his team played but he didn't; a ring, he's listed Out.</li></ul>
-    <p>Hover any played game for his minutes and stat line. The number on the right is games this week; hover it for played and left. Projections use the real box score for games already played and project only the rest.</p>`],
+    <p>Hover any played game for his minutes and stat line. The number on the right is games this period; hover it for played and left. Projections use the real box score for games already played and project only the rest.</p>`],
   benchswaps: ['How the week ended', `
     <p><b>The final score</b> counts every game each team's starters played that week, from the league's real lineups that week and the NBA box scores (like Season totals). The tables show each team's lineup that week: starters' games (what counted), the week total (green where that team won the category, red where it lost), and the bench's games, which didn't count.</p>
     <p><b>Bench swaps.</b> Each bench player is tried in place of each starter: his games that week count instead of the starter's, against the other team's real total. A swap only counts if the lineup could still be filled from the two players' positions (as they're listed now). In daily-lineup leagues the swap covers every day the starter started and the bench player sat.</p>

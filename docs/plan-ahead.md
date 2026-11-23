@@ -20,5 +20,7 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
 - Another team picked in place of the real opponent says so in one line across the top of the scoreboard (`fxOppNote`,
   `.sb-hypo`: "Hypothetical", Back to the real one), never under the opponent's menu: there it took two or three lines on a
   phone and pushed that side's score down (the owner found it clunky, Nov 23, 2026).
+- A period longer than a week (the NBA Cup's, the All-Star break's) draws each player's schedule dots a row a week (`.dots.wk`,
+  `dayDots`), at every width: 14 in a line ran the games count into the opponent's column on a phone (Nov 23, 2026).
 - The Lineups board's Per game and Week total show FG% and FT% to two places, ".49", players and Projected week alike (the owner's
   ask, Nov 20, 2026: `fmtPct(n, 2)`); the Categories table and the tips keep three.

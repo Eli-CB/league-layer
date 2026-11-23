@@ -188,9 +188,11 @@ function gameTip(p, line, d, bench) {
     ${short ? `<div class="tip-warn">Usually ${Math.round(p.min)} min: ${esc(short)}</div>` : ''}`;
 }
 
+// (a period longer than a week, the NBA Cup's or the All-Star break's, a row a week: .dots.wk; 14 in a line ran into the
+// opponent's column on a phone)
 function dayDots(p, ctx, counts) {
   const dot = (cls, tip) => `<i class="${cls}" data-tip="${esc(tip)}"></i>`;
-  return `<span class="dots">${ctx.dates.map(d => {
+  return `<span class="dots${ctx.dates.length > 7 ? ' wk' : ''}">${ctx.dates.map(d => {
     if (!playsOn(p, d)) return dot('none', 'No game');
     const bench = counts ? '' : ' bench';
     // a game on now pulses green while he's in it (a line in tonight's box score, or on the floor), a green ring until he

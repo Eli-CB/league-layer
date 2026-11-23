@@ -3715,6 +3715,18 @@ test("a Fantrax league of a sport the site doesn't read (golf) says so, instead 
   assert.equal(app.sportNotRead('Sleeper', 'LCS').message, "That's a Sleeper LCS league. On Sleeper, League Layer covers basketball and football leagues.");
 });
 
+test("Plan Ahead's schedule dots of a period longer than a week come a row a week, so a phone's column still holds them", async () => {
+  const L = await app.useLeague(CATS9);
+  const days = n => app.periodDates(L.periods.find(q => q.n === n));
+  const p = app.nbaPlayers().find(x => x.team && app.get('teamDates').get(x.team));
+  assert.equal(days(7).length, 14, 'the NBA Cup period, Nov 30 - Dec 13');
+  const long = app.dayDots(p, { dates: days(7) }, true);
+  assert.match(long, /^<span class="dots wk">/);
+  assert.equal(long.match(/<i /g).length, 14, 'still a dot a day');
+  assert.match(app.dayDots(p, { dates: days(6) }, true), /^<span class="dots">/, 'a week: one line');
+  assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'styles.css'), 'utf8'), /\.dots\.wk \{[^}]*grid-template-columns: repeat\(7, /);
+});
+
 test("Plan Ahead's schedule bubble of a game on now flashes green while he's in it; your own team's name is orange wherever it's drawn", async () => {
   const L = await app.useLeague(CATS9);
   await app.loadBoxes();

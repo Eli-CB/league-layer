@@ -1074,6 +1074,7 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: .85em; backgro
 .bmeta-g { text-align: left; } /* (right after the bubbles) */
 .bmeta b { color: var(--text); font-variant-numeric: tabular-nums; }
 .dots { display: inline-flex; gap: 2px; vertical-align: middle; }
+.dots.wk { display: inline-grid; grid-template-columns: repeat(7, 8px); } /* a period longer than a week: a row a week */
 .dots i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 /* filled: played; ring: still to come; red: missed or ruled out. A bench player's games look the same: his row is shaded */
 .dots i.done { background: var(--good); }
