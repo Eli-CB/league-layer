@@ -418,9 +418,11 @@ const draftTime = L => fxTime(L.draftAt);
 // Weekly lineups lock when the period's first game starts (a Fantrax period's start: periodFirstGame), as the week
 // becomes this week (weekStartAt); a week without games at the start of its first day
 function lockTime(start) {
-  const p = (fxLeague() && fxLeague().periods && fxPeriodFor(start)) || { start }, t = periodFirstGame(p);
-  return t != null ? new Date(t) : new Date(matchDates(start)[0] + 'T00:00:00');
+  const k = periodLock(start);
+  return k ? new Date(k.at) : new Date(matchDates(start)[0] + 'T00:00:00');
 }
+// (as periodKickoff: { at, known }, null for a week without games)
+const periodLock = start => periodKickoff((fxLeague() && fxLeague().periods && fxPeriodFor(start)) || { start });
 
 function draftWhen(L) {
   const dt = draftTime(L);

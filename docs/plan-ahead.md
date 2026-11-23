@@ -16,6 +16,8 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   which reads `periodFirstGame` (Fantrax's lock, its first tip-off; else ESPN's scoreboard; else 7 PM ET; ESPN's, Sleeper's
   and Yahoo's midnight "lock" is a placeholder, skipped). Before it, Plan Ahead opens on the new period as Next period, its
   lineups open, and the Matchup tab still shows the period just played, as Fantrax does. `lockTime` is the same moment.
+  Until then the week's notes give that time as the deadline, "lineups lock today 5:00 PM" (the owner's ask, Nov 23, 2026:
+  `fxWeekNotes`, `lockWhen`; `periodLock`/`periodKickoff` say whether it's known), "~" before it when it's the 7 PM ET guess.
   A week turning with Plan Ahead open loads the new week's real opponent (`planAheadWeek`).
 - No title row (the owner's pick from mockups, Nov 23, 2026): the week's picker, ‹ its name › (a menu of every week) with
   its days under, sits across the scoreboard under the win chance, a half-circle gauge (`weekPicker`, `.sb-week`, `winGauge`).

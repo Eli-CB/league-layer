@@ -374,13 +374,15 @@ function etEvening(d) {
 // When a period's first game starts: Fantrax starts a period at its first tip-off (its lock); ESPN's scoreboard says
 // once that day's is here; else 7 PM ET on the period's first game day. (ESPN's, Sleeper's and Yahoo's periods are
 // given a lock at midnight, which says no time: not counted.) null: no game in it.
-function periodFirstGame(p) {
+function periodFirstGame(p) { const k = periodKickoff(p); return k && k.at; }
+// The same as { at, known }: known when it's Fantrax's lock or ESPN's scoreboard, not the 7 PM guess
+function periodKickoff(p) {
   const day = matchDates(String(p.start).slice(0, 10)).find(d => [...teamDates.values()].some(ds => ds.has(d)));
   if (!day) return null;
   const lock = /T(?!00:00:00)\d/.test(String(p.lock || '')) && fxTime(p.lock);
   const games = typeof live === 'undefined' ? [] : live.games;
   const times = [...games.filter(g => g.d === day).map(g => +g.start), ...(lock ? [+lock] : [])].filter(Number.isFinite);
-  return times.length ? Math.min(...times) : etEvening(day);
+  return times.length ? { at: Math.min(...times), known: true } : { at: etEvening(day), known: false };
 }
 
 // The league's fantasy playoffs: its playoff periods (from L.playoffPeriod on) and their game days still to come (all of

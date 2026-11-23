@@ -695,7 +695,15 @@ function fxOppNote(ctx) {
   return `<div class="sb-hypo"><span class="badge warn">Hypothetical</span>${opp ? `<button class="link-btn quiet" data-action="${ui.viewing ? 'fx-view-actual' : 'fx-load-opp'}" title="Back to ${esc(opp.name)}, the real opponent">Back to ${esc(opp.name)}</button>` : ''}</div>`;
 }
 
-// Next to the week's dates: lineups locked (weekly leagues, once the week starts) and whose rosters these are
+// A lineup deadline, short: "today 7:00 PM", "Mon 7:00 PM" in the coming six days, else "Mon, Dec 7, 7:00 PM"
+function lockWhen(t) {
+  const days = Math.round((Date.parse(isoDay(t) + 'T12:00') - Date.parse(todayIso() + 'T12:00')) / 864e5);
+  const day = days === 0 ? 'today' : days === 1 ? 'tomorrow'
+    : t.toLocaleDateString(undefined, days < 7 ? { weekday: 'short' } : { weekday: 'short', month: 'short', day: 'numeric' }) + (days < 7 ? '' : ',');
+  return `${day} ${fmtTime(t)}`;
+}
+// Next to the week's dates: when lineups lock (weekly leagues: the week's first game, the deadline for setting them) or that
+// they're locked (once it's started), and whose rosters these are
 function fxWeekNotes(ctx) {
   const L = fxLeague();
   if (!L || !state.fxTeam) return '';
@@ -704,10 +712,14 @@ function fxWeekNotes(ctx) {
   const over = ctx.dates[ctx.dates.length - 1] < todayIso();
   const shown = nextRosterPeriod(ctx.start) || L.rosterPeriod;
   const out = [];
+  const longWhen = t => `${t.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at ${fmtTime(t)}`;
   if (ctx.locked && !over) {
-    const t = lockTime(ctx.start);
-    const when = `${t.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at ${fmtTime(t)}`;
-    out.push(`<span title="Starters locked ${esc(when)}, so this shows the lineups as set. Suggestions pick up again for next week.">lineups locked</span>`);
+    out.push(`<span title="Starters locked ${esc(longWhen(lockTime(ctx.start)))}, so this shows the lineups as set. Suggestions pick up again for next week.">lineups locked</span>`);
+  } else if (ctx.weekly && !SPORT.gameLocks && !over && periodLock(ctx.start)) {
+    // (a time not known yet, ESPN's or Yahoo's before game day: 7 PM ET, marked "~")
+    const k = periodLock(ctx.start), t = new Date(k.at), about = k.known ? '' : 'about ';
+    const tip = `The ${spanWord()} starts at its first game, ${about}${longWhen(t)}${k.known ? '' : ' (the exact time shows on game day)'}, and lineups lock then: set yours on ${sourceName(L)} before it.`;
+    out.push(`<span title="${esc(tip)}">lineups lock <b>${k.known ? '' : '~'}${lockWhen(t)}</b></span>`);
   }
   if (!over && L.rosterPeriod && opp && opp.period !== shown) out.push(`rosters as of week ${shown}`);
   return out.map(x => ` · ${x}`).join('');

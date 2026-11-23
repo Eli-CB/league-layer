@@ -372,6 +372,22 @@ test("a new period is this period from its first game: before it, Plan Ahead's n
     assert.equal(ctx.locked, false, 'its lineups still to set');
     assert.match(app.fxOppPicker(ctx), / \(next period\)<\/option>/);
     assert.match(app.weekPicker(), />Week 1 \(this period\)</);
+    // the deadline for them: its first tip-off, Fantrax's own time (the notes, on the scoreboard's last line)
+    const seven = app.fmtTime(Date.parse('2026-10-26T19:00:00-04:00')); // ("7:00 PM", as the device writes it)
+    const notes = s => app.fxWeekNotes(app.weekContext(app.weekStartAt(s)));
+    assert.ok(notes(1).includes(`lineups lock <b>today ${seven}</b>`), notes(1));
+    assert.ok(notes(1).includes(`title="The period starts at its first game, Mon, Oct 26 at ${seven}, and lineups lock then: set yours on Fantrax before it."`));
+    assert.match(app.viewWeek(), /class="muted sb-foot-notes"><span title="The period starts at its first game[^"]*">lineups lock <b>today /);
+    app.setClock('2026-10-24T12:00:00-04:00');
+    assert.ok(notes(1).includes(`lineups lock <b>Mon ${seven}</b>`), 'days ahead: its weekday');
+    assert.ok(notes(2).includes(`lineups lock <b>Mon, Nov 2, ${seven}</b>`), 'a week or more: its date');
+    // without Fantrax's time (ESPN's or Yahoo's lock is midnight): 7 PM ET, marked as a guess
+    const lock = L.periods[1].lock;
+    L.periods[1].lock = '2026-10-26T00:00:00';
+    app.setClock('2026-10-26T12:00:00-04:00');
+    assert.ok(notes(1).includes(`about Mon, Oct 26 at ${seven} (the exact time shows on game day), and lineups lock then`));
+    assert.ok(notes(1).includes(`lineups lock <b>~today ${seven}</b>`));
+    L.periods[1].lock = lock;
     // tip-off: period 2 is this period, its lineups locked, and Plan Ahead opens on period 3
     app.setClock('2026-10-26T19:00:00-04:00');
     assert.equal(app.fxPeriodFor(app.weekStartAt(0)).n, 2);
