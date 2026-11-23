@@ -1290,13 +1290,15 @@ test("performances: this week adds up each player's games", async () => {
   app.ui.perfRange = 'week';
   try {
     const html = await onDay('2026-10-25', () => app.topPerformancesCard());
-    assert.match(html, /\d G · \d+ min/, 'rows show games played');
+    assert.match(html, /<td class="sc pf-gp">\d+<\/td><td class="sc pf-min">\d+<\/td>/, 'rows show games played and minutes, each a column of its own');
+    assert.match(html, /title="Games played"[^>]*>GP</);
+    assert.doesNotMatch(html, /\d G · |\d+ min/, 'not under the name: it crowded a phone');
     // per game: each player's games over the period, averaged
     app.ui.perfPer = true;
     const per = await onDay('2026-10-25', () => app.topPerformancesCard());
     assert.match(per, / · per game/);
     assert.match(per, /aria-pressed="true">Per game</);
-    assert.match(per, /\d+ GP · /, 'games played, as the season per game shows them');
+    assert.match(per, /<td class="sc pf-gp">\d+<\/td><td class="sc pf-min">\d+\.\d<\/td>/, 'games played, and minutes a game to one decimal');
   } finally { app.ui.perfRange = null; app.ui.perfPer = false; }
 });
 
@@ -2033,7 +2035,7 @@ test('Players: one table; Per game ranks every NBA player, with search and posit
     const rows = app.seasonRows();
     assert.equal(count(html), rows.length, 'every NBA player with stats');
     assert.ok(rows.length > 300 && rows.every(r => r.per));
-    assert.ok(/\d+ GP · \d+ min\/g/.test(html), 'games played and minutes a game');
+    assert.ok(/<td class="sc pf-gp">\d+<\/td><td class="sc pf-min">\d+\.\d<\/td>/.test(html) && html.includes('title="Minutes a game"'), 'games played and minutes a game');
     if (app.state.fxTeam && app.fxOpponentFor(app.todayIso(), app.state.fxTeam)) { ui.perfFiltOpen = true; assert.ok(app.topPerformancesCard().includes('data-key="opp"'), "this week's opponent filter too"); ui.perfFiltOpen = false; }
     assert.ok(/<td class="sc" title="FG%: [\d.]+\/[\d.]+ a game">\.\d{3}<\/td>/.test(html), 'percentages per game');
     // the top row is the best average game
@@ -2108,7 +2110,7 @@ test('Players: one table; Per game ranks every NBA player, with search and posit
     assert.equal(count(html), tot.length);
     const top = tot.reduce((x, y) => (y.v > x.v ? y : x));
     assert.equal(ids(html)[0], top.raw.id, 'the most value over the season on top');
-    assert.ok(new RegExp(`${top.g} G · `).test(html));
+    assert.equal(+html.match(/<td class="sc pf-gp">(\d+)</)[1], top.g, 'his games, in their column');
     // no live updates for averages
     ui.perfRange = 'avg';
     ui.tab = 'players';
@@ -4324,7 +4326,7 @@ test("a points league's shooting pairs are one column on the Players tab, the te
   try {
     // the Players tab, over the season: one "FG" column of makes/attempts, sorted by the points they score
     ui.perfRange = 'year';
-    const perf = app.topPerformancesCard(), ph = head(perf, 'perf-table');
+    const perf = app.topPerformancesCard(), ph = head(perf, 'perf-table pl-table');
     assert.ok(together(ph), ph);
     assert.match(perf, /<td class="sc" title="FG: [+−]?\d+\.\d FP[^"]*">(<span[^>]*>[^<]*<\/span>)?\d+\/\d+<\/td>/, 'makes/attempts in one cell');
     // a team's card: its roster and By category
@@ -4347,7 +4349,7 @@ test("a points league's shooting pairs are one column on the Players tab, the te
     // DD and TD: one decimal where they're averages, whole in a game's line
     assert.equal(app.catDef('dd').dec, 1);
     ui.perfPer = true;
-    const per = app.topPerformancesCard(), cols = head(per, 'perf-table').trim().split(' ');
+    const per = app.topPerformancesCard(), cols = head(per, 'perf-table pl-table').trim().split(' ').filter(c => c !== 'GP' && c !== 'MIN'); // (their cells are pf-gp, pf-min)
     const dd = [...per.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].slice(1, 4).map(m => [...m[1].matchAll(/<td class="sc"[^>]*>(?:<span[^>]*>[^<]*<\/span>)?([^<]*)<\/td>/g)].map(x => x[1])[cols.indexOf('DD') - 1]);
     assert.ok(dd.length && dd.every(v => /^\d+\.\d$/.test(v)), `DD a game to one decimal: ${dd}`);
     assert.ok(text(app.lineChips({ min: 30, pts: 20, reb: 11, fgm: 8, fga: 15, dd: 1, gp1: 1 })).includes(' 1 DD '), 'a game: "1 DD", not "1.00"');

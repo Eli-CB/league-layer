@@ -305,16 +305,17 @@ function perfPicked(rows, { owner, statusOf, teamOf }, otherPick) {
   });
 }
 
-// The rows shown, sorted on the column picked (Value ↑ for the worst): the top 300 over the season, 100 for a day or week,
+// The rows shown, sorted on the column picked (VAL ↑ for the worst): the top 300 over the season, 100 for a day or week,
 // and 100 more each time Show more is tapped (for this list: any other sort, filter or range starts over). A live update
 // keeps the rows where they were (numbers and ranks change in place; anyone new goes below) so the table doesn't jump
 // while it's read; anything you do sorts it again.
-function perfShown(picked, { range, perWeek, avg, dates }, { mine }, otherPick) {
-  const pts = leaguePoints(), so = ui.perfSort;
+function perfShown(picked, W, { mine }, otherPick) {
+  const { range, perWeek, avg, dates } = W, pts = leaguePoints(), so = ui.perfSort, has = perfCols(W);
   // a column sorts by what it adds: its category contribution, or its fantasy points, so best-first works for TO too
-  // (a shooting pair, "10/19 FG": its own points, lineCats)
+  // (a shooting pair, "10/19 FG": its own points, lineCats); games and minutes by themselves
   const pair = lineCats().find(c => c.shot && c.key === so.key);
-  const sortVal = (r, key) => (key === 'name' ? r.raw.name.toLowerCase() : key === 'v' ? r.v : pair ? shotFp(r.tot, pair) : pts ? lineStat(r.tot, key) * (pts[key] || 0) : r.z[key] || 0);
+  const sortVal = (r, key) => (key === 'name' ? r.raw.name.toLowerCase() : key === 'v' ? r.v : key === 'gp' ? (has.gp ? r.g : r.v) : key === 'min' && has.min ? r.tot.min || 0
+    : pair ? shotFp(r.tot, pair) : pts ? lineStat(r.tot, key) * (pts[key] || 0) : r.z[key] || 0);
   const sorted = sortRows(picked, r => sortVal(r, so.key), so.dir);
   const sig = [range, perWeek, dates.join(), so.key, so.dir, JSON.stringify(ui.perfWhose), otherPick.join(), ui.perfSpot, mine, ui.perfQ, ui.perfPos.join(), ui.perfTeam.join(), JSON.stringify(ui.perfOnly)].join('|');
   if (ui.perfMore.sig !== sig) ui.perfMore = { sig, n: 0 };
@@ -326,6 +327,14 @@ function perfShown(picked, { range, perWeek, avg, dates }, { mine }, otherPick) 
   }
   perfOrder = { sig, ids: shown.map(r => r.raw.id) };
   return shown;
+}
+
+// Games and minutes: columns of their own after the name (under it they crowded a phone's narrow column, the owner's ask,
+// Nov 23, 2026). Games for more than one day (not football's projections), minutes but in football; neither when the
+// league already scores it (a MIN or GP category has its own column)
+function perfCols({ football, proj, avg, perWeek, weekly }) {
+  const has = new Set(lineCats().filter(c => !c.fp).map(c => c.key));
+  return { gp: !proj && (avg || perWeek || weekly) && !has.has('gp1'), min: !football && !has.has('min') };
 }
 
 // What Value is shaded against: an average starter's games over these days (the season: every day since opening night;
@@ -346,10 +355,11 @@ function perfValueScale({ football, range, avg, weekly, perWeek, dates }) {
   return { shade: shadeOf, tip };
 }
 
-// The table: each player's line in the league's categories (its badges: the best and worst of the range) and his Value or
-// fantasy points, ranked among everyone in range; else why there's nothing (no games yet today, or nobody matches)
+// The table: each player's games and minutes (perfCols), his line in the league's categories (its badges: the best and
+// worst of the range) and his Value or fantasy points, ranked among everyone in range; under his name only whose he is
+// (and a game on now: its clock or green dot); else why there's nothing (no games yet today, or nobody matches)
 function perfTable(rows, picked, shown, W, { opp, who, teamOf }) {
-  const { football, proj, avg, weekly, perWeek, day } = W;
+  const { proj, avg, weekly, perWeek, day } = W;
   const today = todayIso();
   if (!rows.length) {
     if (W.range !== 'today') return '';
@@ -363,7 +373,11 @@ function perfTable(rows, picked, shown, W, { opp, who, teamOf }) {
   const rank = new Map([...rows].sort((a, b) => b.v - a.v).map((r, i) => [r, i + 1]));
   const value = perfValueScale(W);
   const so = ui.perfSort;
-  const th = (key, label, cls) => sortTh('perf-sort', key, label, so, { cls, down: so.dir < 0 });
+  const th = (key, label, cls, tip) => sortTh('perf-sort', key, label, so, { cls, tip, down: so.dir < 0 });
+  const has = perfCols(W), each = avg || perWeek; // (each: a game's average, not games added up)
+  // the last column, VAL (Value) or fantasy points; Value without a "+" (a number with no "−" is above 0), the room it
+  // saves on a phone, the owner's ask (Nov 23, 2026)
+  const val = r => (pts ? (each ? fmt(r.v, 1) : fmtFp(r.v)) : signed(r.v, 2).replace('+', ''));
   const cell = (r, c) => {
     const b = badges.get(`${r.raw.id}|${c.key}`);
     const emo = b ? `<span class="pf-emo" aria-hidden="true">${b[0]}</span>` : '', tip = b ? ` · ${b[1]}` : '';
@@ -377,16 +391,15 @@ function perfTable(rows, picked, shown, W, { opp, who, teamOf }) {
   };
   // a game on today: its clock (a finished one says nothing: its line is there, nothing's moving)
   const clock = r => { const st = liveStatus(r.raw, day); return st && st !== 'Final' ? st : ''; };
-  return `<div class="perf-wrap${shown.length > 5 ? ' scroll' : ''}"><table class="perf-table">
-      <thead><tr>${th('name', 'Player', 'pf-name')}${cats.map(c => th(c.key, c.label, 'sc')).join('')}${th('v', proj ? 'Proj' : pts ? 'FP' : 'Value', 'num pf-v')}</tr></thead>
+  return `<div class="perf-wrap${shown.length > 5 ? ' scroll' : ''}"><table class="perf-table pl-table">
+      <thead><tr>${th('name', 'Player', 'pf-name')}${has.gp ? th('gp', 'GP', 'sc pf-gp', 'Games played') : ''}${has.min ? th('min', 'MIN', 'sc pf-min', each ? 'Minutes a game' : 'Minutes played') : ''}${cats.map(c => th(c.key, c.label, 'sc')).join('')}${th('v', proj ? 'Proj' : pts ? 'FP' : 'VAL', 'num pf-v', pts ? '' : 'Value')}</tr></thead>
       <tbody>${shown.map(r => `<tr class="${teamOf(r) === 'me' ? 'pf-me' : teamOf(r) === 'opp' ? 'pf-opp' : ''}">
         <td class="pf-name"${teamOf(r) === 'me' ? ' title="Your team"' : teamOf(r) === 'opp' ? ` title="Opponent: ${esc(opp.name)}"` : ''}><div class="bplayer"><span class="perf-rank">${rank.get(r)}</span>${headshot({ nbaId: r.raw.id, name: r.raw.name }, 34)}<div class="bmain">
           <div class="bname">${playerBtn(r.raw.id, r.raw.name)}${rookieBadge(r.raw, 'by-name')}${injBadge(r.raw.inj, 'by-name')}</div>
-          <div class="pmeta">${rookieBadge(r.raw, 'in-meta')}${injBadge(r.raw.inj, 'in-meta')}${[ // (" · " only between pieces: no team, no dot left over)
-            proj ? esc(r.game) : avg || perWeek ? `${r.g} GP` : weekly ? `${r.on ? liveDot(r.raw, r.on) : ''}${r.g} G` : day === today ? clock(r) : '',
-            football ? '' : `${Math.round(r.tot.min || 0)} min${avg ? '/g' : ''}`, who(r.raw.id)].filter(Boolean).join(' · ')}</div></div>${sbAddBtn(r.raw.id)}</div></td>
-        ${cats.map(c => cell(r, c)).join('')}
-        <td class="num pf-v" style="${value.shade(r)}" data-tip="${value.tip}">${pts ? (avg || perWeek ? fmt(r.v, 1) : fmtFp(r.v)) : signed(r.v, 2)}</td>
+          <div class="pmeta">${rookieBadge(r.raw, 'in-meta')}${injBadge(r.raw.inj, 'in-meta')}${weekly && r.on ? liveDot(r.raw, r.on) : ''}${[ // (" · " only between pieces: no team, no dot left over)
+            proj ? esc(r.game) : !weekly && !each && day === today ? clock(r) : '', who(r.raw.id)].filter(Boolean).join(' · ')}</div></div>${sbAddBtn(r.raw.id)}</div></td>
+        ${has.gp ? `<td class="sc pf-gp">${r.g}</td>` : ''}${has.min ? `<td class="sc pf-min">${fmt(r.tot.min || 0, r.per ? 1 : 0)}</td>` : ''}${cats.map(c => cell(r, c)).join('')}
+        <td class="num pf-v" style="${value.shade(r)}" data-tip="${value.tip}">${val(r)}</td>
       </tr>`).join('')}</tbody>
     </table>${picked.length > shown.length ? `<div class="pf-more"><button type="button" class="btn sm" data-action="perf-more">Show ${Math.min(100, picked.length - shown.length)} more</button></div>` : ''}</div>`;
 }
