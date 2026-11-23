@@ -12,7 +12,9 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   gauge's place, "Projected going in" under it), a Lineups board with Per game / Week total (`ui.pastMode`, its own stored
   choice) and a VAL column (FP in points leagues), sortable by any column (`ui.pastSort`, starters and bench apart, best first
   as this week's board sorts; both boards draw the arrow under the label, `stabTh`: beside it, "FG% ↓" ran into the next
-  column), and "Against their averages" (better / worse than usual, missed games).
+  column), and "Against their averages" (better / worse than usual, missed games). The two teams' Week total rows line up:
+  each table keeps its own height (`.pw-boards`: a grid stretching the shorter one spread the room over its rows) and the
+  side with fewer starters gets blank rows (`.pw-pad`).
   All from data already loaded, nothing saved (the owner weighs anything that costs requests): `weekVsAverages` (history.js)
   gives each player his team's games while starting, the days he missed, his averages from this season's games before the
   week (fewer than 3: his season's now) and their projection; the team's adds up for `compareCats`. Per game shades how he

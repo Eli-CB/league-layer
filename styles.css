@@ -1084,6 +1084,8 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: .85em; backgro
 .pw-table .pw-total tr.pw-proj td { font-weight: 400; }
 .pw-table tr.pw-proj td.st-name, .pw-table tr.pw-proj td.st-g { color: var(--muted); }
 .pw-table tr.bench td.sc, .pw-table tr.bench td.st-g { color: var(--muted); }
+.stat-boards.pw-boards { align-items: start; } /* (each table its own height: stretched, a table spreads the room over its rows) */
+.pw-table tbody tr.pw-pad:hover { background: none; } /* (a blank row lining up the Week totals: nothing to point at) */
 .pw-table .pw-total + tbody tr:first-child td { border-top: 16px solid var(--surface); } /* (room between Projected and the bench; a border, so shaded cells don't stretch into it) */
 .stab td.pw-miss { color: var(--bad); font-weight: 600; }
 .pw-ou { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 28px; }

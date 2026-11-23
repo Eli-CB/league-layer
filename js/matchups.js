@@ -821,6 +821,11 @@ function pastWeekCard(start, top = '', nav = top) {
   };
   const ps = ui.pastSort; // (no arrow on the first order, most games)
   const th = (key, label, cls, attrs = '') => stabTh('past-sort', key, label, ps, { cls, attrs, arrow: key !== '#g' || ps.dir > 0 });
+  // The two teams' tables side by side keep their own heights (.pw-boards: stretched to the taller one, a table spreads the
+  // room over its rows, and the Week total rows stopped lining up), the side with fewer starters padded with blank rows of a
+  // player row's height (its photo's room, a line of name), so Week total and Projected line up and the benches start level
+  const nStarters = Math.max(A.starters.length, B.starters.length), px = hsPx(30, 24);
+  const padRow = `<tr class="pw-pad" aria-hidden="true"><td class="st-name"><div class="bplayer"><span class="hs" style="width:${px}px;height:${px}px;visibility:hidden"></span><div class="bmain"><div class="bname">&nbsp;</div></div></div></td><td class="num st-g"></td>${cols.map(() => '<td class="sc"></td>').join('')}</tr>`;
   const table = (S, O) => {
     const sc = weekScore(S.tot, O.tot), mine = S === A;
     const lead = i => (sc.lead[i] > 0 ? ' pos-good' : sc.lead[i] < 0 ? ' pos-bad' : '');
@@ -839,7 +844,7 @@ function pastWeekCard(start, top = '', nav = top) {
     };
     return `<table class="stab pw-table">
       <thead><tr><th class="st-name">${name(S.tid)}</th>${th('#g', 'G', 'num st-g')}${cols.map(c => th(c.key, c.val ? valLabel : c.label, 'sc', width(c))).join('')}</tr></thead>
-      <tbody>${order(S.starters).map(x => row(x, false)).join('')}</tbody>
+      <tbody>${order(S.starters).map(x => row(x, false)).join('')}${padRow.repeat(nStarters - S.starters.length)}</tbody>
       <tbody class="pw-total">${S.fix && Math.abs(S.fix) >= 0.05 ? `<tr class="bench"><td class="st-name" title="Sleeper's own score for the week, less these lineups' games: Lock-In counts a lineup spot's game day by day, and these are the week's final lineups">Rest of Sleeper's score</td><td class="num st-g"></td>${cols.map(c => `<td class="sc">${c.val ? signed(S.fix, 1) : ''}</td>`).join('')}</tr>` : ''}
         <tr><td class="st-name"><b>Week total</b></td><td class="num st-g"><b>${S.tot.gp1 || 0}</b></td>${cols.map(totCell).join('')}</tr>
         ${projOk ? `<tr class="pw-proj"><td class="st-name" title="Each starter's averages before the week, over his team's games while he started">Projected</td><td class="num st-g">${fmt(S.proj.games, 0)}</td>${cols.map(projCell).join('')}</tr>` : ''}</tbody>
@@ -848,7 +853,7 @@ function pastWeekCard(start, top = '', nav = top) {
   };
   const board = `<div class="card board-card">
     <div class="card-head"><h2>Lineups ${infoBtn('pastShade')}</h2>${SPORT.oneNumber ? '' : segBtns('Lineup view', 'past-mode', 'mode', [['game', 'Per game'], ['week', 'Week total']], ui.pastMode)}</div>
-    <div class="table-wrap"><div class="stat-boards" style="--cols:${shares}">${table(A, B)}${table(B, A)}</div></div>
+    <div class="table-wrap"><div class="stat-boards pw-boards" style="--cols:${shares}">${table(A, B)}${table(B, A)}</div></div>
     <p class="muted small" style="margin:8px 0 0">${per ? 'Green: better than his averages before the week; red: worse.' : 'Green: more than his averages projected; red: less (missed games count).'} Muted rows: the bench, which didn't count.</p>
   </div>`;
 
