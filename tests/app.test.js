@@ -235,6 +235,17 @@ test('a finished week: its real result, and the bench swaps that would have chan
   const pts = p => (G.players.get(fidNba(p.fid)) || []).filter(r => days.has(r[0])).reduce((t, r) => t + app.gameLine(G, r).pts, 0);
   const w = A.swaps.find(x => pts(x.inP) !== pts(x.outP));
   assert.equal(w.tot.pts, A.tot.pts - pts(w.outP) + pts(w.inP));
+  // each player against his averages going in (week 1: no one has 3 games before it, so his season's): his team's games
+  // while he started, the ones he missed, and a projection that adds up to the team's
+  app.weekVsAverages({ ...L, fidNba }, G2, weeks, period, [A, B]);
+  for (const x of A.starters) {
+    assert.ok(x.sched >= (x.line.gp1 || 0) && x.missed.length === x.sched - (x.line.gp1 || 0), `${x.p.name}: ${x.line.gp1} of ${x.sched}, missed ${x.missed}`);
+    assert.equal(x.avgGames, 0);
+  }
+  for (const x of [...A.bench, ...B.bench]) assert.equal(x.missed.length, 0, `${x.p.name}: a bench player's missed games cost nothing`);
+  const withProj = A.starters.filter(x => x.proj);
+  assert.ok(withProj.length && Math.abs(A.proj.tot.pts - withProj.reduce((t, x) => t + x.proj.pts, 0)) < 1e-6);
+  assert.equal(A.proj.games, withProj.reduce((t, x) => t + x.sched, 0));
   // the card: for a team with a winning swap, it says so
   useTeam(me);
   const ui = app.get('ui');
@@ -243,12 +254,15 @@ test('a finished week: its real result, and the bench swaps that would have chan
     app.pastWeekCard(app.weekStart()); // starts loading the week's lineups and box scores
     await new Promise(r => setTimeout(r, 10));
     const html = app.pastWeekCard(app.weekStart());
-    assert.ok(!html.includes('How week 1 ended') && html.includes('class="pw-final"') && html.includes('class="alert good"') && html.includes('Would have won'), html.slice(0, 400)); // (no heading: straight to the final)
-    // the page shows the week as it was played, with nothing projected
+    assert.ok(!html.includes('How week 1 ended') && html.includes('class="pw-result"') && html.includes('class="alert good"') && html.includes('Would have won'), html.slice(0, 400)); // (no heading: straight to the final)
+    // the page shows the week as it was played: nothing to plan, only what was projected going in beside what happened
     const page = app.viewWeek();
-    assert.ok(page.includes('Week total') && !/project|win chance|to win the week|Plan next week/i.test(page), 'a finished week, not a projection');
+    assert.ok(page.includes('Week total') && page.includes('Projected going in') && !/Suggested changes|Pickup ideas|Lineup for|to win the week|Plan next week/i.test(page), 'a finished week, not a projection');
     assert.equal((page.match(/<tr class="bench">/g) || []).length, A.bench.length + B.bench.length, "both teams' benches that week");
-  } finally { ui.weekShift = 0; }
+    assert.ok(page.includes('Against their averages') && page.includes('class="on" data-action="past-mode" data-mode="week"'), 'Week total first, and who beat his averages');
+    ui.pastMode = 'game';
+    assert.ok(app.pastWeekCard(app.weekStart()).includes('class="on" data-action="past-mode" data-mode="game"'), 'Per game');
+  } finally { ui.weekShift = 0; ui.pastMode = 'week'; }
   assert.equal(app.pastWeekCard(app.weekStart()), '', 'not for a week still being played');
 });
 

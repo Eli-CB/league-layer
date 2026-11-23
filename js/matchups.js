@@ -624,7 +624,8 @@ function pickupsCard(ctx) { // (ctx: the week as the page has just worked it out
     </div>`;
 }
 
-// ----- A finished week: the final score, and bench swaps that would have changed it -----
+// ----- A finished week: the final score and the projection going in, each team's lineup against its players' averages,
+// who beat them and who missed games, and bench swaps that would have changed it -----
 // The weekly rosters and box scores load once (shared with Season totals and Awards); each matchup's replay is kept
 const pastWeeks = {}; // league id -> { state, weeks, G } ; replays: "league|period|team" -> result
 const pastReplays = new Map();
@@ -644,7 +645,43 @@ function pastWeeksOf(L, period) {
   }
   return P;
 }
-function pastWeekCard(start, top = '') {
+// The finished week's Lineups board: Per game or Week total (kept on the device, apart from this week's board)
+const PAST_KEY = 'league-layer-past-board';
+ui.pastMode = store.get(PAST_KEY) === 'game' ? 'game' : 'week';
+
+// How far apart rostered players' values a game are: VAL's shading on a finished week, as BASE's spreads shade a stat
+let valSpreadMemo = { base: null, w: null, sd: 0.15 };
+function valSpread() {
+  const W = winWeights();
+  if (valSpreadMemo.base !== BASE || valSpreadMemo.w !== W) {
+    const vs = (BASE.stats || []).map(s => sum(Object.values(catWins(s)))), m = sum(vs) / (vs.length || 1);
+    const sd = vs.length >= 20 ? Math.sqrt(sum(vs.map(v => (v - m) ** 2)) / vs.length) : 0;
+    valSpreadMemo = { base: BASE, w: W, sd: sd || 0.15 };
+  }
+  return valSpreadMemo.sd;
+}
+const scaleLine = (line, k) => Object.fromEntries(Object.entries(line).map(([s, v]) => [s, typeof v === 'number' ? v * k : v]));
+const PAST_VAL = { key: 'val', val: true }; // (the board's last column: VAL, or fantasy points)
+// How a player's finished week compares with his averages going in (weekVsAverages), one column, in the spreads this week's
+// board shades by (contribZ): per game, the games he played against his average game (how well he played); week total, his
+// week against his projection, avg × his team's games (a missed game counts). NaN: nothing to compare
+function pastZ(x, c, per) {
+  const g = x.line.gp1 || 0;
+  if (!x.avg || (per && !g)) return NaN;
+  const A = x.line, E = per ? scaleLine(x.avg, g) : x.proj, n = per ? g : WEEK_GAMES;
+  if (c.val) return isPoints() ? (lineFp(A) - lineFp(E)) / (fpBase()[1] * n) : (lineValue(A) - lineValue(E)) / (valSpread() * n);
+  if (c.shot) return (shotFp(A, c) - shotFp(E, c)) / (fpBase(shotPoints(c))[1] * n);
+  if (!BASE[c.key]) return NaN;
+  let d;
+  if (c.pct) { // makes over his own rate on the shots he took, in both views (a missed game takes none)
+    const att = lineStat(A, c.att), at0 = lineStat(x.avg, c.att);
+    if (!att || !at0) return NaN;
+    d = lineStat(A, c.made) - lineStat(x.avg, c.made) / at0 * att;
+  } else d = lineStat(A, c.key) - lineStat(E, c.key);
+  return (c.neg ? -d : d) / (BASE[c.key][1] * n);
+}
+
+function pastWeekCard(start, top = '', nav = top) {
   const L = fxLeague(), period = fxPeriodFor(start);
   if (!L || !period || !hasWeekLineups(L) || !periodOver(period)) return '';
   const leftId = ui.viewing ? ui.viewA : state.fxTeam;
@@ -657,8 +694,9 @@ function pastWeekCard(start, top = '') {
   if (P.state === 'error') return note(`Couldn't load the week's lineups (${esc(P.msg)}).`);
   const key = `${L.id}|${period.n}|${leftId}`;
   if (!pastReplays.has(key)) {
-    const R = P.weeks && P.G ? benchSwaps({ ...L, fidNba: currentFidNba() }, P.G, P.weeks, period, [leftId, pair[0] === leftId ? pair[1] : pair[0]]) : null;
-    pastReplays.set(key, R);
+    const Lx = { ...L, fidNba: currentFidNba() };
+    const R = P.weeks && P.G ? benchSwaps(Lx, P.G, P.weeks, period, [leftId, pair[0] === leftId ? pair[1] : pair[0]]) : null;
+    pastReplays.set(key, R && weekVsAverages(Lx, P.G, P.weeks, period, R));
   }
   const R = pastReplays.get(key);
   if (!R) return note(`${sourceName(L)} hasn't shared this week's lineups.`);
@@ -695,34 +733,142 @@ function pastWeekCard(start, top = '') {
       ${top.length ? `<ul class="alerts">${top.map(item).join('')}</ul>` : `<p class="muted small" style="margin:0 0 4px">No bench swap would have done better.</p>`}`;
   };
 
-  // each team's lineup that week: starters' games (what counted), the week total, then the bench's games
-  // (a points league's shooting pair is one "8/17 FG": lineCats)
-  // (the FP column two shares: a week's total, "≈ 160.5")
-  const cols = lineCats().filter(c => !c.fp), shares = colShares(cols) + (pts ? 2 : 0);
-  const cell = (s, c, cls = '') => {
-    if (c.shot) return `<td class="sc${cls}">${fmt(lineStat(s, c.made), 0)}/${fmt(lineStat(s, c.att), 0)}</td>`;
-    if (c.pct) return `<td class="sc${cls}" title="${s[c.att] ? `${s[c.made] || 0}/${s[c.att]}` : 'no attempts'}">${s[c.att] ? fmtPct(s[c.made] / s[c.att]) : '—'}</td>`;
-    return `<td class="sc${cls}">${fmt(lineStat(s, c.key), 0)}</td>`;
+  // The projection going in: each team's starters' averages before the week over their games that week (weekVsAverages),
+  // as this week's board projects one: each category's chance, and the week's
+  const projOk = A.proj.games > 0 && B.proj.games > 0;
+  const pc = projOk ? compareCats(A.proj, B.proj) : [], odds = projOk ? matchOdds(pc) : null;
+  const valOf = line => lineValue(line);
+  const vFmt = v => (pts ? fmt(v, 1) : fmtValue(v, 2));
+  const unitWord = pts ? 'FP' : 'VAL';
+
+  // The scoreboard: each team's final and who won, the week's picker under it as on this week's, the projection going in
+  const resWord = RES_VERB[A.res] || verb(outcome(final)), resCls = resWord === 'won' ? 'good' : resWord === 'lost' ? 'bad' : '';
+  const big = me => `${est ? '≈' : ''}${pts ? fmtFp(me ? final.me : final.opp) : me ? final.me : final.opp}`;
+  const projTxt = !odds ? '' : pts ? `${fmt(odds.expected, 0)}–${fmt(odds.opp, 0)}` : `${fmt(odds.expected, 1)}–${fmt(odds.n - odds.expected, 1)}`;
+  const scoreboard = `<div class="card scoreboard pw-board">
+    <div class="sb-main">
+      <div class="sb-side"><div class="sb-label">${name(A.tid)}</div><div class="sb-score">${big(true)}</div></div>
+      <div class="pw-result"><span class="badge ${resCls}">${resWord[0].toUpperCase() + resWord.slice(1)}</span>${!pts && final.ties ? `<span class="muted small">${final.ties} tied</span>` : ''}</div>
+      <div class="sb-side right"><div class="sb-label">${name(B.tid)}</div><div class="sb-score">${big(false)}</div></div>
+      ${nav}
+    </div>
+    ${odds ? `<div class="sb-foot"><span class="muted">Projected going in</span> <span class="sb-foot-n"><b>${projTxt}</b> ${pts ? 'points' : 'cats'} · <b>${pctTxt(odds.win)}</b> to win ${infoBtn('pastProj')}</span></div>` : ''}
+  </div>`;
+
+  // Each team's lineup that week: starters' games (what counted), the week's total and its projection, then the bench's
+  // games. Per game or Week total, each player shaded by how it went against his averages going in (pastZ); his games
+  // "3/4" where he missed some of his team's while starting. (A points league's shooting pair is one "8/17 FG": lineCats)
+  const per = ui.pastMode === 'game' && !SPORT.oneNumber; // (football: a week is one game)
+  const cols = [...lineCats().filter(c => !c.fp), PAST_VAL];
+  const share = c => (c.shot ? 2.5 : c.val ? (pts ? 2 : 1.5) : 1);
+  const shares = sum(cols.map(share));
+  const width = c => (share(c) !== 1 ? ` style="width:${(63 * share(c) / shares).toFixed(1)}%"` : '');
+  const valLabel = pts ? (per ? 'FP/G' : 'FP') : 'VAL';
+  const long = fxTime(period.endAt) - fxTime(period.lock) > 8 * 864e5; // (a period longer than a week: dates, not days)
+  const dayName = d => (long ? fmtMonthDay(d) : new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' }));
+  const gamesWord = n => `${fmt(n, 0)} game${n === 1 ? '' : 's'}`;
+  const pctShown = (c, v, d) => (c.rate ? fmt(v, 2) : fmtPct(v, d));
+  // a number as a cell shows it: k, the share of the line shown (per game: 1 ÷ games); kind: 'row' a player's, 'avg' his
+  // averages (and a tip's projection), 'tot' a week's real total, 'proj' its projection (whole numbers, as Projected week's)
+  const num = (s, c, k, kind) => {
+    const d = kind === 'avg' || (kind === 'row' && per) ? 1 : 0;
+    if (c.val) { const v = valOf(s) * k; return !pts ? fmtValue(v, 2) : d || kind === 'proj' ? fmt(v, d) : fmtFp(v); }
+    if (c.shot) return shotVol(lineStat(s, c.made) * k, lineStat(s, c.att) * k, d);
+    if (c.pct) return lineStat(s, c.att) ? pctShown(c, lineStat(s, c.made) / lineStat(s, c.att), kind === 'row' || kind === 'avg' ? 2 : 3) : '—';
+    return fmt(lineStat(s, c.key) * k, d && c.dec ? c.dec : d);
   };
-  const row = (x, bench) => `<tr class="${bench ? 'bench' : ''}"><td class="st-name"><div class="bplayer">${headshot(x.p, hsPx(30, 24))}<div class="bmain"><div class="bname">${playerName(x.p)}</div></div></div></td>
-    <td class="num st-g">${x.line.gp1 || 0}</td>${cols.map(c => cell(x.line, c)).join('')}${pts ? `<td class="sc">${fmtFp(lineFp(x.line))}</td>` : ''}</tr>`;
+  // the words behind a player's cell: what he did, against his averages going in (per game) or his projection (week total)
+  const was = x => (x.avgGames ? 'before the week' : 'his season average');
+  const tip = (x, c) => {
+    const g = x.line.gp1 || 0, label = c.val ? valLabel : c.label;
+    if (!g && per) return `${label}: no games`;
+    const avgTxt = x.avg ? num(x.avg, c, 1, 'avg') : null;
+    if (c.pct) return `${label}: ${lineStat(x.line, c.att) ? `${pctShown(c, lineStat(x.line, c.made) / lineStat(x.line, c.att), 3)} (${fmt(lineStat(x.line, c.made), 0)}/${fmt(lineStat(x.line, c.att), 0)})` : 'no attempts'}${x.avg && lineStat(x.avg, c.att) ? ` · ${pctShown(c, lineStat(x.avg, c.made) / lineStat(x.avg, c.att), 3)} ${was(x)}` : ''}`;
+    if (per) return `${label}: ${num(x.line, c, 1 / g, 'avg')} a game in ${gamesWord(g)}${avgTxt ? ` · ${avgTxt} ${was(x)}` : ''}`;
+    return `${label}: ${num(x.line, c, 1, 'tot')} in ${gamesWord(g)}${x.proj ? ` · ${num(x.proj, c, 1, 'avg')} projected (${avgTxt} a game × ${gamesWord(x.sched)})` : ''}`;
+  };
+  const gCell = (x, bench) => {
+    const g = x.line.gp1 || 0, miss = !bench && x.missed.length;
+    const t = miss ? `Played ${g} of his team's ${x.sched} games while starting: missed ${x.missed.map(dayName).join(', ')}` : bench ? `${gamesWord(g)} on the bench` : `${gamesWord(g)} while starting`;
+    return `<td class="num st-g${miss ? ' pw-miss' : ''}" title="${esc(t)}">${g}${miss ? `<span class="pw-of">/${x.sched}</span>` : ''}</td>`;
+  };
+  const row = (x, bench) => {
+    const g = x.line.gp1 || 0, k = per ? (g ? 1 / g : 0) : 1;
+    const cells = cols.map(c => {
+      const none = per && !g, z = none ? NaN : pastZ(x, c, per);
+      return `<td class="sc" style="${shade(z)}" title="${esc(tip(x, c))}">${none ? '—' : num(x.line, c, k, 'row')}</td>`;
+    }).join('');
+    return `<tr class="${bench ? 'bench' : ''}"><td class="st-name"><div class="bplayer">${headshot(x.p, hsPx(30, 24))}<div class="bmain"><div class="bname">${playerName(x.p)}</div></div></div></td>${gCell(x, bench)}${cells}</tr>`;
+  };
   const table = (S, O) => {
-    const sc = weekScore(S.tot, O.tot);
+    const sc = weekScore(S.tot, O.tot), mine = S === A;
     const lead = i => (sc.lead[i] > 0 ? ' pos-good' : sc.lead[i] < 0 ? ' pos-bad' : '');
-    const byG = list => [...list].sort((a, b) => (b.line.gp1 || 0) - (a.line.gp1 || 0) || lineFp(b.line) - lineFp(a.line));
+    const byG = list => [...list].sort((a, b) => (b.line.gp1 || 0) - (a.line.gp1 || 0) || valOf(b.line) - valOf(a.line));
+    // the week's real total (green won, red lost); the projection going in, shaded by its chance (as this week's Projected week)
+    const totCell = c => {
+      if (c.val) return `<td class="sc${pts ? lead(0) : ''}" title="${esc(`${unitWord} of the starters' games${pts && S.fix ? `, with the rest of Sleeper's score` : ''}`)}">${est && pts ? '≈ ' : ''}${num(S.tot, c, 1, 'tot')}</td>`;
+      const j = pts ? -1 : cats.findIndex(x => x.key === c.key);
+      return `<td class="sc${j >= 0 ? lead(j) : ''}">${num(S.tot, c, 1, 'tot')}</td>`;
+    };
+    const projCell = c => {
+      const x = c.val ? (pts ? pc.find(y => y.fp) : null) : pc.find(y => y.key === c.key);
+      const p = c.shot ? shotChance(c, mine ? A.proj : B.proj, mine ? B.proj : A.proj) : x ? (mine ? x.p : 1 - x.p) : NaN;
+      return `<td class="sc" style="${Number.isFinite(p) ? shadeProb(p) : ''}"${Number.isFinite(p) ? ` title="${pctTxt(p)} to win it, going in"` : ''}>${num(S.proj.tot, c, 1, 'proj')}</td>`;
+    };
     return `<table class="stab pw-table">
-      <thead><tr><th class="st-name">${name(S.tid)}</th><th class="num st-g">G</th>${cols.map(c => `<th class="sc"${colWidth(c, shares)}>${c.label}</th>`).join('')}${pts ? `<th class="sc" style="width:${(63 * 2 / shares).toFixed(1)}%">FP</th>` : ''}</tr></thead>
+      <thead><tr><th class="st-name">${name(S.tid)}</th><th class="num st-g">G</th>${cols.map(c => `<th class="sc"${width(c)}>${c.val ? valLabel : c.label}</th>`).join('')}</tr></thead>
       <tbody>${byG(S.starters).map(x => row(x, false)).join('')}</tbody>
-      <tbody class="pw-total">${S.fix && Math.abs(S.fix) >= 0.05 ? `<tr class="bench"><td class="st-name" title="Sleeper's own score for the week, less these lineups' games: Lock-In counts a lineup spot's game day by day, and these are the week's final lineups">Rest of Sleeper's score</td><td class="num st-g"></td>${cols.map(() => '<td class="sc"></td>').join('')}<td class="sc">${signed(S.fix, 1)}</td></tr>` : ''}
-        <tr><td class="st-name"><b>Week total</b></td><td class="num st-g"><b>${S.tot.gp1 || 0}</b></td>${cols.map((c, i) => cell(S.tot, c, pts ? '' : lead(i))).join('')}${pts ? `<td class="sc${lead(0)}">${est ? '≈ ' : ''}${fmtFp(lineFp(S.tot))}</td>` : ''}</tr></tbody>
+      <tbody class="pw-total">${S.fix && Math.abs(S.fix) >= 0.05 ? `<tr class="bench"><td class="st-name" title="Sleeper's own score for the week, less these lineups' games: Lock-In counts a lineup spot's game day by day, and these are the week's final lineups">Rest of Sleeper's score</td><td class="num st-g"></td>${cols.map(c => `<td class="sc">${c.val ? signed(S.fix, 1) : ''}</td>`).join('')}</tr>` : ''}
+        <tr><td class="st-name"><b>Week total</b></td><td class="num st-g"><b>${S.tot.gp1 || 0}</b></td>${cols.map(totCell).join('')}</tr>
+        ${projOk ? `<tr class="pw-proj"><td class="st-name" title="Each starter's averages before the week, over his team's games while he started">Projected</td><td class="num st-g">${fmt(S.proj.games, 0)}</td>${cols.map(projCell).join('')}</tr>` : ''}</tbody>
       ${S.bench.length ? `<tbody>${byG(S.bench).map(x => row(x, true)).join('')}</tbody>` : ''}
     </table>`;
   };
-  return `<div class="card">${head}
-    <p class="pw-final"><b>${name(A.tid)}</b> ${scoreTxt(final)} <b>${name(B.tid)}</b></p>
+  const board = `<div class="card board-card">
+    <div class="card-head"><h2>Lineups ${infoBtn('pastShade')}</h2>${SPORT.oneNumber ? '' : segBtns('Lineup view', 'past-mode', 'mode', [['game', 'Per game'], ['week', 'Week total']], ui.pastMode)}</div>
     <div class="table-wrap"><div class="stat-boards" style="--cols:${shares}">${table(A, B)}${table(B, A)}</div></div>
-    <p class="muted small" style="margin:8px 0 0">Bench rows (muted) are games that didn't count.</p>
-  </div>
+    <p class="muted small" style="margin:8px 0 0">${per ? 'Green: better than his averages before the week; red: worse.' : 'Green: more than his averages projected; red: less (missed games count).'} Muted rows: the bench, which didn't count.</p>
+  </div>`;
+
+  // Who beat his averages and who didn't, each team's starters: what his games added over his average game's worth (how he
+  // played), and what the games he missed cost (his average game each); together, his week against his projection
+  const played = x => (x.avg ? valOf(x.line) - valOf(x.avg) * (x.line.gp1 || 0) : 0);
+  const missCost = x => (x.avg ? -valOf(x.avg) * x.missed.length : 0);
+  const sig = v => signed(v, pts ? 1 : 2), cls = v => (v > 0 ? 'pos-good' : v < 0 ? 'pos-bad' : 'muted');
+  // the two categories that moved most his way, a game against his average, "PTS 28.5 (19.8)" (points: fantasy points)
+  const why = (x, up) => {
+    const g = x.line.gp1 || 0;
+    if (!g) return '';
+    if (pts) return `${fmt(lineFp(x.line) / g, 1)} FP a game (${fmt(lineFp(x.avg), 1)})`;
+    const a = catWins(x.line), e = catWins(scaleLine(x.avg, g));
+    return scoreCats().filter(c => !c.fp && a[c.key] != null).map(c => ({ c, d: a[c.key] - (e[c.key] || 0) }))
+      .filter(y => (up ? y.d > 0 : y.d < 0)).sort((p, q) => Math.abs(q.d) - Math.abs(p.d)).slice(0, 2)
+      .map(({ c }) => `${esc(c.label)} ${num(x.line, c, 1 / g, 'avg')} (${num(x.avg, c, 1, 'avg')})`).join(' · ');
+  };
+  const ouRow = (x, v, sub) => `<li class="pw-ou-row">${headshot(x.p, 28)}<span class="grow"><span class="bname">${playerName(x.p)} <span class="muted small">${x.line.gp1 || 0} G</span></span>${sub ? `<span class="small muted">${sub}</span>` : ''}</span><b class="${cls(v)}">${sig(v)}</b></li>`;
+  const ouTeam = S => {
+    const list = S.starters.filter(x => x.avg);
+    const ups = sortDesc(list.filter(x => played(x) > 0.005), played).slice(0, 3);
+    const downs = sortDesc(list.filter(x => played(x) < -0.005), x => -played(x)).slice(0, 3);
+    const outs = sortDesc(list.filter(x => x.missed.length), x => -missCost(x));
+    const how = sum(list.map(played)), lost = sum(list.map(missCost)), n = sum(list.map(x => x.missed.length));
+    const sec = (title, rows) => (rows ? `<h4 class="pw-ou-h">${title}</h4><ul class="pw-ou-list">${rows}</ul>` : '');
+    return `<section class="pw-ou-team">
+      <h3 class="sub">${name(S.tid)}</h3>
+      ${projOk ? `<p class="small pw-ou-sum">${vFmt(valOf(S.tot) - (S.fix || 0))} ${unitWord}, ${vFmt(valOf(S.proj.tot))} projected: <b class="${cls(how)}">${sig(how)}</b> from how they played${n ? `, <b class="pos-bad">${sig(lost)}</b> from ${gamesWord(n)} missed` : ''}</p>` : ''}
+      ${sec('Better than usual', ups.map(x => ouRow(x, played(x), why(x, true))).join(''))}
+      ${sec('Worse than usual', downs.map(x => ouRow(x, played(x), why(x, false))).join(''))}
+      ${sec('Missed games', outs.map(x => ouRow(x, missCost(x), `Missed ${x.missed.length} of ${x.sched}: ${x.missed.map(dayName).join(', ')}`)).join(''))}
+      ${!ups.length && !downs.length && !outs.length ? '<p class="muted small" style="margin:0">Every starter played to his averages.</p>' : ''}
+    </section>`;
+  };
+  const overUnder = `<div class="card"><div class="card-head"><h2>Against their averages ${infoBtn('pastOver')}</h2><span class="muted small">starters, in ${unitWord}</span></div>
+    <div class="pw-ou">${ouTeam(A)}${ouTeam(B)}</div>
+  </div>`;
+
+  return `${scoreboard}
+  ${board}
+  ${overUnder}
   <div class="card"><div class="card-head"><h2>Bench swaps ${infoBtn('benchswaps')}</h2><span class="muted small">one bench player for one starter</span></div>
     ${est ? `<p class="muted small" style="margin:0">≈ estimated: Sleeper doesn't share this week's scores, so no bench swaps. ${RES_VERB[A.res] ? `${name(A.tid)} ${RES_VERB[A.res]}, as Sleeper has it.` : ''} ${infoBtn('slpScores')}</p>` : `${side(A, B)}${side(B, A)}`}
   </div>`;
@@ -795,7 +941,7 @@ function viewWeek() {
       : `That week is over, and ${ui.viewing ? 'this team' : 'you'} had no matchup in it.`;
     return `<div class="card">${top}<p class="muted small" style="margin:0">${msg}</p></div>`;
   };
-  const past = over ? pastWeekCard(start, top) || pastNote() : '';
+  const past = over ? pastWeekCard(start, top, weekNav(false)) || pastNote() : '';
   const unit = isPoints() ? 'points' : 'cats';
   const when = ui.weekShift === 1 ? 'next week' : ui.weekShift ? 'that week' : 'this week';
   const real = hasOpp ? null : fxOpponentFor(start); // (no opponent loaded: who the league says you play)

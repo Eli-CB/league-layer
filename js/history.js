@@ -417,9 +417,10 @@ function startersMissed(L, G) {
 // Sleeper basketball (its lineups can't give Lock-In's real scores: slpWeekPts, sleeper.js) also: res, Sleeper's own result
 // ('W', 'L', 'T'); exact, whether its real score is known, and then fix, what it adds to the lineups' games (as 'bonus'
 // points on tot and on every swap's, so each says the real score and a swap changes it by the two players' games)
+// The lineup periods that start within a matchup period (by time: the next one starts the evening this one ends)
+const periodRps = (weeks, period) => weeks.filter(w => fxTime(w.start) >= fxTime(period.lock) && fxTime(w.start) < fxTime(period.endAt));
 function benchSwaps(L, G, weeks, period, tids) {
-  // the lineup periods that start within it (by time: the next one starts the evening this one ends)
-  const rps = weeks.filter(w => fxTime(w.start) >= fxTime(period.lock) && fxTime(w.start) < fxTime(period.endAt));
+  const rps = periodRps(weeks, period);
   if (!rps.length) return null;
   const known = new Map();
   const playerOf = f => {
@@ -482,6 +483,57 @@ function benchSwaps(L, G, weeks, period, tids) {
 }
 // Whether benchSwaps' scores for these teams (R) are estimates: Sleeper basketball, a team's real score not yet seen
 const weekEstimated = R => R.some(x => x.res !== undefined && !x.exact);
+
+// A finished week against each player's averages going in (Plan Ahead's past week; nothing saved, all from the box scores):
+// to each of benchSwaps' { p, line } (R) it adds sched, his team's games while he started (a bench player's: the games he
+// played), missed, the dates of those he didn't play, avg, his per-game line from this season's games before the week (avgGames of
+// them; with fewer than 3, his season's averages as the site has them now, avgGames 0), and proj, avg × sched. To each team:
+// proj, its starters' projected week with its spread ({ tot, vr, left, games }, as projectSide's, for compareCats).
+// A goalie misses no games (a backup sits most of them): his games are the ones he played. One-game leagues: one game a spot.
+function weekVsAverages(L, G, weeks, period, R) {
+  const rps = periodRps(weeks, period);
+  const days = new Map(rps.map(rp => [rp, periodDays(G, rp)]));
+  const first = Math.min(...[...days.values()].flatMap(s => [...s]));
+  const add = (tot, line, k = 1) => { for (const [s, v] of Object.entries(line)) if (typeof v === 'number') tot[s] = (tot[s] || 0) + k * v; return tot; };
+  for (const S of R) {
+    const tot = {}, vr = {};
+    let games = 0;
+    for (const [list, on] of [[S.starters, true], [S.bench, false]]) {
+      for (const x of list) {
+        const nba = L.fidNba(x.p.fid), rows = (nba && G.players.get(nba)) || [], played = new Set(rows.map(r => r[0]));
+        const g = x.line.gp1 || 0;
+        let sched = 0, missed = [];
+        for (const rp of rps) {
+          const o = rp.owner.get(x.p.fid);
+          if (!o || o.tid !== S.tid || !!o.on !== on || o.taxi) continue;
+          for (const day of days.get(rp)) {
+            const team = teamOn(G, rows, day) || x.p.team;
+            if (!(team && G.days.has(team) && G.days.get(team).has(day))) continue;
+            sched++;
+            if (!played.has(day)) missed.push(addDays(G.start, day));
+          }
+        }
+        if (!on || isGoalie(nbaById.get(nba))) { sched = g; missed = []; } // (a bench player's missed games cost nothing)
+        if (L.oneGame) { sched = Math.min(sched, 1); if (g) missed = []; }
+        sched = Math.max(sched, g);
+        const before = rows.filter(r => r[0] < first);
+        let avg = null;
+        if (before.length >= 3) { avg = {}; for (const r of before) add(avg, gameLine(G, r), 1 / before.length); }
+        else if (x.p.gp) avg = { ...perGame(x.p).m, gp1: 1 };
+        Object.assign(x, { sched, missed, avg, avgGames: avg && before.length >= 3 ? before.length : 0, proj: avg ? add({}, avg, sched) : null });
+        if (!on || !avg) continue;
+        add(tot, x.proj);
+        games += sched;
+        // (football: a week's points land as far from a projection as footballProj says, by position; one number, fpTotals)
+        if (SPORT.oneNumber) { vr.fpsd = (vr.fpsd || 0) + sched * ((SPORT.projSd || {})[(x.p.pos || [])[0]] || 6) ** 2; continue; }
+        const sd = perGame(x.p).sd;
+        for (const k of COUNT_KEYS) vr[k] = (vr[k] || 0) + sched * (sd[k] || 0) ** 2;
+      }
+    }
+    S.proj = { tot, vr, left: tot, games };
+  }
+  return R;
+}
 
 // One team's week against another's: categories won, lost and tied (or fantasy points), and who led each
 function weekScore(a, b) {

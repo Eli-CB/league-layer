@@ -10,6 +10,8 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   night a week ends, not after the daily job, ESPN's finals of the week's unsaved days go into `BOX` (`fillWeekFromEspn`, live.js;
   from the Recap tab, once a minute at most; basketball only: ESPN's hockey lines lack stats). Every basketball final the live update
   reads goes into `BOX` the same way (`readBoxes` -> `addBoxGame`, `boxAdded`), so Plan Ahead's dots and projection count a night as it ends.
+- A finished matchup replayed: `benchSwaps` (each team's lineup and swaps; `periodRps`, its lineup periods), then `weekVsAverages`
+  (each player against his averages before the week, missed games, the projection going in): Plan Ahead's past week (docs/plan-ahead.md).
 
 ## Rules settled with the owner (keep them)
 - Awards (current season "so far" + past seasons) all come from weekly starters (ACTIVE status) and game logs:

@@ -2,11 +2,22 @@
 
 Part of the repo's notes: CLAUDE.md says which file covers what and how to keep them current. Read this before changing js/matchups.js.
 
-- matchups: the Plan Ahead tab (`#week`, was Matchups; opens on next period, else the week picked: `planAheadWeek`, `ui.weekChosen`), schedule dots (a game on now: `.dots i.live`, flashing green while he's in it, the owner's ask, never red; a flashing ring until he checks in; listed Out, the red ring; the week underway follows tonight's games, `weekTabLive` in live.js), stat tables, tooltips. The opponent's injured reserve (`state.opp.il`, `oppIlIds`/`oppActive` in nba.js) sits in the board's IR row (tag "IR"; `IL` inside the code), never on their bench or in their projection. A finished week (its last day before today) never shows a projection, the owner's rule: its real
-  result and lineups, plus bench swaps that would have changed it (`pastWeekCard`; `benchSwaps`/`weekScore` in history),
-  else one line saying why not (`pastNote` in `viewWeek`: the last night's box scores not in yet, with `fillWeekFromEspn` asked meanwhile; no matchup; a league whose past lineups aren't read: ESPN football, Yahoo)
+- matchups: the Plan Ahead tab (`#week`, was Matchups; opens on next period, else the week picked: `planAheadWeek`, `ui.weekChosen`), schedule dots (a game on now: `.dots i.live`, flashing green while he's in it, the owner's ask, never red; a flashing ring until he checks in; listed Out, the red ring; the week underway follows tonight's games, `weekTabLive` in live.js), stat tables, tooltips. The opponent's injured reserve (`state.opp.il`, `oppIlIds`/`oppActive` in nba.js) sits in the board's IR row (tag "IR"; `IL` inside the code), never on their bench or in their projection. A finished week (its last day before today) shows nothing to plan (no suggestions, pickups or
+  live odds): its real result and lineups, bench swaps that would have changed it (`pastWeekCard`; `benchSwaps`/`weekScore`
+  in history), and what was projected going in beside what happened (below), else one line saying why not (`pastNote` in
+  `viewWeek`: the last night's box scores not in yet, with `fillWeekFromEspn` asked meanwhile; no matchup; a league whose past lineups aren't read: ESPN football, Yahoo)
 
 ## Rules settled with the owner (keep them)
+- A finished week, the owner's ask (Nov 23, 2026; it replaced "never a projection"): a scoreboard (the final, Won/Lost in the
+  gauge's place, "Projected going in" under it), a Lineups board with Per game / Week total (`ui.pastMode`, its own stored
+  choice) and a VAL column (FP in points leagues), and "Against their averages" (better / worse than usual, missed games).
+  All from data already loaded, nothing saved (the owner weighs anything that costs requests): `weekVsAverages` (history.js)
+  gives each player his team's games while starting, the days he missed, his averages from this season's games before the
+  week (fewer than 3: his season's now) and their projection; the team's adds up for `compareCats`. Per game shades how he
+  played against those averages, Week total against the projection, so missed games count (`pastZ`); a bench player is
+  measured on the games he played. It isn't the projection the site showed then (who was listed Out isn't known): saving
+  that, or keeping football's past Sleeper projections in the daily file, would be new data, the owner's call.
+  Its players' FG%/FT% take two places like this week's board; the Week total and Projected rows three (they decide the category).
 - Weekly lineups lock when the week starts, so the lineup people are setting is next week's: Fantrax leagues with weekly
   lineups also load next period's rosters (`L.nextRosters`, one more request; the daily job too), and the Matchups tab
   shows them on next week (`withViewedTeam(viewWeek, true)`, `nextRosterPeriod()`, `fxTeamSide(tid, period)`). Every

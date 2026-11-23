@@ -1073,9 +1073,29 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: .85em; backgro
 .fx-vs .stepper .ctx-team { max-width: 300px; }
 .week-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .week-stack > .card + .card { margin-top: 0; }
-.pw-final { margin: 0 0 10px; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
-.pw-table .pw-total td { border-top: 2px solid var(--border); font-weight: 700; }
+/* a finished week: its scoreboard (who won in the gauge's place), its Lineups board, Above and below averages */
+.pw-result { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 10px; }
+.pw-result .badge { font-size: .85rem; padding: 3px 12px; }
+.pw-board .sb-side.right .sb-label { overflow: hidden; } /* (a team's name, not the live board's opponent menu: cut short) */
+.pw-board .sb-label .team-link { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pw-board .sb-side.right .team-link { margin-left: auto; }
+.pw-table .pw-total tr:first-child td { border-top: 2px solid var(--border); }
+.pw-table .pw-total td { font-weight: 700; }
+.pw-table .pw-total tr.pw-proj td { font-weight: 400; }
+.pw-table tr.pw-proj td.st-name, .pw-table tr.pw-proj td.st-g { color: var(--muted); }
 .pw-table tr.bench td.sc, .pw-table tr.bench td.st-g { color: var(--muted); }
+.stab td.pw-miss { color: var(--bad); font-weight: 600; }
+.pw-ou { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 28px; }
+.pw-ou-sum { margin: 0 0 4px; font-variant-numeric: tabular-nums; }
+.pw-ou-h { margin: 12px 0 2px; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.pw-ou-list { list-style: none; margin: 0; padding: 0; }
+.pw-ou-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.pw-ou-row:last-child { border-bottom: 0; }
+.pw-ou-row .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pw-ou-row .bname { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.pw-ou-row .pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.pw-ou-row > b { flex: none; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) { .pw-ou { grid-template-columns: minmax(0, 1fr); } }
 .board { table-layout: fixed; min-width: 340px; }
 .board col.c-slot { width: 58px; }
 .board thead th { font-size: .8rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; }

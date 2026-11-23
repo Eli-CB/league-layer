@@ -431,6 +431,11 @@ const actions = {
     store.set(BOARD_KEY, ui.boardMode);
     render();
   },
+  'past-mode'(el) { // a finished week's Lineups: Per game or Week total
+    ui.pastMode = el.dataset.mode;
+    store.set(PAST_KEY, ui.pastMode);
+    render();
+  },
   // the next or previous week in the picker (a two-week matchup is one step)
   'week-shift'(el) {
     const s = weekShifts(), next = +el.dataset.step > 0 ? s.find(x => x > ui.weekShift) : s.filter(x => x < ui.weekShift).pop();
