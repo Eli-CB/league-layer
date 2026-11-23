@@ -341,7 +341,7 @@ const actions = {
   },
   // the sandbox Live's Today / Yesterday / Week, kept for a refresh until a new day (picks, core.js)
   'watch-range'(el) { ui.watchRange = el.dataset.range; savePick('watch', { v: ui.watchRange, at: todayIso() }); render(); },
-  // the box scores didn't load (boxWait, views.js): ask again
+  // the box scores didn't load (boxWait, boxscores.js): ask again
   'box-retry'() { boxFail = ''; render(); },
   // the sandbox's own points (sandbox.js): edit them, or fill the form with a site's standard
   'sb-points'() { sbCloseMenus(); sbPointsOpen(); },
