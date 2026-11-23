@@ -430,6 +430,27 @@ test("a new period is this period from its first game: before it, Plan Ahead's n
   }
 });
 
+test("before a period's first game the league's rosters are the week just played's: Fantrax's new period, from midnight, is next week's lineups", async () => {
+  const fx = s => JSON.parse(readFixture(`fantrax/${CATS9}/${s}.json`)).rosters;
+  const starters = r => Object.fromEntries(Object.entries(r).map(([tid, t]) => [tid, t.rosterItems.filter(x => x.status === 'ACTIVE').map(x => x.id).sort()]));
+  const ours = r => Object.fromEntries(Object.entries(r).map(([tid, t]) => [tid, t.filter(x => x.st === 'ACTIVE').map(x => x.fid).sort()]));
+  try {
+    // Monday noon: Fantrax's own answer is already period 2, which starts at 7 PM ET
+    app.setClock('2026-10-26T12:00:00-04:00');
+    const L = await app.useLeague(CATS9);
+    assert.equal(L.rosterPeriod, 1, 'this week: the one that ended last night');
+    assert.deepEqual(ours(L.rosters), starters(fx('getTeamRosters-1')));
+    assert.equal(L.nextRosters.period, 2, "next week's lineups: the ones being set");
+    assert.deepEqual(ours(L.nextRosters.rosters), starters(fx('getTeamRosters')));
+    assert.equal(app.fxPeriodFor(app.weekStartAt(0)).n, L.rosterPeriod, "the Matchup tab's week and its lineups agree");
+    // tip-off: period 2 is this week
+    app.setClock('2026-10-26T19:00:00-04:00');
+    const M = await app.useLeague(CATS9);
+    assert.equal(M.rosterPeriod, 2);
+    assert.deepEqual(ours(M.rosters), starters(fx('getTeamRosters')));
+  } finally { app.setClock(); await app.useLeague(CATS9); }
+});
+
 test("a pick on Matchup's or Players' When menu and Plan Ahead's week hold over a refresh, until a new day or matchup week brings the defaults back", async () => {
   const L = await app.useLeague(CATS9);
   useTeam(L.standings[0].id);

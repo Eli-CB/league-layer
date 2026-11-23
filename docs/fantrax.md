@@ -22,6 +22,10 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
 - Fantrax rate limits answer 200 OK with `{ error: { code: 'RATE_LIMITED', message: '... at most once every 5 seconds per
   IP address.' } }` (getDraftResults: 5 s): `getJson` waits what it says and asks again; a draft that still doesn't come
   marks the league `draftFailed` (not kept on the device; Draft tab offers Try again), never "no draft".
+- `getTeamRosters` with no period answers the new period from midnight ET, hours before it starts at its first game (its
+  `startDate`, e.g. 7 PM ET): weekly leagues then ask for the period before as this week's and keep the new one as
+  `nextRosters`, the same two requests (`fetchFantraxLeague`, and `fantrax()` in update_data.py). Read as this week's, the
+  Matchup tab drew the week just played with next week's lineups (Nov 23, 2026).
 - Fantrax names can differ from NBA.com ("Nicolas"/"Nic"): `matchNicknames` (initial + last name + team).
 - Private Fantrax leagues load like any other, with no login (checked Nov 22, 2026 with the owner's test league "testest" `ywhrlx6smwsawar4`,
   "Allow public to view league" off): the public API (`fxea/general/`) ignores that setting. Only Fantrax's internal API (`fxpa/req`) and its

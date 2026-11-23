@@ -684,10 +684,26 @@ def fantrax(league_id, index, saved_league=None):
         msg = (info.get('error') or {}).get('message') or 'no teams returned'
         raise RuntimeError(f'Fantrax league {league_id}: {msg}')
     rosters = get_json(FX + 'getTeamRosters', {'leagueId': league_id})
+    weekly = (roster_period_days(info.get('rosterPeriods') or []) or 0) >= 2
+    # Fantrax hands out a new period's rosters from midnight, though the period starts at its first game: until then the
+    # period just played is this one, and the new one's lineups are next week's (as fetchFantraxLeague, js/fantrax.js)
+    early = None
+    cur_n = rosters.get('period') or 0
+    rp = next((p for p in info.get('rosterPeriods') or [] if p.get('number') == cur_n), None)
+    rp_at = fx_ms(rp.get('startDate')) if weekly and rp and cur_n > 1 else None
+    if rp_at and time.time() * 1000 < rp_at:
+        try:
+            prev = get_json(FX + 'getTeamRosters', {'leagueId': league_id, 'period': cur_n - 1})
+            if prev.get('period') == cur_n - 1:
+                early, rosters = rosters, prev
+        except Exception:
+            pass
     # weekly lineups: next week's too (this week's locked when it started; next week's is the one being set)
     next_n = (rosters.get('period') or 0) + 1
     next_rosters = None
-    if rosters.get('period') and roster_period_days(info.get('rosterPeriods') or []) >= 2 and any(p.get('number') == next_n for p in info.get('rosterPeriods') or []):
+    if early is not None:
+        next_rosters = early
+    elif rosters.get('period') and weekly and any(p.get('number') == next_n for p in info.get('rosterPeriods') or []):
         try:
             next_rosters = get_json(FX + 'getTeamRosters', {'leagueId': league_id, 'period': next_n})
             if next_rosters.get('period') != next_n:

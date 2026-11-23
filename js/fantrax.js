@@ -309,18 +309,29 @@ async function fetchFantraxLeague(id, opts = {}) {
     throw sportNotRead('Fantrax', sport);
   }
   const T = SPORTS[sport];
-  const [D, { ids, adp: adpList }, rosters, draftFirst, standings] = await Promise.all([
+  let [D, { ids, adp: adpList }, rosters, draftFirst, standings] = await Promise.all([
     SPORT.key === sport && NBA ? NBA : fetchSport(sport), fxPlayerLists(sport), fxGet(`getTeamRosters?leagueId=${q}`),
     fxGet(`getDraftResults?leagueId=${q}`).catch(() => null), fxGet(`getStandings?leagueId=${q}`).catch(() => []),
   ]);
   // the draft can fail with everything else asking at once: once more on its own, a moment later. Still nothing is
   // a failure (draftFailed), not a league without a draft
   const draft = draftFirst || await pause(1500).then(() => fxGet(`getDraftResults?leagueId=${q}`)).catch(() => null);
+  // Fantrax hands out a new period's rosters from midnight, though the period starts at its first game (its start time):
+  // until then the period just played is this one (weekStartAt), and the new one's lineups, still being set, are next
+  // week's. Read as this week's, the Matchup tab drew the week just played with next week's lineups (Nov 23, 2026).
+  // Weekly lineups only: a daily league's day is set up to its own games
+  const weekly = rosterPeriodDays(info.rosterPeriods || []) >= 2;
+  const rp = weekly && (info.rosterPeriods || []).find(p => p.number === rosters.period), rpAt = rp && rosters.period > 1 && fxTime(rp.startDate);
+  const early = rpAt && Date.now() < rpAt ? rosters : null;
+  if (early) {
+    const prev = await fxGet(`getTeamRosters?leagueId=${q}&period=${early.period - 1}`).catch(() => null);
+    if (prev && prev.period === early.period - 1) rosters = prev;
+  }
   // the opening week's rosters: past seasons use them for keepers and pickups, and so does this season once week 1 is over
   const opening = opts.opening || (rosters.period || 1) > 1 ? await fxGet(`getTeamRosters?leagueId=${q}&period=1`).catch(() => null) : null;
   // weekly lineups: next week's too. This week's locked when it started, so the lineup people are setting is next week's
-  const nextN = rosters.period && rosterPeriodDays(info.rosterPeriods || []) >= 2 && (info.rosterPeriods || []).some(p => p.number === rosters.period + 1) ? rosters.period + 1 : null;
-  const next = nextN && !opts.opening ? await fxGet(`getTeamRosters?leagueId=${q}&period=${nextN}`).catch(() => null) : null;
+  const nextN = rosters.period && weekly && (info.rosterPeriods || []).some(p => p.number === rosters.period + 1) ? rosters.period + 1 : null;
+  const next = early && early.period === nextN ? early : nextN && !opts.opening ? await fxGet(`getTeamRosters?leagueId=${q}&period=${nextN}`).catch(() => null) : null;
 
   const names = Object.fromEntries(Object.entries(ids).map(([fid, v]) => [fid, fxName(v.name || '')]));
   const hockey = sport === 'nhl', toNba = matchPlayers(ids, names, D, hockey ? hockeyRole : undefined);
