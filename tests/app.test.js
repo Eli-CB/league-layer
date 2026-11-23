@@ -6222,7 +6222,7 @@ test('football tabs: the board, swaps, Roster, Players and adds speak in project
   ui.tab = 'week';
   const week = a.withViewedTeam(a.viewWeek, true);
   quiet(a);
-  assert.match(week, /to win the week/);
+  assert.match(week, /class="sb-gauge"[^>]*aria-label="\d+% to win the week/, 'the win chance: a gauge between the scores');
   assert.match(week, /<b>[\d.]+<\/b> projected/);
   assert.ok(!/starter games|schedule dots|Per game<\/button>/i.test(week));
   // a starter out for the week: the swap says what it's worth

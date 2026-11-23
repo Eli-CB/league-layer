@@ -731,6 +731,12 @@ function weekPicker() {
     { first: ui.weekShift <= shifts[0], last: ui.weekShift >= shifts[shifts.length - 1] });
 }
 
+// The scoreboard's win chance: a half-circle gauge between the two scores (the owner's pick over a bar across the card,
+// Nov 2026, as it takes no row of its own), your share green from the left, theirs red. No caption: what the scores are
+// is in its hover title, and a tap opens how it's figured
+const winGauge = (pct, scores) => `<button type="button" class="sb-gauge" data-action="info" data-key="win" title="${pct}% to win the week (scores: ${scores}). How this is calculated" aria-label="${pct}% to win the week. How this is calculated">
+  <svg viewBox="0 0 100 54" aria-hidden="true"><path class="sb-gauge-them" d="M8 50 A42 42 0 0 1 92 50" pathLength="100"/><path class="sb-gauge-you" d="M8 50 A42 42 0 0 1 92 50" pathLength="100" stroke-dasharray="${pct} 100"/><text x="50" y="48" text-anchor="middle">${pct}%</text></svg></button>`;
+
 function viewWeek() {
   if (!NBA) {
     return loadingCard('Loading schedule and stats…', `The matchup projector needs the ${SPORT.name} data file.`);
@@ -779,11 +785,9 @@ function viewWeek() {
       ${fxLeague() && state.fxTeam ? fxOppNote(ctx) : ''}
       <div class="sb-main">
         <div class="sb-side"><div class="sb-label">${teamLink(ui.viewing ? ui.viewA : state.fxTeam, esc(state.teamName))}</div><div class="sb-score">${fmt(oBest.expected, isPoints() ? 0 : 1)}</div></div>
-        <div class="sb-vs">projected ${unit}${changed ? '<span class="sb-vs-extra"> with suggested lineup</span>' : ''}</div>
+        ${winGauge(winPct, `projected ${unit}${changed ? ' with the suggested lineup' : ''}`)}
         <div class="sb-side right"><div class="sb-label">${fxLeague() && state.fxTeam ? fxOppPicker(ctx) : esc(state.opp.name || 'Opponent')}</div><div class="sb-score">${isPoints() ? fmt(oBest.opp, 0) : fmt(oBest.n - oBest.expected, 1)}</div></div>
       </div>
-      <div class="odds" role="img" aria-label="Win chance ${winPct}%"><span class="odds-you" style="width:${winPct}%"></span></div>
-      <div class="odds-legend"><span><b>${winPct}%</b> to win the week ${infoBtn('win')}</span><span>${100 - winPct}%</span></div>
       ${changed ? asSetLine() : ''}
     </div>` : isRoto() ? rotoOutlookCard() : noOpp(); // (roto: no one to face; the season's outlook instead, roto.js)
 
