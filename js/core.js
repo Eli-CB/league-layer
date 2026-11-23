@@ -414,8 +414,8 @@ function value(p) {
 // Highest first by what fn says of each: worked out once per item, not at every comparison (a sort by value(p) asked
 // for it some 37,000 times in one draw of Plan Ahead). A new list; ties keep their order.
 const sortDesc = (list, fn) => list.map(x => [fn(x), x]).sort((a, b) => b[0] - a[0]).map(x => x[1]);
-// A value reads VAL, with no "+" (a number with no "−" is above 0), a change in value too (a trade's net, a trend's
-// move: its green or red says which way): the owner's ask (Nov 23, 2026)
+// A value reads VAL, with no "+" (a number with no "−" is above 0), a trade's net too (its green or red says which way):
+// the owner's ask (Nov 23, 2026). Trends keeps the "+" on a value's move, as on its every list's (trends.js)
 const valueLabel = () => (isPoints() ? 'FP/G' : 'VAL');
 const fmtValue = (v, d = 2) => (isPoints() ? fmt(v, 1) : signed(v, d).replace('+', ''));
 const statOf = (p, c) => (c.fp ? fantasyPoints(p) : c.pct ? pctOf(p, c) : statVal(p, c.key));

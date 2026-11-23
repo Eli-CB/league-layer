@@ -3215,6 +3215,9 @@ test("Trends: last 5 games against the usual one, per category, with the reason 
     const tab = app.viewTrends();
     assert.ok(tab.includes('<div class="card trends">') && /data-whose="(rostered|waivers)"[^>]*>(Rostered|Waivers)</.test(tab) && !tab.includes('All players') && !tab.includes('No league connected'));
     assert.ok(!app.SPORTS.nfl.soonTabs.includes('recap') && app.SPORTS.nfl.soonTabs.includes('trends'));
+    // a value's move keeps its "+" on Trends, as every list's change does (the owner's call, Nov 23, 2026), though VAL has none elsewhere
+    const moves = [...tab.matchAll(/class="tr-num"[^>]*><b>[^<]*<\/b><div class="small pos-good">([^<]*)</g)].map(m => m[1]);
+    assert.ok(moves.length && moves.every(m => /^\+\d\.\d\d$/.test(m)), moves.join());
     ui.tab = 'recap';
     app.viewRecap();
     await new Promise(r => setTimeout(r, 20));
