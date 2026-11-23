@@ -72,8 +72,11 @@ line in the notes pointing to it. `docs/` isn't published: the deploy copies onl
   `samePosDrops`; hockey's `steadyMinutes`): other pages read those traits, and branch on `isFootball()` only to call football's own functions.
 - Other folders: `scripts/` the daily data jobs (docs/data.md), `worker/` the Cloudflare Worker at api.leaguelayer.com (worker/README.md), `hosting/` the site's Cloudflare hosting (its README),
   `data/` what the jobs write, `icons/`, `fonts/`.
-- `tests/`: `node --test tests/app.test.js` (Node built-ins only). `harness.js` loads the js files in a vm
-  in page order with fake fetch (fixtures) and a fixed clock (2026-10-26 20:00 ET). Fixtures in
+- `tests/`: `node --test "tests/*.test.js"` (Node built-ins only; one area: `node --test tests/espn.test.js`). `harness.js` loads the js files in a vm
+  in page order with fake fetch (fixtures) and a fixed clock (2026-10-26 20:00 ET). One test file an area, named as its `docs/` file
+  (split from one app.test.js Nov 23, 2026: half of all commits touched it, and Node runs files side by side, 41 s to 18 s); `helpers.js`
+  holds what more than one file uses. Each file loads its own app, so a test sets up the league and team it needs itself, never
+  leaning on an earlier test's (three did). Fixtures in
   `tests/fixtures` (refresh: `python tests/capture_fixtures.py`). Every run of the site workflow, data runs too, tests
   what's on main in its `test` job, and publishes exactly that commit only if they pass (`site.yml`; `tests.yml` covers pull requests).
 
@@ -108,7 +111,7 @@ line in the notes pointing to it. `docs/` isn't published: the deploy copies onl
 ## Gotchas
 - Escaping: a shared link opens any league on leaguelayer.com, so text a league's members type (its name, team names) goes through `esc()`
   wherever it's drawn. A `data-tip` is HTML put in the page again as HTML (`showTip`), so text inside one is escaped twice: `esc()` in the tip, `esc()` on the attribute. Inside a popup `showTip` moves the box into the open dialog: a modal is drawn above any z-index, so tips in cards never showed until Nov 2026.
-  The full-draw test in app.test.js draws every tab and popup of nine leagues with names made to break out of HTML (audited Nov 17, 2026: none did); it also checks every position is in its color.
+  The full-draw test in tests/site.test.js draws every tab and popup of nine leagues with names made to break out of HTML (audited Nov 17, 2026: none did); it also checks every position is in its color.
   Behind it, index.html's Content-Security-Policy (Nov 20, 2026): no inline script or `on...=` handlers, and a new outside source the page loads (a photo server, an API) must be added there or browsers block it (a test checks js/'s https:// addresses; a blocked one shows in the error log).
 - `python serve.py [port]` (preview config "site", port 5173) refreshes `data/` locally: never commit
   `data/players.json` / `data/boxscores.json` from a local run (`git checkout -- data/players.json data/boxscores.json`).

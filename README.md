@@ -45,7 +45,7 @@ Scoring comes from each league's own settings: its own categories for category l
 ## Tests
 
 ```
-node --test tests/app.test.js
+node --test "tests/*.test.js"
 ```
 
 The tests load the site's scripts in Node (in page order, one at a time like a browser) against saved Fantrax, ESPN and NBA responses in `tests/fixtures` (a 9-cat league, a weekly points league and a daily points league on Fantrax, and a public points league on ESPN), with the date fixed at Oct 26, 2026. They cover reading league settings, category and points scoring, projections, season totals (which must reproduce the real week-1 results), short names, draft grading and recommended adds. They run on every push. `python tests/capture_fixtures.py` saves fresh fixtures, which may mean updating expected values.

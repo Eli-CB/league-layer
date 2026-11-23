@@ -101,7 +101,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - run: node --test tests/app.test.js
+      - run: node --test "tests/*.test.js"
       - run: python3 -m unittest discover -s tests -p "test_*.py"
 
   deploy:

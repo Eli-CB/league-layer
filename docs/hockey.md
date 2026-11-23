@@ -27,7 +27,7 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   season only. Names need team and role: two Sebastian Ahos, and two Elias Petterssons on Vancouver (ESPN's "Elias N."; Fantrax's
   C vs D; `hockeyRole`). A namesake with no data here must not take a player's id (`matchPlayers`: two entries on one player, the
   one on his team in his role keeps him; `homePos` is the NHL's position, as a league's overwrites `pos`). Long-term injured aren't on NHL rosters: ESPN's rosters and injury report put them on a team. Tests:
-  `tests/test_update_nhl.py` (Python), the last tests in `app.test.js`; fixtures from `tests/capture_nhl_fixtures.py` (team names replaced).
+  `tests/test_update_nhl.py` (Python), `tests/hockey.test.js`; fixtures from `tests/capture_nhl_fixtures.py` (team names replaced).
 - NHL.com's stats API sends at most 100 rows a request since Nov 17, 2026, whatever `limit` asks (`limit=-1` used to send all; `total`
   has the full count). Unnoticed until Nov 20, it cut each day's skaters to a handful (Nov 17-19: ~6 rows a game, top skaters "DNP") and the bios
   to 100 players (most `exp` read 1). `rest_rows` pages through every report sorted on gameId + playerId (bios: playerId; unsorted pages

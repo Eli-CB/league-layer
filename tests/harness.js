@@ -88,7 +88,11 @@ function loadApp(saved = {}) {
     addEventListener() {}, createElement: () => new El(),
   };
   // the page's own timers (the injury report's every few minutes) don't keep the test run open once its tests are done
-  const pageTimeout = (f, ms, ...a) => { const t = setTimeout(f, ms, ...a); if (ms > 60e3 && t.unref) t.unref(); return t; };
+  const pageTimeout = (f, ms, ...a) => {
+    const t = setTimeout((...x) => { pageTimers.delete(t); f(...x); }, ms, ...a);
+    if (ms > 60e3 && t.unref) t.unref(); else pageTimers.add(t);
+    return t;
+  };
   const ctx = {
     document, console, setTimeout: pageTimeout, clearTimeout, URL, URLSearchParams, Intl, Math, JSON, Promise, Map, Set,
     Date: FixedDate,
@@ -130,10 +134,16 @@ function loadApp(saved = {}) {
     const res = await (src === 'espn' ? ctx.fetchEspnLeague(id) : src === 'sleeper' ? ctx.fetchSleeperLeague(id) : src === 'yahoo' ? ctx.fetchYahooLeague(id) : ctx.fetchFantraxLeague(id));
     const L = res.league;
     ctx.__get('NBA').league = L;
+    ctx.__get('changed')('players'); // as the site's switch does (applyFantraxLeague): values from the last league's scoring go
     ctx.applyLeagueRules(L);
     return L;
   };
   return app;
 }
 
-module.exports = { loadApp, readFixture, NOW };
+// Shorter timers (a live refresh every 30 s) keep the run open while tests wait on them; once a file's tests are done,
+// none of them may (helpers.js calls this after each file): a page left polling would hold the file open for good
+const pageTimers = new Set();
+function releaseTimers() { for (const t of pageTimers) t.unref(); pageTimers.clear(); }
+
+module.exports = { loadApp, readFixture, NOW, releaseTimers };
