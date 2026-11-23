@@ -1712,6 +1712,8 @@ tr.me-row td { background: var(--accent-soft); }
 /* Standings, phones: the numbers' columns tight, so a team's name gets the room (it wrapped onto three lines, and the table
    ran 3 px past the screen) */
 @media (max-width: 640px) { .st-table th, .st-table td { padding-inline: 5px; } .st-table :is(th, td):first-child { padding-left: 0; } .st-table :is(th, td):last-child { padding-right: 0; } }
+/* Categories won: a record stays on one line (a phone broke "3-1-1" at its dashes, onto three); the table scrolls instead */
+.cats-won td.num { white-space: nowrap; }
 
 /* ---------- Awards ---------- */
 .awards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; }
