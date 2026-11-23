@@ -47,7 +47,7 @@ line in the notes pointing to it. `docs/` isn't published: the deploy copies onl
 | `players.js`: the Players tab | docs/players.md |
 | `matchups.js`: Plan Ahead, next week's lineups, finished weeks | docs/plan-ahead.md |
 | `views.js`: Standings, Categories won, Season totals | docs/standings.md |
-| `views.js`: Trades, draft picks in a deal | docs/trades.md |
+| `trades.js`: Trades, draft picks in a deal | docs/trades.md |
 | `recap.js`, `share.js`: the Recap, every share picture | docs/recap.md |
 | `trends.js` | docs/trends.md |
 | `draft.js`: the board, Draft Recap, keepers | docs/draft.md |
@@ -60,7 +60,7 @@ line in the notes pointing to it. `docs/` isn't published: the deploy copies onl
 
 ## Layout
 - `index.html`, `styles.css`, `js/*.js`. The js files are ONE script split by area and share one global
-  scope; they must load in the order index.html lists: sports, nicknames, core, nba, info, fantrax, espn, sleeper, football, yahoo, render, history, views,
+  scope; they must load in the order index.html lists: sports, nicknames, core, nba, info, fantrax, espn, sleeper, football, yahoo, render, history, views, trades,
   dashboard, players, matchups, roto, recap, trends, share, live, draft, leagues, sandbox, actions. Shared builders (Nov 18, 2026): every row of on/off buttons is `segBtns` (core.js), every sortable table's order `sortRows` (views.js: empty cells last), whose a player is `rosterOwners`/`ownerTag`/`faBadge` (players.js, the sandbox's My team included). Top-level code may only use things defined in earlier files (no hoisting across files), and no two files may declare the same function: a later file's silently replaces the earlier one everywhere (history.js's `periodDays` once broke every week's dates; a test checks).
 - Names: "NBA", `nbaId`, `nbaPlayers` and the like mean "the sport's data"; "fx" names (`fxLeague`, `raw.fx`, `fxTeamSide`) mean "the league's
   site", any site. Use the shared pieces, never your own: caches sign up with `keep(from, reset)` beside their declaration and hear

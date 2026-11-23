@@ -142,7 +142,7 @@ const INFO = {
     <li><b>GP:</b> games played in those weeks; every stat comes from just these games.</li>
     <li><b>Missed:</b> games his NBA team played in those weeks without him (injury, rest or a coach's decision).</li>
     <li><b>VAL</b> (value): each game valued like a single game on the Players tab: categories won against not playing (fantasy points in points leagues), added up for Totals or averaged for Per game.</li></ul>`],
-  // the Trades tab's proposal (tradeCard, views.js): everything its table shows, so the table itself carries no notes
+  // the Trades tab's proposal (tradeCard, trades.js): everything its table shows, so the table itself carries no notes
   trade: ['Trade proposal', () => { const P = fxLeague() ? playoffDays() : null; return `
     <p><b>GP</b> and <b>Missed.</b> His games this season, and the games his ${SPORT.name} team has played without him: hurt, resting, out of the rotation, or not on the team yet.${isHockey() ? ' A goalie has none: a healthy backup sits most games.' : ''}</p>
     <p><b>Playoff G.</b> His team's games in your league's playoffs${P ? `, ${playoffWeeks(P)}` : ''}, only those still to play once they've started. A goalie's are his expected starts; in a Sleeper league, where one game a week counts, it's the playoff weeks he plays in.</p>
