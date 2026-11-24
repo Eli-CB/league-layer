@@ -97,8 +97,12 @@ line in the notes pointing to it. `docs/` isn't published: the deploy copies onl
 - Weekly lineups lock when the week starts, so the lineup people are setting is next week's: Plan Ahead shows next week's rosters;
   every other tab and the saved lineup stay on this week's (docs/plan-ahead.md). A week starts at its first game, not at midnight (`weekStartAt`).
 - Fantrax: minimize requests (league data cached on the device, read again on opening, on coming back and around each lock, spread
-  over minutes; weekly rosters once per finished period: docs/fantrax.md). How often each site is read is one table, `READ_PACE`
-  (fantrax.js, a row per site): if Fantrax, ESPN or Sleeper ever questions the requests, turn that site's row down there. Fantrax and Sleeper are asked straight from each browser on
+  over minutes; weekly rosters once per finished period: docs/fantrax.md).
+- How often each league site is read is one table, `READ_PACE` (top of the league-saving section in js/fantrax.js), a row each for
+  fantrax, espn, sleeper and yahoo, all `{ open: 30, back: 5, start: true, daily: true }` since Nov 24, 2026. When the owner asks to read a
+  site less (say it questions the requests), change only that row: raise `open` (minutes before opening the page reads again; 360 was the
+  old 6 hours) or `back` (minutes before coming back to the page reads again), or set `start` (around each period's lock) or `daily` (each
+  game day, daily-lineup leagues) to false; 0 turns a minutes field off. Then tests, land, and note the new values here. ↻ Reload by hand always works. Fantrax and Sleeper are asked straight from each browser on
   purpose: their limits are per IP, and a proxy would pool everyone's.
 - A matchup's span is a "period" in labels (This / Last / Next period), not a week.
 - Makes and attempts are always written with a slash, "10/19 FG", never a dash (the owner's ask, Nov 2026; a dash is for records and scores). How pairs are drawn and sorted: docs/core.md.

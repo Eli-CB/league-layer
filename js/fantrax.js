@@ -550,7 +550,7 @@ function syncLeagueRules() {
 //          another tab or app), a copy older than this is read again. Raise it to read less; 0: off.
 //   start: true: read 10-20 minutes before a matchup period's first game and 2-6 after (its locked lineups). false: off.
 //   daily: true: in a daily-lineup league, the same around each game day's first game. false: off.
-// What each does to a page: docs/fantrax.md (Rules settled with the owner).
+// What each does to a page: docs/fantrax.md (Rules settled with the owner). CLAUDE.md lists these values: change it with them.
 const READ_PACE = {
   fantrax: { open: 30, back: 5, start: true, daily: true },
   espn: { open: 30, back: 5, start: true, daily: true },
