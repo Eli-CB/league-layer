@@ -88,7 +88,9 @@ function teamStrengths(tid) {
     </div></td></tr>`;
   });
   const mine = tid === state.fxTeam;
-  return `<div><h3 class="sub" style="margin-top:0">By category <span class="muted small" title="Each team's ${N} best players by their value this season (injured reserve left out), as many as a lineup starts">top ${N}, against every team</span> ${infoBtn('strengths')}</h3>
+  // (roto: under the team's real standing, rotoCardStanding, so said to be the roster's averages and not the standings)
+  const what = isRoto() ? `top ${N} players' per-game averages, not the standings` : `top ${N}, against every team`;
+  return `<div><h3 class="sub" style="margin-top:0">${isRoto() ? 'Roster by category' : 'By category'} <span class="muted small" title="Each team's ${N} best players by their value this season (injured reserve left out), as many as a lineup starts">${what}</span> ${infoBtn('strengths')}</h3>
     <div class="table-wrap"><table class="cs-table">
       <thead><tr><th>Cat</th><th class="num">Per player</th><th class="num cs-lavg">League avg</th><th class="cs-bar">Below · league avg · above</th><th class="num">Rank</th><th class="cs-strip"><span class="hide-sm">Every team (${mine ? 'you in orange' : state.fxTeam ? 'this one bigger, you in orange' : 'this one bigger'})</span><span class="show-sm-inline">All ${n} teams</span></th></tr></thead>
       <tbody>${rows.join('')}</tbody>
@@ -334,7 +336,7 @@ function teamCardHtml(tid) {
     : !p.gp || (so.key !== 'min' && !cols[so.key]) ? null : so.key === 'min' ? p.min : cols[so.key].shot ? fantasyPoints(p, shotPoints(cols[so.key])) : cols[so.key].pct ? pctOf(p, cols[so.key]) : statVal(p, cols[so.key].key));
   const rows = sortRows(sortDesc(side.players, order), sortVal, so.dir).map(row).join(''); // (ties stay best first)
   const th = (key, label, cls, tip, attrs) => sortTh('team-sort', key, label, so, { cls, tip, attrs, down: so.dir < 0 });
-  const cats = football ? '' : teamStrengths(tid);
+  const cats = football ? '' : `${isRoto() ? rotoCardStanding(tid) : ''}${teamStrengths(tid)}`;
   // (each part 16 px below the one before: .tc-body)
   return `<div class="tc-body">
     ${!me && state.fxTeam && !isRoto() ? `<div><button type="button" class="btn sm" data-action="team-compare" data-team="${esc(tid)}">Compare on Plan Ahead</button></div>` : ''}

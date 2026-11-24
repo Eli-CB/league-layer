@@ -383,6 +383,7 @@ body:has(.mu-card.full) { background: var(--surface); }
 .mu-rows.solo .mu-row, .mu-card.full .mu-rows.solo .mu-row { grid-template-columns: 40px minmax(0, 1fr); }
 .mu-rows.solo .mu-slot { order: -1; } /* (the lineup spot first, as a lineup reads) */
 .mu-rt-games { margin-top: 4px; font-variant-numeric: tabular-nums; }
+.rt-pace-n { white-space: nowrap; } /* (the pace whole on its own line, "runs out ~Mar 1", rather than broken) */
 .mu-rt { margin-bottom: 12px; }
 .rt-table th, .rt-table td { padding: 7px 6px; font-variant-numeric: tabular-nums; }
 .rt-table thead th { font-size: .78rem; font-weight: 600; color: var(--muted); }

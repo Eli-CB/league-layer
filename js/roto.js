@@ -76,27 +76,40 @@ function rotoBoard(S, D) {
   if (!r) return '';
   const share = rotoSeasonShare(R), gp = r.tot.gp1 || 0, o = rotoOutlook().get(S.tid);
   const games = R.gpMax ? `<b>${fmt(gp, 0)}</b> of ${R.gpMax} games` : `<b>${fmt(gp, 0)}</b> games`;
-  const gamesTip = `Games your starters have played${R.gpMax ? `, of the league's limit of ${R.gpMax}${R.gpSpot ? ` (${R.gpSpot} a lineup spot)` : ''}` : ''}${share != null ? `. The league's season is ${Math.round(share * 100)}% played.` : ''}`;
+  // the pace, said plainly (rotoPace's, Plan Ahead's outlook): when the limit runs out, or the games to spare; no limit, the season played
+  const pace = !o ? '' : !R.gpMax ? (share != null ? `${Math.round(share * 100)}% of the season` : '')
+    : o.rest.full ? `<span class="pos-bad">runs out ~${fmtMonthDay(o.rest.full)}</span>`
+    : o.rest.bar === Infinity ? '<span class="pos-bad">limit reached</span>'
+    : `on pace for ${fmt(gp + o.rest.wanted, 0)}`;
+  const gamesTip = `Games your starters have played${R.gpMax ? `, of the league's limit of ${R.gpMax}${R.gpSpot ? ` (${R.gpSpot} a lineup spot)` : ''}` : ''}${share != null ? `. The league's season is ${Math.round(share * 100)}% played.` : '.'}${o && R.gpMax ? ` ${rotoPace(R, gp, o.rest).replace(/<\/?b>/g, '')}` : ''}`;
   return `<div class="mu-board">
       <div class="mu-team"><div class="mu-name">${teamLink(S.tid, esc(S.name))}</div><div class="mu-line"><div class="mu-score" title="Roto points: every category's added up">${fmtRotoPts(r.pts)}</div>${dashPaceChips(S, D)}</div></div>
       <div class="mu-mid"></div>
       <div class="mu-team right"><div class="mu-name">${ordinal(r.rank)} <span class="muted">of ${fxPickable().length}</span></div>
-        <div class="mu-rt-games small" title="${esc(gamesTip)}">${games}${share != null ? `<span class="muted"> · ${Math.round(share * 100)}% of the season</span>` : ''}</div>
+        <div class="mu-rt-games small" title="${esc(gamesTip)}">${games}${pace ? ` <span class="rt-pace-n"><span class="muted">· </span>${pace.startsWith('<') ? pace : `<span class="muted">${pace}</span>`}</span>` : ''}</div>
         ${o ? `<div class="mu-rt-games small muted" title="Where you'd finish at the season's end, as projected: Standings, Projected">Projected ${ordinal(o.rank)} · ${fmt(o.total, 1)} pts</div>` : ''}</div>
     </div>`;
 }
-// Each category: your total, your points, and how far the nearest team above (to pass) and below (your lead) are
+// Each category: a team's total, its points, and how far the nearest team above (to pass) and below (its lead) are
+// (the Matchup tab's, yours; a team's card, its own)
 function rotoStandTable(tid) {
-  const rows = rotoStanding(tid);
+  const rows = rotoStanding(tid), you = tid === state.fxTeam;
   if (!rows.length) return '';
   // (teams tied at that gap: the first named, the rest counted)
   const who = ids => `${teamLink(ids[0])}${ids.length > 1 ? `<span class="muted" title="${esc(ids.slice(1).map(fxTeamName).join(', '))}">+${ids.length - 1}</span>` : ''}`;
   const near = (x, c) => (x ? `<b>${fmtRotoValue(c, x.gap)}</b><span class="rt-who">${who(x.ids)}</span>` : '<span class="muted">—</span>');
   return `<div class="table-wrap mu-rt"><table class="rt-table rt-stand">
-    <thead><tr><th>Cat</th><th class="num">You</th><th class="num">Pts</th><th class="num" title="How far behind the nearest team above you, and who">To pass</th><th class="num" title="How far ahead of the nearest team below you, and who">Lead</th></tr></thead>
+    <thead><tr><th>Cat</th><th class="num">${you ? 'You' : 'Total'}</th><th class="num" title="Roto points in the category">Pts</th><th class="num" title="How far behind the nearest team above ${you ? 'you' : 'it'}, and who">To pass</th><th class="num" title="How far ahead of the nearest team below ${you ? 'you' : 'it'}, and who">Lead</th></tr></thead>
     <tbody>${rows.map(({ c, v, pts, above, below }) => `<tr><td><b>${c.label}</b></td><td class="num">${fmtRotoValue(c, v)}</td><td class="num"><b>${fmtRotoPts(pts)}</b></td>
       <td class="num rt-near">${near(above, c)}</td><td class="num rt-near">${near(below, c)}</td></tr>`).join('')}</tbody>
   </table></div>${rotoUnplayed(fxLeague()) ? '<p class="muted small mu-when">No games counted yet, so every team is tied.</p>' : ''}`;
+}
+
+// A team's card in a roto league: where it stands, category by category, above the card's roster numbers (teamStrengths,
+// which rank the roster's per-game averages: not the standings, and the two can be far apart)
+function rotoCardStanding(tid) {
+  const t = rotoStandTable(tid);
+  return t ? `<div><h3 class="sub" style="margin-top:0">Standings <span class="muted small">season totals and roto points</span></h3>${t}</div>` : '';
 }
 
 // ----- The projected finish -----

@@ -95,6 +95,15 @@ test('ESPN roto: Standings, the Matchup tab, Plan Ahead and a team card, all wit
   const title = a.teamCardTitle('4');
   assert.ok(title.includes('roto points') && !/This week vs|No matchup this week/.test(title));
   assert.ok(!a.teamCardHtml('4').includes('Compare on Plan Ahead'));
+  // a team's card: its real standing first (totals, points, the teams either side), then its roster's averages, said not to be the standings
+  const card = a.teamCardHtml('4');
+  assert.ok(card.indexOf('<h3 class="sub" style="margin-top:0">Standings') < card.indexOf('Roster by category') && card.includes('not the standings'));
+  assert.ok(card.includes('<th class="num">Total</th>') && !card.includes('<th class="num">You</th>'), "another team's: its total, not yours");
+  assert.ok(a.teamCardHtml('3').includes('<th class="num">You</th>'));
+  // the Matchup head says the games pace plainly: when the limit runs out, else the games on pace for
+  const o = a.rotoOutlook().get('3');
+  assert.ok(m.includes(o.rest.full ? `runs out ~${a.fmtMonthDay(o.rest.full)}` : `on pace for ${a.fmt(103 + o.rest.wanted, 0)}`), 'the pace beside the games');
+  assert.ok(!m.includes('% of the season</span>'), 'the season played moves to the tip');
   assert.ok(!a.tabList().some(([k]) => k === 'recap'), 'no weekly matchups to recap');
   assert.ok(!a.tabList().some(([k]) => k === 'awards'), "no Awards tab where every day's lineups aren't read (ESPN)");
   assert.ok(standings.includes('<span class="rt-tot">1,150</span>'), "a season's count with its thousands comma (Team 10's PTS)");
