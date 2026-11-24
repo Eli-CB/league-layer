@@ -652,7 +652,8 @@ const actualLine = (p, d) => (BOX && p.nbaId ? (BOX.day.get(p.nbaId) || new Map(
 
 // Project one side's week. fixedIds = that lineup as set; null = best lineup every day.
 // Days whose games are over count the real box score (or nothing, for a player who sat).
-function projectSide(players, dates, fixedIds) {
+// minValue: on today's and later days, only players worth that much fill the lineup (a roto games limit: rotoGameBar)
+function projectSide(players, dates, fixedIds, minValue = null) {
   const tot = Object.fromEntries(COUNT_KEYS.map(k => [k, 0]));
   const vr = Object.fromEntries(COUNT_KEYS.map(k => [k, 0]));
   const left = Object.fromEntries(COUNT_KEYS.map(k => [k, 0])); // the part still to be played
@@ -668,7 +669,8 @@ function projectSide(players, dates, fixedIds) {
     let active;
     if (fixedIds) active = avail.filter(p => fixedIds.has(p.id));
     else {
-      const ids = new Set(fillSlots(avail, state.slots).filter(Boolean));
+      const fill = minValue == null || d < todayIso() ? avail : avail.filter(p => value(p) >= minValue);
+      const ids = new Set(fillSlots(fill, state.slots).filter(Boolean));
       active = avail.filter(p => ids.has(p.id));
     }
     for (const p of SPORT.oneNumber ? [] : active) { // (football: oneGameSide)

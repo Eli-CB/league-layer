@@ -41,7 +41,7 @@ function viewTrade() {
   const card = ui.tradeSeen ? tradeCard(ui.tradeSeen)
     : give.length || get.length || givePicks.length || getPicks.length
       ? tradeCard({ from: state.fxTeam, to: ui.tradeTeam, give: give.filter(p => p.nbaId != null).map(p => String(p.nbaId)), get: [...ui.tradeGet], givePicks, getPicks }, tradeForYou(give, get))
-      : `<div class="card"><div class="empty"><strong>Pick players on both sides</strong>See how the deal changes your team's per-game production, and share it with the other team.</div></div>`;
+      : `<div class="card"><div class="empty"><strong>Pick players on both sides</strong>See how the deal changes your team's ${isRoto() ? 'projected roto finish' : 'per-game production'}, and share it with the other team.</div></div>`;
   return `${ui.tradeSeen ? card : ''}
   <div class="trade-grid">
     <div class="card"><div class="card-head"><h2>You give</h2><span class="muted small">${give.length + givePicks.length} selected</span></div>${pick(state.players, ui.tradeGive, 'give', p => p.id)}${picksOf(state.fxTeam, ui.tradeGivePicks, 'give')}</div>

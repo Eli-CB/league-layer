@@ -23,9 +23,10 @@ function weekContext(start = weekStart()) {
   const asSet = projectSide(mine, dates, setIds);
   const locked = weekly && !SPORT.gameLocks && new Date() >= lockTime(start);
   const bestIds = weekly && !locked ? bestWeeklyIds(mine, dates, hasOpp ? them : null) : null;
-  const best = weekly && !bestIds ? asSet : projectSide(mine, dates, bestIds);
+  const bar = weekly ? null : rotoGameBar(ui.viewing ? ui.viewA : state.fxTeam); // (roto, past its games limit: only starts worth one)
+  const best = weekly && !bestIds ? asSet : projectSide(mine, dates, bestIds, bar);
   const catsSet = compareCats(asSet, them), catsBest = compareCats(best, them);
-  return { start, dates, weekly, locked, mine, opp, hasOpp, setIds, oppIds, them, asSet, bestIds, best, catsSet, catsBest, oSet: matchOdds(catsSet), oBest: matchOdds(catsBest) };
+  return { start, dates, weekly, locked, mine, opp, hasOpp, setIds, oppIds, them, asSet, bestIds, best, bar, catsSet, catsBest, oSet: matchOdds(catsSet), oBest: matchOdds(catsBest) };
 }
 
 function catValue(proj, c) {
@@ -999,12 +1000,17 @@ function viewWeek() {
       const s = asSet.days[i], b = best.days[i];
       return { d, start: [...b.active].filter(id => !s.active.has(id)).map(byId), sit: [...s.active].filter(id => !b.active.has(id)).map(byId), past: d < today };
     }).filter(x => x.start.length || x.sit.length);
+    // (roto past its games limit: a start is worth it only above the bar, so fewer games can be the better lineup)
+    const R = ctx.bar != null ? fxLeague().roto : null, full = R && rotoOutlook().get(ui.viewing ? ui.viewA : state.fxTeam).rest.full;
+    const diff = best.games - asSet.games;
+    const barNote = R ? `<p class="muted small" style="margin:0 0 10px">${ctx.bar === Infinity ? `Your starters have used all ${R.gpMax} games of the league's limit, so no start counts.`
+      : `You're on pace to pass the league's limit of ${R.gpMax} games${full ? ` around <b>${fmtMonthDay(full)}</b>` : ''}, so only players worth <b>${fmtValue(ctx.bar)}</b> VAL or more are worth a start: sitting the rest saves their games for better ones.`}</p>` : '';
     dailyCards = `
     <div class="card">
-      <div class="card-head"><h2>Daily bench swaps</h2><span class="muted small">${best.games - asSet.games > 0 ? `+${best.games - asSet.games} games over your lineup as set` : 'lineup as set'}</span></div>
-      ${swaps.length ? `<ul class="alerts">${swaps.map(x => `<li class="alert ${x.past ? '' : 'good'}"><span class="dot"></span><span class="grow"><b>${fmtDay(x.d)}</b>${x.past ? ' <span class="muted small">(already played)</span>' : ''}<br>
-        Start ${x.start.map(p => `<b>${esc(nameShown(p.name, p.nbaId))}</b>`).join(', ')}${x.sit.length ? `; sit ${x.sit.map(p => esc(nameShown(p.name, p.nbaId))).join(', ')}` : ''}</span></li>`).join('')}</ul>`
-        : `<p class="muted small" style="margin:0">${mine.length ? 'Your lineup as set already uses every game your bench could add.' : 'Your roster is empty.'}</p>`}
+      <div class="card-head"><h2>Daily bench swaps</h2><span class="muted small">${diff > 0 ? `+${diff} games over your lineup as set` : diff < 0 ? `${-diff} fewer games than your lineup as set` : 'lineup as set'}</span></div>
+      ${barNote}${swaps.length ? `<ul class="alerts">${swaps.map(x => `<li class="alert ${x.past ? '' : 'good'}"><span class="dot"></span><span class="grow"><b>${fmtDay(x.d)}</b>${x.past ? ' <span class="muted small">(already played)</span>' : ''}<br>
+        ${x.start.length ? `Start ${x.start.map(p => `<b>${esc(nameShown(p.name, p.nbaId))}</b>`).join(', ')}` : ''}${x.sit.length ? `${x.start.length ? '; sit' : 'Sit'} ${x.sit.map(p => esc(nameShown(p.name, p.nbaId))).join(', ')}` : ''}</span></li>`).join('')}</ul>`
+        : `<p class="muted small" style="margin:0">${!mine.length ? 'Your roster is empty.' : R ? 'Your lineup as set already starts only the games worth one.' : 'Your lineup as set already uses every game your bench could add.'}</p>`}
       ${hasOpp && !isPoints() ? `<h3 class="sub" style="margin-top:16px">Categories ${infoBtn('win')}</h3>${catCompareTable(ctx, changed)}` : ''}
     </div>`;
   }

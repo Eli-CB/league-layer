@@ -18,7 +18,9 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   finish (`rotoOutlook`, a day's memo): totals so far + each roster's games from tomorrow (`rotoRest`: daily best lineups, Out until ESPN's `inj.back` or 2 weeks,
   past the limit only the best games), expected points = 1 + chances of finishing ahead (unsure by `ROTO_DRIFT` 0.5: a judgment, not checked on a real season).
   Standings (Now / Projected, `ui.rotoView`), the Matchup head, Plan Ahead's Season outlook (`rotoOutlookCard`, games pace `rotoPace`) and Trades' For your team
-  (`rotoTradeChange`, `rotoTradeRow`) read it. No opponent's column on Plan Ahead or the Matchup rows (`solo`), no Recap tab. ESPN's real roto numbers aren't
+  (`rotoTradeChange`, `rotoTradeRow`) read it. Past the games limit, Plan Ahead's daily bench swaps start only players worth at least the weakest
+  game the projection keeps (`rotoGameBar`, `projectSide`'s `minValue`, Nov 24, 2026: "+6 games" was wrong advice for a team that runs out
+  in March), and say "sit" where that saves a game. On a phone the standings keep # and Team in place as they scroll (`.rt-board`). No opponent's column on Plan Ahead or the Matchup rows (`solo`), no Recap tab. ESPN's real roto numbers aren't
   checked yet (the test league hadn't played).
 
 ## Gotchas
@@ -33,5 +35,5 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   keeps them per week). A day is 1.5 MB (270 KB compressed) and the filter header doesn't trim it, so only the shown week's
   days are asked for, once (`league-layer-espn-days-v1`). Checked on a real points league: 18 of 20 team-weeks matched
   ESPN's finals exactly, the other two within 4 points. Season totals, Awards and past seasons stay Fantrax/Sleeper-only
-  (`hasLineupHistory`): they'd need every day of the season (40 MB by spring). A category league loads on every tab (the Utah test league, Nov 19, 2026),
+  (`hasLineupHistory`; no Awards tab elsewhere, `tabList`): they'd need every day of the season (40 MB by spring). A category league loads on every tab (the Utah test league, Nov 19, 2026),
   but no finished week of one is checked against ESPN's results yet; ESPN football isn't checked. ESPN doesn't say waivers vs free agent in the league data: unrostered = 'A'.

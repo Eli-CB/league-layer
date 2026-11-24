@@ -96,6 +96,9 @@ test('ESPN roto: Standings, the Matchup tab, Plan Ahead and a team card, all wit
   assert.ok(title.includes('roto points') && !/This week vs|No matchup this week/.test(title));
   assert.ok(!a.teamCardHtml('4').includes('Compare on Plan Ahead'));
   assert.ok(!a.tabList().some(([k]) => k === 'recap'), 'no weekly matchups to recap');
+  assert.ok(!a.tabList().some(([k]) => k === 'awards'), "no Awards tab where every day's lineups aren't read (ESPN)");
+  assert.ok(standings.includes('<span class="rt-tot">1,150</span>'), "a season's count with its thousands comma (Team 10's PTS)");
+  assert.ok(/<table class="rt-table rt-board">/.test(standings) && standings.includes('<td class="num rt-rk">'), 'the rank and team stay put as the table scrolls on a phone');
   assert.ok(a.INFO.roto, 'the (i) explains roto');
 });
 
@@ -195,4 +198,36 @@ test('ESPN roto: a copy kept on the device from before the site read roto is rea
     keep({ id: ESPN_ROTO, scoring: 'ROTO', roto: { gpMax: 680 } });
     assert.ok(app.cachedLeague(ESPN_ROTO), 'one with its roto standings is kept');
   } finally { if (was == null) app.localStorage.removeItem(key); else app.localStorage.setItem(key, was); }
+});
+
+test('ESPN roto: past the games limit, Plan Ahead\'s daily bench swaps start only the games worth one', async () => {
+  const { a, L } = await rotoApp();
+  const was = L.roto, memo = a.get('rotoMemo');
+  try {
+    // a limit the season's lineups run well past: the projection keeps the best games, and the weakest kept is the bar
+    L.roto = { ...was, gpMax: 200 };
+    memo.clear();
+    const rest = a.rotoOutlook().get('3').rest;
+    assert.ok(rest.wanted > rest.room && Number.isFinite(rest.bar), 'over the limit: a bar');
+    assert.equal(a.rotoGameBar('3'), rest.bar);
+    const ctx = a.weekContext(), today = a.todayIso();
+    assert.equal(ctx.bar, rest.bar);
+    const mine = new Map(ctx.mine.map(p => [p.id, p]));
+    ctx.best.days.forEach(x => { if (x.date >= today) for (const id of x.active) assert.ok(a.value(mine.get(id)) >= ctx.bar, `${x.date}: a start under the bar`); });
+    const all = a.projectSide(ctx.mine, ctx.dates, null);
+    assert.ok(ctx.best.games < all.games, `fewer starts than every game the bench could add: ${ctx.best.games} of ${all.games}`);
+    const week = a.viewWeek();
+    assert.ok(week.includes("You're on pace to pass the league's limit of 200 games") && week.includes('sitting the rest saves their games'));
+    // all of it used: no start counts
+    L.roto = { ...was, gpMax: 100 };
+    memo.clear();
+    assert.equal(a.rotoGameBar('3'), Infinity);
+    assert.ok(a.weekContext().best.days.filter(x => x.date >= today).every(x => !x.active.size));
+    // a limit the season won't reach: every game helps, as before
+    L.roto = { ...was, gpMax: 100000 };
+    memo.clear();
+    assert.equal(a.rotoGameBar('3'), null);
+    assert.equal(a.weekContext().best.games, a.projectSide(a.weekContext().mine, a.weekContext().dates, null).games);
+    assert.ok(!a.viewWeek().includes('on pace to pass'));
+  } finally { L.roto = was; memo.clear(); }
 });

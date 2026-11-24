@@ -120,8 +120,9 @@ function teamMenu() {
 const TABS_NOW = [['dashboard', 'Matchup'], ['week', 'Plan Ahead'], ['recap', 'Recap'], ['players', 'Players'], ['trends', 'Trends'], ['draft', 'Draft'], ['standings', 'Standings'], ['awards', 'Awards'], ['trade', 'Trades']];
 const TABS_PAST = [['standings', 'Standings'], ['awards', 'Awards'], ['draft', 'Draft'], ['rosters', 'Rosters']];
 const TABS_BROWSE = [['team', 'My team'], ['watch', 'Live'], ['players', 'Players'], ['trends', 'Trends'], ['trade', 'Trades']]; // the sandbox: no league (sandbox.js)
-// (a roto league has no weekly matchups, so no Recap of one)
-const tabList = () => (ui.season ? TABS_PAST : state.browse ? TABS_BROWSE : TABS_NOW.filter(([k]) => !SPORT.soonTabs.includes(k) && !(k === 'recap' && isRoto())));
+// (a roto league has no weekly matchups, so no Recap of one; Awards need every day's lineups: no tab where they aren't read)
+const tabList = () => (ui.season ? TABS_PAST : state.browse ? TABS_BROWSE : TABS_NOW.filter(([k]) => !SPORT.soonTabs.includes(k) && !(k === 'recap' && isRoto())
+  && !(k === 'awards' && fxLeague() && !hasLineupHistory(fxLeague()))));
 const seasonLabel = y => `${y}-${String(y + 1).slice(2)}`;
 const pastCache = {};
 let seasonCtx = null; // set while a past season renders: { basis, label }

@@ -401,6 +401,13 @@ body:has(.mu-card.full) { background: var(--surface); }
   .mu-rows.solo .mu-row { grid-template-columns: 30px minmax(0, 1fr); }
   .rt-who { max-width: 5.75rem; } /* (the five columns fit a 375 px phone) */
   .rt-table .rt-team .team-link { max-width: 8.5rem; } /* (more categories in view before the table scrolls) */
+  /* the standings scroll sideways under the rank and team, so a category far right still says whose it is */
+  /* (no padding on the wrap's left: what scrolls under them would show in it; the rank's cell takes that room) */
+  #view .table-wrap.rt-wrap { padding-left: 0; }
+  .rt-board .rt-rk, .rt-board .rt-team { position: sticky; z-index: 1; background: var(--surface); }
+  .rt-board .rt-rk { left: 0; box-sizing: border-box; width: 42px; min-width: 42px; }
+  .rt-board .rt-team { left: 42px; box-shadow: inset -1px 0 0 var(--border); }
+  .rt-board tr.me-row td.rt-rk, .rt-board tr.me-row td.rt-team { background: var(--accent-soft); }
 }
 /* top performances */
 /* Performances tables: 5 rows show, the rest scroll (fitPerfLists); the header, player and value columns stay put */

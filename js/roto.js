@@ -9,7 +9,7 @@ const fmtRotoPts = n => fmt(n, Number.isInteger(n) ? 0 : 1); // (a tie splits po
 // A team's season total in a category ({ tot }: a standings row, or a projected one): a percentage from its makes and
 // attempts (null before any), else the count
 const rotoValue = (r, c) => (c.pct ? (r.tot[c.att] ? r.tot[c.made] / r.tot[c.att] : null) : lineStat(r.tot, c.key) || 0);
-const fmtRotoValue = (c, v) => (v == null ? '—' : c.pct ? fmtPct(v) : fmt(v, 0));
+const fmtRotoValue = (c, v) => (v == null ? '—' : c.pct ? fmtPct(v) : Math.round(v).toLocaleString()); // (a season's counts: 4,452)
 // ESPN's points while no one has played: every team tied in every category
 const rotoUnplayed = L => L.standings.every(r => !r.tot.gp1);
 
@@ -48,14 +48,14 @@ function rotoStandingsCard(L) {
     return `<td class="num rt-c" title="${c.label}: ${v}, ${shown(x.cats[c.key])} points${proj ? ' at the season\'s end, as projected' : ''}"><b>${shown(x.cats[c.key])}</b><span class="rt-tot">${v}</span></td>`;
   };
   const me = myTeamId();
-  const row = x => `<tr${x.r.id === me ? ' class="me-row"' : ''}><td class="num">${x.rank}</td><td class="rt-team"><b>${teamLink(x.r.id, esc(x.r.name))}</b>${x.r.id === me ? ' <span class="muted small">(you)</span>' : ''}</td>
+  const row = x => `<tr${x.r.id === me ? ' class="me-row"' : ''}><td class="num rt-rk">${x.rank}</td><td class="rt-team"><b>${teamLink(x.r.id, esc(x.r.name))}</b>${x.r.id === me ? ' <span class="muted small">(you)</span>' : ''}</td>
     <td class="num"><b>${shown(x.pts)}</b></td><td class="num">${fmt(x.tot.gp1 || 0, 0)}</td>${cats.map(c => cell(x, c)).join('')}</tr>`;
   return `<div class="card">
     <div class="card-head"><h2>Roto standings ${infoBtn('roto')}</h2>${segBtns('Standings', 'roto-view', 'v', [['now', 'Now'], ['proj', 'Projected', "At the season's end, as projected"]], proj ? 'proj' : 'now')}</div>
     ${proj ? `<p class="muted small" style="margin:0 0 10px">At the season's end, ${fmtMonthDay(L.roto.end)}: each team's totals so far plus its roster's games to come. Points are expected points, so they needn't be whole.</p>`
       : rotoUnplayed(L) ? '<p class="muted small" style="margin:0 0 10px">No games counted yet, so every team is tied.</p>' : ''}
-    <div class="table-wrap"><table class="rt-table">
-      <thead><tr><th class="num">#</th><th>Team</th><th class="num" title="Roto points: every category's added up">Pts</th><th class="num" title="${esc(gpTip)}">GP</th>${cats.map(c => `<th class="num">${c.label}</th>`).join('')}</tr></thead>
+    <div class="table-wrap rt-wrap"><table class="rt-table rt-board">
+      <thead><tr><th class="num rt-rk">#</th><th class="rt-team">Team</th><th class="num" title="Roto points: every category's added up">Pts</th><th class="num" title="${esc(gpTip)}">GP</th>${cats.map(c => `<th class="num">${c.label}</th>`).join('')}</tr></thead>
       <tbody>${rows.map(row).join('')}</tbody>
     </table></div>${waiverLine()}
   </div>`;
@@ -91,7 +91,7 @@ function rotoStandTable(tid) {
   if (!rows.length) return '';
   // (teams tied at that gap: the first named, the rest counted)
   const who = ids => `${teamLink(ids[0])}${ids.length > 1 ? `<span class="muted" title="${esc(ids.slice(1).map(fxTeamName).join(', '))}">+${ids.length - 1}</span>` : ''}`;
-  const near = (x, c) => (x ? `<b>${c.pct ? fmtPct(x.gap) : fmt(x.gap, 0)}</b><span class="rt-who">${who(x.ids)}</span>` : '<span class="muted">—</span>');
+  const near = (x, c) => (x ? `<b>${fmtRotoValue(c, x.gap)}</b><span class="rt-who">${who(x.ids)}</span>` : '<span class="muted">—</span>');
   return `<div class="table-wrap mu-rt"><table class="rt-table rt-stand">
     <thead><tr><th>Cat</th><th class="num">You</th><th class="num">Pts</th><th class="num" title="How far behind the nearest team above you, and who">To pass</th><th class="num" title="How far ahead of the nearest team below you, and who">Lead</th></tr></thead>
     <tbody>${rows.map(({ c, v, pts, above, below }) => `<tr><td><b>${c.label}</b></td><td class="num">${fmtRotoValue(c, v)}</td><td class="num"><b>${fmtRotoPts(pts)}</b></td>
@@ -114,7 +114,8 @@ keep('sport league players', () => rotoMemo.clear());
 const rotoDays = R => nbaGameDays().filter(d => d > todayIso() && (!R.start || d >= R.start) && (!R.end || d <= R.end));
 
 // A roster's games from tomorrow on, with gpUsed of its games limit gone -> { tot (per stat), games (counted), wanted (its
-// lineups would start, before the limit), room (games the limit leaves), full (the day the limit runs out at this pace) }
+// lineups would start, before the limit), room (games the limit leaves), full (the day the limit runs out at this pace),
+// bar (with the limit run past: the value of the weakest game still counted, so a lesser one isn't worth a start; else null) }
 function rotoRest(players, gpUsed) {
   const R = fxLeague().roto, today = todayIso();
   const val = new Map(players.map(p => [p, value(p)])), ranked = sortDesc(players, p => val.get(p)), byId = new Map(players.map(p => [p.id, p]));
@@ -133,7 +134,9 @@ function rotoRest(players, gpUsed) {
     const m = avg.get(p), c = startChance(p, d);
     for (const k of COUNT_KEYS) tot[k] += c * (m[k] || 0);
   }
-  return { tot, games: kept.length, wanted: starts.length, room, full: starts.length > room && room > 0 ? starts[room - 1][1] : null };
+  const over = starts.length > room;
+  return { tot, games: kept.length, wanted: starts.length, room, full: over && room > 0 ? starts[room - 1][1] : null,
+    bar: !over ? null : room > 0 ? val.get(kept[room - 1][0]) : Infinity };
 }
 
 // Every team's projected finish (swap: { team id: players } in place of a roster, for a trade) -> Map(team id -> { fin (its
@@ -199,6 +202,15 @@ function rotoTradeRow(T, cats, po) {
   };
   return `<tr class="tp-you"><td class="tp-pl"><b>For your team</b><div class="pmeta">projected roto points</div></td><td></td><td></td>${po}<td></td>
     ${cats.map(cell).join('')}<td class="num tp-v ${cls(d)}" title="${esc(`Your projected roto points at the season's end: ${fmt(b.total, 1)} now (${ordinal(b.rank)}), ${fmt(a.total, 1)} with the deal (${ordinal(a.rank)})`)}"><b>${signed(d, 1)}</b></td></tr>`;
+}
+
+// A team's bar for a start (rotoRest's bar) -> null where every game helps: no limit, or one the season won't reach.
+// Plan Ahead's daily bench swaps start no one under it (weekContext): his game would take the place of a better one later
+function rotoGameBar(tid) {
+  const L = fxLeague();
+  if (!isRoto() || !L.roto.gpMax || !tid) return null;
+  const o = rotoOutlook().get(tid);
+  return o ? o.rest.bar : null;
 }
 
 // Your games against the league's limit, as the rest of the season's lineups would use them (Plan Ahead's outlook)
