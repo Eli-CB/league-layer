@@ -109,17 +109,20 @@ test("the way home from the demo and the sandbox: the league menu's Home page, a
   quietLive();
   assert.ok(st.demo && !a.needsLanding());
   assert.match(menuHtml(), /class="lm-foot"><button type="button" class="lm-item" data-action="go-home">[^]*Home page</);
+  assert.equal(a.document.title, a.fxLeague().name, "the tab: the league's name alone");
   back('#players');
   assert.ok(st.demo && ui.tab === 'players');
   back('');
   assert.ok(!st.demo && !st.fxTeam && st.players.length === 0 && a.needsLanding(), 'the home page');
   assert.match(menuHtml(), /lm-brand/);
+  assert.equal(a.document.title, a.SITE_TITLE, "the tab: the site's own title again");
   // the sandbox on hockey: Home page, back on basketball (the home page's demo and pictures are), hockey's team kept for next time
   a.actions['land-browse']();
   await a.sbSetSport('nhl');
   const puck = a.sortDesc(a.nbaPlayers().filter(p => p.gp), p => p.val)[0];
   a.actions['sb-add']({ dataset: { id: String(puck.nbaId) } });
   assert.match(menuHtml(), /data-action="go-home"/);
+  assert.equal(a.document.title, a.SITE_TITLE, 'the sandbox: no league, the site');
   await a.actions['go-home']();
   quietLive();
   assert.ok(!st.browse && a.needsLanding() && a.SPORT.key === 'nba');

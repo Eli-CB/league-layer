@@ -42,10 +42,14 @@ const TABS_SHOWN = 4; // phones: past 5 sections, the bottom bar shows this many
 /* =========================================================
    Rendering
    ========================================================= */
+// The tab's title (the owner's pick, Nov 24, 2026): a league's name alone while one is open (the icon says League Layer);
+// anywhere else index.html's own, which is what search engines read (they never have a league open)
+const SITE_TITLE = document.title || 'League Layer';
 function leagueMenu() {
   const el = $('#leagueMenu');
   if (!el) return;
   const L = fxLeague(), sb = !L && state.browse; // (the sandbox: no league on the page, its leagues to go back to)
+  document.title = L && !needsLanding() ? L.name : SITE_TITLE;
   if (needsLanding()) { el.innerHTML = `<span class="lm-brand">${LOGO_MARK}League Layer</span>`; return; } // (no league yet: the site's name)
   if (!L && !sb) { el.innerHTML = ''; return; }
   const cur = sb ? null : currentLeagueId();
