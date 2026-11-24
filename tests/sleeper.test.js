@@ -75,6 +75,13 @@ test('Sleeper players with no NBA.com match are named from the daily file (slpNa
   }
 });
 
+test("a Sleeper league read twice with nothing new on Sleeper is the same read (its week's read time doesn't count), so nothing is redrawn", async () => {
+  await app.getLeague(SLEEPER, true);
+  const at = app.Date.now;
+  app.Date.now = () => at() + 5000; // (a later read: this week's points carry a later time)
+  try { assert.equal((await app.getLeague(SLEEPER, true)).same, true); } finally { app.Date.now = at; }
+});
+
 test('Sleeper league IDs and addresses', () => {
   assert.equal(app.parseLeagueId(SLEEPER), SLEEPER);
   assert.equal(app.parseLeagueId(`https://sleeper.com/leagues/${SLEEPER}/matchup`), SLEEPER);

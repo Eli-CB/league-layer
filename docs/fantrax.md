@@ -19,7 +19,7 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   league was read before that moment; checked once a minute and on coming back to the page), so the lock's lineups and the new
   period show without a manual Reload. A read asks only for what can change: a finished draft (`state` 'completed') and week 1's
   rosters come from the copy kept here (fetchFantraxLeague's `kept`), so a read is 3-4 requests. A read that brings nothing new
-  (`res.same`, `leagueSig`) leaves the page as it is (no `changed('league')`, no redraw: only the stamp's time moves, `stampNow`), and
+  (`res.same`, `leagueSig`: a time stored in a read, like `slpWeek.at`, must be left out of it, or every Sleeper read looked new) leaves the page as it is (no `changed('league')`, no redraw: only the stamp's time moves, `stampNow`), and
   an automatic one that fails is quiet until the copy is past `LEAGUE_OLD_MS` (6 h). Weekly rosters fetched once per finished period. Shared player list/ADP: never from each browser (Nov 20, 2026: thousands of
   visitors each asking Fantrax for the same large lists daily, all from leaguelayer.com, is what gets a site noticed); the daily job saves them.
 

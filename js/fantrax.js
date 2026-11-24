@@ -595,8 +595,9 @@ async function getLeague(id, force, anyAge = false) {
   }
   return leagueReads.get(id);
 }
-// A league's read as it's compared: what a later read may change (not its future picks, read apart on the Trades tab)
-const leagueSig = res => JSON.stringify([{ ...res.league, futurePicks: null }, res.fxPlayers]);
+// A league's read as it's compared: what a later read may change (not its future picks, read apart on the Trades tab, nor
+// when this week's points were read, slpWeek.at: Sleeper's and ESPN football's, which made every read look new)
+const leagueSig = res => JSON.stringify([{ ...res.league, futurePicks: null, slpWeek: res.league.slpWeek && { ...res.league.slpWeek, at: 0 } }, res.fxPlayers]);
 async function readLeague(id) {
   const src = leagueSourceOf(id), was = readLeagueCache()[id];
   const res = await (src === 'espn' ? fetchEspnLeague(id) : src === 'sleeper' ? fetchSleeperLeague(id) : src === 'yahoo' ? fetchYahooLeague(id) : fetchFantraxLeague(id));
