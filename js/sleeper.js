@@ -320,6 +320,50 @@ function oneGameLine(p, lines) {
   return i < 0 ? null : withBonus(lines[i]);
 }
 const isOneGame = () => !!(fxLeague() && fxLeague().oneGame);
+
+// ----- Lock-In (Sleeper basketball's game_mode 1; Game Pick, 0, counts the game picked before it) -----
+// A starter's latest game counts unless his manager locks one in after it's played; locked, it's his for the week. So with
+// n games to come a lineup spot is worth more than one game: each game is locked in only if it beats what waiting for
+// the rest is worth. lockInWorth(m, sd, n) is that, for a game worth m fantasy points on average, sd its spread: one
+// game left, m; each more, E[max(next game, worth of the rest)]. Sleeper's public API doesn't say what's locked in.
+const isLockIn = () => !!(isOneGame() && fxLeague().gameMode === 'lockin' && !isFootball());
+function lockInWorth(m, sd, n) {
+  if (n <= 0) return 0;
+  let v = m;
+  for (let i = 1; i < n && sd > 0; i++) { const z = (v - m) / sd; v += sd * (Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI) - z * (1 - phi(z))); }
+  return v;
+}
+// One game's fantasy points for him: his average and its spread (stats in a game move together: FP_RHO, as fpTotals)
+function gameFpSpread(p, g = perGame(p)) {
+  const parts = Object.entries(foldPoints(leaguePoints() || {})).map(([k, v]) => v * (g.sd[k] || 0));
+  return { m: lineFp(g.m), sd: Math.sqrt(Math.max(0, (1 - FP_RHO) * sum(parts.map(x => x * x)) + FP_RHO * sum(parts) ** 2)) };
+}
+// How many of one game his n games are worth in a Lock-In week (1 game: 1; 3 games, about 1.15); Game Pick: 1 at most
+function lockInTries(p, n) {
+  if (!isLockIn() || n <= 1) return Math.min(1, n);
+  const s = gameFpSpread(p);
+  return s.m > 0 ? lockInWorth(s.m, s.sd, n) / s.m : 1;
+}
+// A starter's Lock-In call this period (dates: its days), for the Matchup tab:
+//  locked: Sleeper's points for him this week are an earlier game's than his latest, so that one was locked in;
+//  lock / wait: his latest finished game, with games still to come and none on now, against what waiting is worth.
+// null: nothing to decide (no game in yet, one on now, or none left: his latest counts).
+function lockInCall(p, dates) {
+  if (!isLockIn() || !p || p.nbaId == null) return null;
+  const L = fxLeague(), today = todayIso(), raw = nbaById.get(p.nbaId);
+  const days = dates.filter(d => d <= today && gameFinal(p, d) && actualLine(p, d));
+  if (!days.length) return null;
+  const lines = days.map(d => withBonus(actualLine(p, d))), last = lines.length - 1, fp = lineFp(lines[last]);
+  const pts = L.slpWeek && raw && raw.slp && L.slpWeek.pts[raw.slp] != null ? +L.slpWeek.pts[raw.slp] : null;
+  const i = countedIndex(lines, pts);
+  if (pts != null && i >= 0 && i < last && Math.abs(fp - pts) >= 1) return { call: 'locked', fp: lineFp(lines[i]), day: days[i] };
+  const g = playsOn(p, today) && !gameFinal(p, today) ? liveGame(p, today) : null;
+  if (g && g.state !== 'pre') return null; // (on now, or over and its box score not read yet: the game before isn't his latest)
+  const left = p.status === 'Out' ? 0 : dates.filter(d => d > days[last] && d >= today && playsOn(p, d) && !gameFinal(p, d)).length;
+  if (!left) return null;
+  const s = gameFpSpread(p), worth = lockInWorth(s.m, s.sd, left);
+  return { call: fp >= worth ? 'lock' : 'wait', fp, worth, left, day: days[last] };
+}
 // On his team's taxi squad (a Sleeper dynasty league's; with the IR in a team's il, drawn as "Taxi")
 function onTaxi(p) {
   const L = fxLeague(), raw = p && nbaById.get(p.nbaId);

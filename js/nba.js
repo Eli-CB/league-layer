@@ -699,10 +699,14 @@ function oneGameSide(players, days) {
     if (!on.length) continue;
     if (isFootball()) { cands.push(footballEntry(p, dates)); continue; }
     const played = on.map(x => (gameFinal(p, x.date) ? actualLine(p, x.date) : null)).filter(Boolean);
-    const toCome = on.some(x => !gameFinal(p, x.date));
+    const toCome = on.filter(x => !gameFinal(p, x.date)).length;
     const g = perGame(p), c = oneGameLine(p, played);
-    if (c && (!toCome || lineFp(c) >= lineFp(g.m))) cands.push({ p, line: c, fp: lineFp(c) });
-    else if (toCome) cands.push({ p, g, fp: lineFp(g.m) });
+    // Lock-In: the games to come are worth lockInWorth (a later one locked in only if it's good), the game in hand
+    // counts if it's worth that much (or is locked in already: lockInCall); Game Pick: one game's average
+    const s = isLockIn() && toCome ? gameFpSpread(p, g) : null, worth = s ? lockInWorth(s.m, s.sd, toCome) : toCome ? lineFp(g.m) : 0;
+    const locked = s && c && (lockInCall(p, dates) || {}).call === 'locked';
+    if (c && (!toCome || locked || lineFp(c) >= worth)) cands.push({ p, line: c, fp: lineFp(c) });
+    else if (toCome) cands.push({ p, g, fp: worth, scale: s && s.m > 0 ? worth / s.m : 1 });
   }
   cands.sort((a, b) => b.fp - a.fp);
   const seated = new Set(fillSlots(cands.map(x => x.p), state.slots).filter(Boolean));
@@ -713,7 +717,8 @@ function oneGameSide(players, days) {
     if (x.line) for (const k of COUNT_KEYS) tot[k] += x.line[k] || 0;
     if (!x.g) continue;
     const c = x.share == null ? 1 : x.share; // (football: a game partly played counts the rest of its projection)
-    for (const [k, v] of Object.entries(x.g.m)) { tot[k] += c * v; left[k] += c * v; }
+    const m = c * (x.scale || 1); // (Lock-In: the games to come as one game worth lockInWorth; their spread stays one game's)
+    for (const [k, v] of Object.entries(x.g.m)) { tot[k] += m * v; left[k] += m * v; }
     for (const [k, v] of Object.entries(x.g.sd)) vr[k] += c * v ** 2;
   }
   return { tot, vr, left, games };
@@ -807,9 +812,10 @@ function playerFromRaw(raw, extra = {}) {
 
 // ----- Locked weekly lineups -----
 // Rough worth of starting a player for the week: games × value (against not playing); one game in one-game leagues
+// (Lock-In: a little more for each game more, lockInTries)
 function weeklyPriority(p, dates) {
   if (isFootball()) return p.status === 'Out' ? -1 : Math.max(footballPts(p, dates), gamesIn(p, dates) ? 0.01 : 0);
-  return p.status === 'Out' ? -1 : (isOneGame() ? Math.min(1, gamesIn(p, dates)) : expectedGames(p, dates)) * Math.max(value(p), 0.01);
+  return p.status === 'Out' ? -1 : (isOneGame() ? lockInTries(p, gamesIn(p, dates)) : expectedGames(p, dates)) * Math.max(value(p), 0.01);
 }
 
 function fitsSlots(ids, players) {

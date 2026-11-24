@@ -745,6 +745,11 @@ td.player { min-width: 170px; }
 .badge.warn { background: var(--warn-soft); color: var(--warn); }
 .badge.accent { background: var(--accent-soft); color: var(--accent); }
 .badge.info { background: var(--info-soft); color: var(--info); }
+/* Lock-In's call on the Matchup tab (lockInBadge): lock it in, keep going, already locked */
+.badge.lk-lock { background: var(--good-soft); color: var(--good); }
+.badge.lk-wait { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--border); }
+.badge.lk-locked { background: var(--surface-2); color: var(--text); }
+.mu-game .badge { padding: 0 5px; font-size: .66rem; margin-left: 2px; cursor: help; }
 .pos-good { color: var(--good); }
 .pos-bad { color: var(--bad); }
 

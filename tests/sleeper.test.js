@@ -183,6 +183,50 @@ test("Sleeper on the Dashboard: this period shows the game that counts", async (
   } finally { ui.dashRange = was; app.get('state').fxTeam = null; }
 });
 
+test('Sleeper Lock-In: each game more is another try, and your starters get a call: lock it in, or keep going', async () => {
+  await app.loadBoxes();
+  const L = await app.useLeague(SLEEPER);
+  assert.equal(L.gameMode, 'lockin');
+  // what waiting is worth: one game left, its average; each more, a bit more (the best of them, locking a good one in)
+  assert.equal(app.lockInWorth(30, 10, 1), 30);
+  assert.ok(Math.abs(app.lockInWorth(30, 10, 2) - (30 + 10 / Math.sqrt(2 * Math.PI))) < 0.01, 'two games: E[max(X, 30)]');
+  assert.ok(app.lockInWorth(30, 10, 4) > app.lockInWorth(30, 10, 3) && app.lockInWorth(30, 10, 3) > app.lockInWorth(30, 10, 2));
+  assert.equal(app.lockInWorth(30, 0, 4), 30);
+  assert.equal(app.lockInWorth(30, 10, 0), 0);
+
+  // week 1's games played, week 2's to come (on the clock's day, Oct 26): a made-up span with both
+  const span = [...app.matchDates('2026-10-20'), ...app.matchDates('2026-10-26')];
+  const byName = n => app.playerFromRaw(app.NBA.players.find(r => r.name === n));
+  const luka = byName('Luka Dončić'), zion = byName('Zion Williamson'), slp = app.NBA.players.find(r => r.name === 'Luka Dončić').slp;
+  L.slpWeek = { n: 1, pts: {}, at: Date.now() };
+  const k = app.lockInCall(luka, span);
+  assert.deepEqual([k.call, k.fp, k.left, k.day], ['lock', 53, 4, '2026-10-25'], 'his 53-point night beats what his 4 games to come are worth');
+  assert.ok(k.worth > 35 && k.worth < 53, `waiting: ${k.worth}`);
+  assert.equal(app.lockInCall(zion, span).call, 'wait', 'a poor game with games to come: keep going');
+  assert.equal(app.lockInCall(luka, app.matchDates('2026-10-20')), null, 'no games left: his latest counts, nothing to decide');
+  // Sleeper's points for him are his first game's, not his latest: that one was locked in
+  L.slpWeek = { n: 1, pts: { [slp]: 31.5 }, at: Date.now() };
+  const first = span.find(d => app.actualLine(luka, d));
+  assert.deepEqual([app.lockInCall(luka, span).call, app.lockInCall(luka, span).day], ['locked', first]);
+  assert.match(app.lockInBadge(luka, span, false), />Locked</, "a locked-in game shows on either team");
+  L.slpWeek = { n: 1, pts: {}, at: Date.now() };
+  assert.match(app.lockInBadge(luka, span, true), /badge lk-lock".*>Lock in</);
+  assert.match(app.lockInBadge(zion, span, true), />Keep going</);
+  assert.equal(app.lockInBadge(luka, span, false), '', "no call on the other team's players");
+
+  // projections: a Lock-In week is worth more than one average game per starter; Game Pick's is one game
+  const A = app.fxTeamSide(L.teams[0].id), w2 = app.matchDates('2026-10-26');
+  const fp = () => app.fpTotals(app.projectSide(A.players, w2, null)).a;
+  const lockIn = fp();
+  assert.ok(app.lockInTries(luka, 4) > 1.1 && app.lockInTries(luka, 1) === 1);
+  L.gameMode = 'pick';
+  try {
+    assert.ok(!app.isLockIn() && app.lockInCall(luka, span) === null && app.lockInTries(luka, 4) === 1, 'Game Pick: one game, no calls');
+    const pick = fp();
+    assert.ok(lockIn > pick * 1.05, `Lock-In ${lockIn} FP, Game Pick ${pick}`);
+  } finally { L.gameMode = 'lockin'; }
+});
+
 // The Sleeper league as the site has it once connected: its players matched by their Sleeper ids (raw.fx)
 async function asSleeper(fn) {
   const saved = app.NBA.players.map(r => [r, r.fx, r.pos]);

@@ -45,7 +45,7 @@ function gamesLeftTip(p, dates) {
   const played = dates.filter(d => playsOn(p, d) && gameFinal(p, d) && actualLine(p, d)).length;
   const left = dates.filter(d => playsOn(p, d) && !gameFinal(p, d)).length;
   if (isGoalie(p)) return `${played} played, about ${fmt(p.status === 'Out' ? 0 : expectedGames(p, dates.filter(d => !gameFinal(p, d))), 1)} more starts in his team's ${left} games left`;
-  return `${played} played, ${p.status === 'Out' ? 0 : left} left this week`;
+  return `${played} played, ${p.status === 'Out' ? 0 : left} left this week${isLockIn() && p.status !== 'Out' && left > 1 ? ': one counts, and each game more is another try at a good one to lock in' : ''}`;
 }
 
 // What changes, category by category, when your starters go from fromIds to toIds

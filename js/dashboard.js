@@ -129,6 +129,20 @@ function dashPace(S, D) {
   return n;
 }
 
+// Lock-In leagues (Sleeper basketball), This period: "Locked" by a starter whose earlier game Sleeper counts (either team);
+// by your own starters with a game in and more to come, whether to lock it in now ("Lock in") or wait for a better one
+function lockInBadge(p, dates, mine) {
+  const k = lockInCall(p, dates);
+  if (!k || (k.call !== 'locked' && !mine)) return '';
+  const day = fmtDay(k.day).split(',')[0], fp = fmtFp(k.fp);
+  const games = `${k.left} game${k.left === 1 ? '' : 's'}`;
+  const tip = k.call === 'locked' ? `Locked in: Sleeper counts his ${day} game, ${fp} FP, for the week`
+    : `${k.call === 'lock' ? 'Lock it in' : 'Keep going'}: his ${day} game, ${fp} FP, against about ${fmtFp(k.worth)} FP from waiting for his ${games} left`
+      + ` (a later one locked in only if it's that good). Sleeper counts his latest game unless you lock one in, and doesn't share which are locked: if you have, he's done for the week.`;
+  const label = k.call === 'locked' ? 'Locked' : k.call === 'lock' ? 'Lock in' : 'Keep going';
+  return ` <span class="badge lk-${k.call}" data-tip="${esc(tip)}">${label}</span>`;
+}
+
 const ICON_GAMES = '<svg viewBox="0 0 20 16" width="15" height="12" aria-hidden="true"><circle cx="7" cy="4.5" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M1.5 15c0-3.2 2.5-5.3 5.5-5.3s5.5 2.1 5.5 5.3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M13 1.8a3 3 0 0 1 0 5.6M15.5 10.2c1.8.7 3 2.4 3 4.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
 const ICON_CLOCK = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="8" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 5.8V9l2 1.6M6 1.2h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
 
@@ -173,7 +187,7 @@ function dashCell(C, p, right, counts, tag = '', cls = '') {
     // football: his one game, or his bye
     if (isFootball()) game = fbDay ? `${fmtDay(fbDay).split(',')[0]} ${dashGame(p, fbDay)}` : 'Bye';
   } else game = dashGame(p, dates[0]);
-  game = linkTeams(game); // (its opponent's code opens that team's players)
+  game = linkTeams(game) + (counts && range === 'week' ? lockInBadge(p, D.all, C.mine && !right) : ''); // (its opponent's code opens that team's players)
   // (in a game on now, the dot by its clock says whether he's on the floor: liveStatus; no green row, the owner's ask)
   return `<div class="mu-p${right ? ' right' : ''}${counts ? '' : ' bench'}${cls}">
     <div class="bplayer">${dashPhoto(p)}<div class="bmain"><div class="bname">${playerName(p)}${p.status !== 'Healthy' ? ' ' + statusBadge(p) : ''}${tag}</div></div></div>
@@ -321,7 +335,7 @@ function dashMatchupCard() {
   // Today: each bubble flashes when a live update moves it
   const isToday = range === 'today', chipNext = new Map();
   const chipsNow = (p, tot) => { const f = chipFlash(p.nbaId, tot); chipNext.set(p.nbaId, f.now); return f.flash; };
-  const C = { D, dates, range, today, hasOpp: !!B, solo: roto, flash: isToday ? chipsNow : undefined };
+  const C = { D, dates, range, today, hasOpp: !!B, solo: roto, mine: !ui.viewing, flash: isToday ? chipsNow : undefined };
   if (range !== 'week') {
     const { rows, none } = dashDayRows(C, A, B);
     chipWas = isToday ? chipNext : new Map();

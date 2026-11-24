@@ -21,6 +21,14 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   today's taxi players `o.taxi` (one promoted can't go back), left out of bench swaps and Benchwarmer Blues. A rookie draft: the board's
   columns are `draft.slots` (slot_to_roster_id) and each pick's slot; Reach/Fall rank among players on no roster (`draft.rostered`, a
   dynasty draft with fewer rounds than spots) and, a rookies-only draft (`player_type` 1), rookies only (`draft.rookies`).
+- Lock-In vs Game Pick (`L.gameMode`, from `settings.game_mode`: 1 Lock-In, 0 Game Pick; The IPA is Lock-In; `isLockIn()`, sleeper.js;
+  Nov 24, 2026, the owner's ask). Lock-In: a starter's latest game counts unless his manager locks one in, so more games are more tries:
+  `lockInWorth(m, sd, n)` (one game left: its average m; each more, E[max(next game, worth of the rest)]), with `gameFpSpread` (one game's FP
+  spread, FP_RHO as fpTotals). It values the games to come in `oneGameSide` (a game in hand counts if it beats them or Sleeper shows it
+  locked) and `weeklyPriority` (`lockInTries`). The Matchup tab's This period puts a call by each of your starters with a game in and more to
+  come (`lockInCall`/`lockInBadge`, dashboard.js): "Lock in" / "Keep going"; "Locked" on either team when Sleeper's points for him this week
+  are an earlier game's than his latest. Sleeper's public API never says what's locked (matchups: only points, starters, players; checked on
+  The IPA, week 6), so a game locked after his latest looks like nothing locked. Game Pick keeps one game's average and no calls.
 - Transactions (Standings' Moves this period, `sleeperMoves` in views.js; the owner's ask, Nov 20, 2026): `league/<id>/transactions/<week>`, one request
   when Standings first draws the league. Only `status: 'complete'` (failed waiver claims are listed too); a trade's `adds`/`drops` say who got each player from
   whom, `draft_picks` (`roster_id` = whose pick it was) and `waiver_budget` too; a waiver's bid is `settings.waiver_bid`. Sleeper files a dynasty league's whole
