@@ -41,13 +41,15 @@ function rotoStandingsCard(L) {
   // each team as the table shows it: { r (ESPN's row), rank, pts, cats (points by category), tot (season totals) }
   const rows = proj ? sortDesc(L.standings, r => O.get(r.id).total).map(r => { const o = O.get(r.id); return { r, rank: o.rank, pts: o.total, cats: o.pts, tot: o.fin }; })
     : L.standings.map(r => ({ r, rank: r.rank, pts: r.pts, cats: r.cats, tot: r.tot }));
-  const shown = n => (proj ? fmt(n, 1) : fmtRotoPts(n));
+  const shown = n => (proj ? fmt(n, 1) : fmtRotoPts(n)), me = myTeamId();
   const gpTip = `Games ${proj ? 'its starters will have played by the season\'s end, as projected' : 'its starters have played'}${gpMax ? `, of the league's limit of ${gpMax}${gpSpot ? ` (${gpSpot} a lineup spot)` : ''}` : ''}`;
+  // each category's cell shaded by its points (shade, the Players tab's greens and reds): the best greenest, the worst
+  // reddest, the middle and an all-way tie plain; your row's over its own orange (never bolder: the points already are)
+  const mid = (L.standings.length + 1) / 2, half = Math.max(1, (L.standings.length - 1) / 2);
   const cell = (x, c) => {
-    const v = fmtRotoValue(c, rotoValue(x, c));
-    return `<td class="num rt-c" title="${c.label}: ${v}, ${shown(x.cats[c.key])} points${proj ? ' at the season\'s end, as projected' : ''}"><b>${shown(x.cats[c.key])}</b><span class="rt-tot">${v}</span></td>`;
+    const v = fmtRotoValue(c, rotoValue(x, c)), z = ((x.cats[c.key] || 0) - mid) / half * 2;
+    return `<td class="num rt-c" style="${shade(z, x.r.id === me ? 'var(--accent-soft)' : 'transparent').replace(/ font-weight: \d+;/, '')}" title="${c.label}: ${v}, ${shown(x.cats[c.key])} points${proj ? ' at the season\'s end, as projected' : ''}"><b>${shown(x.cats[c.key])}</b><span class="rt-tot">${v}</span></td>`;
   };
-  const me = myTeamId();
   const row = x => `<tr${x.r.id === me ? ' class="me-row"' : ''}><td class="num rt-rk">${x.rank}</td><td class="rt-team"><b>${teamLink(x.r.id, esc(x.r.name))}</b>${x.r.id === me ? ' <span class="muted small">(you)</span>' : ''}</td>
     <td class="num"><b>${shown(x.pts)}</b></td><td class="num">${fmt(x.tot.gp1 || 0, 0)}</td>${cats.map(c => cell(x, c)).join('')}</tr>`;
   return `<div class="card">

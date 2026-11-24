@@ -107,6 +107,11 @@ test('ESPN roto: Standings, the Matchup tab, Plan Ahead and a team card, all wit
   assert.ok(!a.tabList().some(([k]) => k === 'recap'), 'no weekly matchups to recap');
   assert.ok(!a.tabList().some(([k]) => k === 'awards'), "no Awards tab where every day's lineups aren't read (ESPN)");
   assert.ok(standings.includes('<span class="rt-tot">1,150</span>'), "a season's count with its thousands comma (Team 10's PTS)");
+  // each category shaded by its points: you (Team 3) alone first in BLK, green over your row's orange; everyone tied in FT%, plain
+  const myRow = standings.split('<tr class="me-row">')[1].split('</tr>')[0], cellOf = label => myRow.match(new RegExp(`<td class="num rt-c" style="([^"]*)" title="${label}:`))[1];
+  assert.match(cellOf('BLK'), /var\(--good\) 40%, var\(--accent-soft\)/);
+  assert.equal(cellOf('FT%'), '');
+  assert.match(cellOf('FG%'), /--bad/, '3 points of 10: on the red side');
   assert.ok(/<table class="rt-table rt-board">/.test(standings) && standings.includes('<td class="num rt-rk">'), 'the rank and team stay put as the table scrolls on a phone');
   assert.ok(a.INFO.roto, 'the (i) explains roto');
 });
