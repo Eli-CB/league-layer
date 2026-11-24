@@ -92,17 +92,66 @@ function rotoBoard(S, D) {
         ${o ? `<div class="mu-rt-games small muted" title="Where you'd finish at the season's end, as projected: Standings, Projected">Projected ${ordinal(o.rank)} · ${fmt(o.total, 1)} pts</div>` : ''}</div>
     </div>`;
 }
+// Every team's roto points in a category from its totals ({ id, tot }) -> Map(id -> points): the best as many as there
+// are teams, the worst 1, ties splitting (as ESPN's); a percentage with no attempts below every other
+function rotoPointsOf(rows, c) {
+  const v = r => { const x = rotoValue(r, c); return x == null ? -Infinity : (c.neg ? -1 : 1) * x; };
+  const vals = rows.map(v);
+  return new Map(rows.map((r, i) => {
+    const better = vals.filter(x => x > vals[i] + 1e-12).length, tied = vals.filter(x => Math.abs(x - vals[i]) <= 1e-12).length;
+    return [r.id, rows.length - better - (tied - 1) / 2];
+  }));
+}
+
+// What the days the Matchup tab shows (Today, Yesterday, This week) did to the standings. ESPN's totals hold every game
+// before today (its nightly update) and none of today's: so a past day comes off every team's totals for "before", and
+// today's games, as they're played, go on for "after". Each team's starters are its lineup now, as the tab's player rows.
+// -> null (no days of the league's season), or { games (your starters' lines in them), before, after (your roto points),
+// cats: Map(key -> { line (your starters' total in the days), d (the points they moved) }) }
+function rotoSpan(tid, dates) {
+  const L = fxLeague(), R = L.roto, today = todayIso();
+  const ds = dates.filter(d => d <= today && (!R.start || d >= R.start) && (!R.end || d <= R.end));
+  if (!ds.length || !L.standings.some(r => r.id === tid)) return null;
+  const plus = (t, l, s) => { const o = { ...t }; for (const k of COUNT_KEYS) if (l[k]) o[k] = (o[k] || 0) + s * l[k]; return o; };
+  let games = 0;
+  const teams = L.standings.map(r => {
+    const S = fxTeamSide(r.id), byId = new Map(S.players.map(p => [p.id, p]));
+    const past = {}, now = {};
+    for (const id of S.lineup) {
+      const p = byId.get(id);
+      if (p) for (const d of ds) { const l = lineOn(p, d); if (l) { addLine(d < today ? past : now, withBonus(l)); if (r.id === tid) games++; } }
+    }
+    return { id: r.id, before: { id: r.id, tot: plus(r.tot, past, -1) }, after: { id: r.id, tot: plus(r.tot, now, 1) }, line: addLine({ ...past }, now) };
+  });
+  const me = teams.find(t => t.id === tid), cats = new Map();
+  let before = 0, after = 0;
+  for (const c of scoreCats().filter(x => !x.fp)) {
+    const b = rotoPointsOf(teams.map(t => t.before), c).get(tid), a = rotoPointsOf(teams.map(t => t.after), c).get(tid);
+    before += b; after += a;
+    cats.set(c.key, { line: me.line, d: a - b });
+  }
+  return { games, before, after, cats };
+}
+
 // Each category: a team's total, its points, and how far the nearest team above (to pass) and below (its lead) are
-// (the Matchup tab's, yours; a team's card, its own)
-function rotoStandTable(tid) {
+// (the Matchup tab's, yours; a team's card, its own). span: rotoSpan's, with its label ("Yesterday"): under your total
+// the days' own numbers, under your points what they moved, and a line over the table with the change in all
+function rotoStandTable(tid, span = null, label = '') {
   const rows = rotoStanding(tid), you = tid === state.fxTeam;
   if (!rows.length) return '';
+  const fmtPts = n => (Number.isInteger(Math.round(n * 10) / 10) ? fmt(n, 0) : fmt(n, 1));
+  const dayVal = c => { const l = span.cats.get(c.key).line; return c.pct ? `${fmt(l[c.made] || 0, 0)}/${fmt(l[c.att] || 0, 0)}` : `+${Math.round(lineStat(l, c.key) || 0).toLocaleString()}`; };
+  const dayPts = c => { const d = span.cats.get(c.key).d; return Math.abs(d) < 0.05 ? '' : `<span class="rt-day ${d > 0 ? 'pos-good' : 'pos-bad'}">${signed(d, Number.isInteger(Math.round(d * 10) / 10) ? 0 : 1)}</span>`; };
+  const moved = span && span.after - span.before;
+  const head = !span ? '' : !span.games ? `<p class="small muted mu-when rt-span">${label}: no games from your starters${label === 'Today' ? ' yet' : ''}.</p>`
+    : `<p class="small mu-when rt-span" title="Your roto points before and after these games, every team's games in them counted. Under each category: your starters' numbers in them, and the points they moved">${label}: <b class="${Math.abs(moved) < 0.05 ? '' : moved > 0 ? 'pos-good' : 'pos-bad'}">${Math.abs(moved) < 0.05 ? 'no change' : `${signed(moved, Number.isInteger(Math.round(moved * 10) / 10) ? 0 : 1)} roto points`}</b> <span class="muted">· ${fmtPts(span.before)} → ${fmtPts(span.after)}</span></p>`;
+  const showDay = span && span.games;
   // (teams tied at that gap: the first named, the rest counted)
   const who = ids => `${teamLink(ids[0])}${ids.length > 1 ? `<span class="muted" title="${esc(ids.slice(1).map(fxTeamName).join(', '))}">+${ids.length - 1}</span>` : ''}`;
   const near = (x, c) => (x ? `<b>${fmtRotoValue(c, x.gap)}</b><span class="rt-who">${who(x.ids)}</span>` : '<span class="muted">—</span>');
-  return `<div class="table-wrap mu-rt"><table class="rt-table rt-stand">
+  return `${head}<div class="table-wrap mu-rt"><table class="rt-table rt-stand">
     <thead><tr><th>Cat</th><th class="num">${you ? 'You' : 'Total'}</th><th class="num" title="Roto points in the category">Pts</th><th class="num" title="How far behind the nearest team above ${you ? 'you' : 'it'}, and who">To pass</th><th class="num" title="How far ahead of the nearest team below ${you ? 'you' : 'it'}, and who">Lead</th></tr></thead>
-    <tbody>${rows.map(({ c, v, pts, above, below }) => `<tr><td><b>${c.label}</b></td><td class="num">${fmtRotoValue(c, v)}</td><td class="num"><b>${fmtRotoPts(pts)}</b></td>
+    <tbody>${rows.map(({ c, v, pts, above, below }) => `<tr><td><b>${c.label}</b></td><td class="num">${fmtRotoValue(c, v)}${showDay ? `<span class="rt-day muted">${dayVal(c)}</span>` : ''}</td><td class="num"><b>${fmtRotoPts(pts)}</b>${showDay ? dayPts(c) : ''}</td>
       <td class="num rt-near">${near(above, c)}</td><td class="num rt-near">${near(below, c)}</td></tr>`).join('')}</tbody>
   </table></div>${rotoUnplayed(fxLeague()) ? '<p class="muted small mu-when">No games counted yet, so every team is tied.</p>' : ''}`;
 }

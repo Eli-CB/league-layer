@@ -21,7 +21,11 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   (`rotoTradeChange`, `rotoTradeRow`) read it. Past the games limit, Plan Ahead's daily bench swaps start only players worth at least the weakest
   game the projection keeps (`rotoGameBar`, `projectSide`'s `minValue`, Nov 24, 2026: "+6 games" was wrong advice for a team that runs out
   in March), and say "sit" where that saves a game. On a phone the standings keep # and Team in place as they scroll (`.rt-board`); each category's cell is shaded by its points (`shade`,
-  first greenest, last reddest, the middle plain; your row's over its orange; Nov 24, 2026). The Matchup head says the games pace beside the games ("runs out ~Mar 1", else "on pace for 640"; `rotoBoard`), the season played in its tip. No opponent's column on Plan Ahead or the Matchup rows (`solo`), no Recap tab. ESPN's real roto numbers aren't
+  first greenest, last reddest, the middle plain; your row's over its orange; Nov 24, 2026). The Matchup tab's Today / Yesterday / This week say what those days did to your standing (`rotoSpan`, Nov 24, 2026): a line over the
+  table ("Yesterday: +2.5 roto points · 48.5 → 51"), and under each category your starters' numbers in them and the points they moved. Every
+  team's starters (its lineup now, as the tab's rows) are taken off ESPN's totals for a past day and added for today's: that ESPN's totals hold
+  every game before today and none of today's is an assumption not yet checked against a real roto night. Roto's Yesterday is the last game day
+  in any week (`dashDays`). The Matchup head says the games pace beside the games ("runs out ~Mar 1", else "on pace for 640"; `rotoBoard`), the season played in its tip. No opponent's column on Plan Ahead or the Matchup rows (`solo`), no Recap tab. ESPN's real roto numbers aren't
   checked yet (the test league hadn't played).
 
 ## Gotchas

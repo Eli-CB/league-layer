@@ -390,6 +390,9 @@ body:has(.mu-card.full) { background: var(--surface); }
 .rt-table .rt-team { white-space: nowrap; }
 .rt-table .rt-team .team-link { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 .rt-c b, .rt-near b { display: block; }
+.rt-day { display: block; font-size: .72rem; font-weight: 600; } /* (the days picked on the Matchup tab: their numbers, the points they moved) */
+.rt-day.muted { font-weight: 400; }
+.rt-span { margin: 2px 0 6px; }
 .rt-tot { display: block; font-size: .72rem; color: var(--muted); }
 /* the team that close: its own ellipsis, as a cut can't go into a button (teamLink), with any "+2" beside it whole */
 .rt-who { display: flex; justify-content: flex-end; max-width: 9rem; margin-left: auto; font-size: .72rem; color: var(--muted); white-space: nowrap; }

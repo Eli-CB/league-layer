@@ -245,3 +245,31 @@ test('ESPN roto: past the games limit, Plan Ahead\'s daily bench swaps start onl
     assert.ok(!a.viewWeek().includes('on pace to pass'));
   } finally { L.roto = was; memo.clear(); }
 });
+
+test("ESPN roto: the Matchup tab's days (Yesterday, Today, This week) say what they did to the standings", async () => {
+  const { a, L } = await rotoApp();
+  const was = L.roto, me = L.standings.find(r => r.id === '3'), cats = a.scoreCats().filter(c => !c.fp);
+  // ESPN's own points come out of the totals the same way
+  for (const c of cats) assert.equal(a.rotoPointsOf(L.standings, c).get('3'), me.cats[c.key], c.key);
+  try {
+    L.roto = { ...was, start: '2026-10-20' }; // (the saved box scores are October's: a season begun by then)
+    const day = '2026-10-25', S = a.fxTeamSide('3'), byId = new Map(S.players.map(p => [p.id, p]));
+    const lines = S.lineup.map(id => byId.get(id)).filter(Boolean).map(p => a.lineOn(p, day)).filter(Boolean);
+    assert.ok(lines.length, 'your starters played that day');
+    const span = a.rotoSpan('3', [day]);
+    assert.equal(span.games, lines.length);
+    assert.equal(span.cats.get('pts').line.pts, lines.reduce((s, l) => s + (l.pts || 0), 0), "the day's own points, your starters'");
+    // a day before today is in ESPN's totals already: after is ESPN's, before takes every team's day off
+    assert.equal(span.after, me.pts);
+    assert.ok(Math.abs(span.after - span.before - cats.reduce((s, c) => s + span.cats.get(c.key).d, 0)) < 1e-9);
+    assert.equal(a.rotoSpan('3', ['2026-10-10']), null, 'before the season: nothing to say');
+    // drawn: the change in all over the table, and under each category the day's numbers
+    a.get('ui').dashRange = 'day';
+    assert.equal(a.dashDays().day, day, "a Monday's Yesterday is Sunday: roto has no matchup week to keep to");
+    const m = a.dashMatchupCard();
+    assert.ok(/<p class="small mu-when rt-span"[^>]*>Yesterday: /.test(m), 'the day and the points it moved');
+    assert.ok(m.includes(`<span class="rt-day muted">+${lines.reduce((s, l) => s + (l.pts || 0), 0)}</span>`), "PTS: the day's points under the season's");
+    assert.ok(/<span class="rt-day muted">\d+\/\d+<\/span>/.test(m), 'a percentage as makes/attempts');
+    assert.ok(!a.teamCardHtml('3').includes('rt-span'), "a team's card: the season alone");
+  } finally { L.roto = was; a.get('ui').dashRange = null; }
+});

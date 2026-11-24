@@ -20,10 +20,11 @@ function viewDashboard() {
 const lineOn = (p, d) => actualLine(p, d) || (p.nbaId && liveLines(d).get(p.nbaId)) || null;
 const addLine = (tot, line) => { for (const [k, x] of Object.entries(line)) if (k !== 'margin') tot[k] = (tot[k] || 0) + x; return tot; };
 
-// This matchup's days: today (when there are games), its last earlier day with games, and its days up to today
+// This matchup's days: today (when there are games), its last earlier day with games, and its days up to today. Roto has
+// no matchups to keep to, so its last day is the last game day before today in any week (a Monday's Yesterday is Sunday)
 function dashDays() {
   const today = todayIso(), P = perfDays(), all = matchDates(weekStartAt(0));
-  const day = all.filter(d => d < today && [...teamDates.values()].some(ds => ds.has(d))).pop() || null;
+  const day = (isRoto() ? nbaGameDays() : all).filter(d => d < today && [...teamDates.values()].some(ds => ds.has(d))).pop() || null;
   return { today: all.includes(today) && P.today ? today : null, started: P.started, day, week: all.filter(d => d <= today), all };
 }
 
@@ -291,7 +292,9 @@ function dashMatchupCard() {
     </div>`}
     ${range !== 'day' && live.error ? `<p class="small pos-bad mu-when">ESPN: ${esc(live.error)}</p>` : ''}`;
 
-  const catTable = roto ? rotoStandTable(me) : B && !pts ? dashCatTable(A, B, sc) : '';
+  // (roto: where you stand, and what the days picked did to it, rotoSpan)
+  const spanLabel = range === 'today' ? 'Today' : range === 'week' ? `This ${spanWord()}` : D.day === addDays(today, -1) ? 'Yesterday' : fmtDay(D.day);
+  const catTable = roto ? rotoStandTable(me, rotoSpan(me, dates), spanLabel) : B && !pts ? dashCatTable(A, B, sc) : '';
 
   // Today: each bubble flashes when a live update moves it
   const isToday = range === 'today', chipNext = new Map();
