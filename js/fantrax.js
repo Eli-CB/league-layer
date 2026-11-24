@@ -309,13 +309,18 @@ async function fetchFantraxLeague(id, opts = {}) {
     throw sportNotRead('Fantrax', sport);
   }
   const T = SPORTS[sport];
+  // What can't change any more comes from the copy kept on this device, not asked for again: a finished draft (the request
+  // Fantrax limits to once every 5 seconds) and, once week 1 is over, its rosters. The league is read more often since
+  // Nov 24, 2026 (READ_PACE), so each read asks less. Not for a past season's read (opts.opening).
+  const kept = opts.opening ? null : ((readLeagueCache()[id] || {}).res || {}).league || null;
+  const keptDraft = kept && kept.draft && kept.draft.state === 'completed' ? kept : null;
   let [D, { ids, adp: adpList }, rosters, draftFirst, standings] = await Promise.all([
     SPORT.key === sport && NBA ? NBA : fetchSport(sport), fxPlayerLists(sport), fxGet(`getTeamRosters?leagueId=${q}`),
-    fxGet(`getDraftResults?leagueId=${q}`).catch(() => null), fxGet(`getStandings?leagueId=${q}`).catch(() => []),
+    keptDraft ? null : fxGet(`getDraftResults?leagueId=${q}`).catch(() => null), fxGet(`getStandings?leagueId=${q}`).catch(() => []),
   ]);
   // the draft can fail with everything else asking at once: once more on its own, a moment later. Still nothing is
   // a failure (draftFailed), not a league without a draft
-  const draft = draftFirst || await pause(1500).then(() => fxGet(`getDraftResults?leagueId=${q}`)).catch(() => null);
+  const draft = keptDraft ? null : draftFirst || await pause(1500).then(() => fxGet(`getDraftResults?leagueId=${q}`)).catch(() => null);
   // Fantrax hands out a new period's rosters from midnight, though the period starts at its first game (its start time):
   // until then the period just played is this one (weekStartAt), and the new one's lineups, still being set, are next
   // week's. Read as this week's, the Matchup tab drew the week just played with next week's lineups (Nov 23, 2026).
@@ -328,7 +333,8 @@ async function fetchFantraxLeague(id, opts = {}) {
     if (prev && prev.period === early.period - 1) rosters = prev;
   }
   // the opening week's rosters: past seasons use them for keepers and pickups, and so does this season once week 1 is over
-  const opening = opts.opening || (rosters.period || 1) > 1 ? await fxGet(`getTeamRosters?leagueId=${q}&period=1`).catch(() => null) : null;
+  const keptOpening = kept && (rosters.period || 1) > 1 && kept.openingRosters;
+  const opening = !keptOpening && (opts.opening || (rosters.period || 1) > 1) ? await fxGet(`getTeamRosters?leagueId=${q}&period=1`).catch(() => null) : null;
   // weekly lineups: next week's too. This week's locked when it started, so the lineup people are setting is next week's
   const nextN = rosters.period && weekly && (info.rosterPeriods || []).some(p => p.number === rosters.period + 1) ? rosters.period + 1 : null;
   const next = early && early.period === nextN ? early : nextN && !opts.opening ? await fxGet(`getTeamRosters?leagueId=${q}&period=${nextN}`).catch(() => null) : null;
@@ -362,12 +368,12 @@ async function fetchFantraxLeague(id, opts = {}) {
     nextRosters: next && next.period === nextN ? { period: nextN, rosters: Object.fromEntries(Object.entries(next.rosters || {}).map(([tid, r]) => [tid,
       (r.rosterItems || []).map(it => ({ fid: it.id, nba: toNba[it.id] || null, name: names[it.id] || '', slot: it.position || '', st: it.status || '' }))])) } : null,
     openingRosters: opening ? Object.fromEntries(Object.entries(opening.rosters || {}).map(([tid, r]) => [tid,
-      (r.rosterItems || []).map(it => ({ fid: it.id, nba: toNba[it.id] || null, name: names[it.id] || '', st: it.status || '' }))])) : null,
+      (r.rosterItems || []).map(it => ({ fid: it.id, nba: toNba[it.id] || null, name: names[it.id] || '', st: it.status || '' }))])) : keptOpening || null,
     rosterInfo: info.rosterInfo || null,
-    draft: null,
-    draftAt: (draft && draft.draftDate) || null,
+    draft: keptDraft ? keptDraft.draft : null,
+    draftAt: keptDraft ? keptDraft.draftAt : (draft && draft.draftDate) || null,
     standings: parseStandings(standings),
-    ...(draft ? {} : { draftFailed: true }),
+    ...(draft || keptDraft ? {} : { draftFailed: true }),
   };
   const picks = ((draft && draft.draftPicks) || []).filter(d => d.playerId);
   if (picks.length) {
@@ -534,21 +540,43 @@ function syncLeagueRules() {
   if (cfg.ir != null) state.ilSize = cfg.ir;
 }
 
-// Every league loaded from Fantrax or ESPN is kept on this device (the five most recent). The site's own
-// league uses it until the daily data file is newer; any other league for 6 hours, or until ↻ Reload. Past that, a kept
-// league is still drawn at once (anyAge) and read again from its site behind it (readLeagueBehind).
+// ----- How often a league is read again from its site: THE place to turn it down -----
+// One row per site, so one site can be turned down without the others (say Fantrax, ESPN or Sleeper asks about the
+// requests coming from leaguelayer.com). Every read goes from each visitor's own browser: Fantrax 3-6 requests, ESPN 1,
+// Sleeper about 7. ↻ Reload by hand always works (once in 2 minutes: RELOAD_COOL, actions.js).
+//   open:  minutes. Opening the page (or picking the league), a copy older than this is drawn at once and read again
+//          behind it. Raise it to read less (360 = six hours, as it was until Nov 24, 2026); 0: never on opening.
+//   back:  minutes. Coming back to the page after a minute or more away (most moves are made on the league's own site, in
+//          another tab or app), a copy older than this is read again. Raise it to read less; 0: off.
+//   start: true: read 10-20 minutes before a matchup period's first game and 2-6 after (its locked lineups). false: off.
+//   daily: true: in a daily-lineup league, the same around each game day's first game. false: off.
+// What each does to a page: docs/fantrax.md (Rules settled with the owner).
+const READ_PACE = {
+  fantrax: { open: 30, back: 5, start: true, daily: true },
+  espn: { open: 30, back: 5, start: true, daily: true },
+  sleeper: { open: 30, back: 5, start: true, daily: true },
+  yahoo: { open: 30, back: 5, start: true, daily: true },
+};
+const readPace = id => READ_PACE[leagueSourceOf(id)] || READ_PACE.fantrax;
+// A copy this old is getting old: the Matchup tab's stamp says so in amber, and a read that fails says so (younger: quietly)
+const LEAGUE_OLD_MS = 6 * 36e5;
+
+// Every league loaded from its site is kept on this device (the five most recent). The site's own league uses it until
+// the daily data file is newer; any other league until READ_PACE's open minutes, or ↻ Reload. Past that, a kept league
+// is still drawn at once (anyAge) and read again from its site behind it (readLeagueBehind).
 const FX_CACHE_KEY = 'league-layer-fantrax-v2';
-const LEAGUE_FRESH_MS = 6 * 36e5;
 const readLeagueCache = () => store.json(FX_CACHE_KEY, {});
 function cachedLeague(id, anyAge = false) {
   const c = readLeagueCache()[id];
-  if (!c) return null;
+  if (!c || !c.res) return null;
   if (c.res.league.scoring === 'ROTO' && !c.res.league.roto) return null; // (an ESPN roto league kept before the site read roto: read again)
-  const site = NBA && NBA.siteLeague && NBA.siteLeague.id === id;
-  return (site ? c.at > Date.parse(NBA.updated || 0) : anyAge || Date.now() - c.at < LEAGUE_FRESH_MS) ? c.res : null;
+  const site = NBA && NBA.siteLeague && NBA.siteLeague.id === id, open = readPace(id).open;
+  return (site ? c.at > Date.parse(NBA.updated || 0) : anyAge || !open || Date.now() - c.at < open * 60e3) ? c.res : null;
 }
-// kept here, but past LEAGUE_FRESH_MS: drawn as it is while it's read again
+// kept here, but past READ_PACE's open minutes: drawn as it is while it's read again
 const leagueStale = id => !cachedLeague(id) && !!cachedLeague(id, true);
+// The site's own league, read this morning by the daily job: past the open minutes, read again behind the page too
+const siteLeagueStale = id => { const open = readPace(id).open; return !!open && Date.now() - leagueReadAt(id) > open * 60e3; };
 function saveLeague(id, res) {
   const all = readLeagueCache();
   all[id] = { at: Date.now(), res: { league: res.league, fxPlayers: res.fxPlayers } };
@@ -561,21 +589,32 @@ const leagueReads = new Map(); // id -> its read from its site in progress
 async function getLeague(id, force, anyAge = false) {
   const kept = force ? null : cachedLeague(id, anyAge);
   if (kept) return kept;
-  if (!leagueReads.has(id)) leagueReads.set(id, readLeague(id).finally(() => leagueReads.delete(id)));
+  if (!leagueReads.has(id)) {
+    leagueReads.set(id, readLeague(id).finally(() => { leagueReads.delete(id); stampNow(); }));
+    stampNow(); // (the Matchup tab's stamp: "reading")
+  }
   return leagueReads.get(id);
 }
+// A league's read as it's compared: what a later read may change (not its future picks, read apart on the Trades tab)
+const leagueSig = res => JSON.stringify([{ ...res.league, futurePicks: null }, res.fxPlayers]);
 async function readLeague(id) {
-  const src = leagueSourceOf(id);
+  const src = leagueSourceOf(id), was = readLeagueCache()[id];
   const res = await (src === 'espn' ? fetchEspnLeague(id) : src === 'sleeper' ? fetchSleeperLeague(id) : src === 'yahoo' ? fetchYahooLeague(id) : fetchFantraxLeague(id));
+  // Nothing new on its site since the copy kept here, and that copy is what's drawn (the site's own league: not when this
+  // morning's file is newer): same, so an automatic read leaves the page as it is, its odds and memos too, and only the
+  // stamp's time moves (Nov 24, 2026: reads became frequent, and redrawing under someone mid-trade for nothing is worse)
+  const site = NBA && NBA.siteLeague && NBA.siteLeague.id === id;
+  res.same = !!(was && was.res && !(site && was.at <= Date.parse(NBA.updated || 0)) && leagueSig(was.res) === leagueSig(res));
+  if (res.same && was.res.league.futurePicks) res.league.futurePicks = was.res.league.futurePicks;
   if (!res.league.draftFailed) saveLeague(id, res); // a league missing its draft is asked for again next time
-  changed('league', id); // its lineups, matchups and rosters may have changed: whatever was worked out from them goes
+  if (!res.same) changed('league', id); // its lineups, matchups and rosters may have changed: whatever was worked out from them goes
   return res;
 }
 
 // ----- Future draft picks, to trade -----
 // A league's future picks: [{ year, round, from (whose pick it was), owner (who has it now) }]. Read from its site the first
 // time the Trades tab needs them, then kept on the league (and with it on this device), so they're read again only with
-// the league: 6 hours on, or ↻ Reload. Not with changed('league'), which a Sleeper league hears on game nights. None for a
+// the league (READ_PACE), or ↻ Reload. Not with changed('league'), which a Sleeper league hears on game nights. None for a
 // site that doesn't trade picks (ESPN; Yahoo here) or a league that doesn't (a Sleeper redraft league).
 // Returns { list }, { loading }, or { error } (Try again: tradePicksRetry).
 const picksLoads = new Map(); // league id -> the read in progress
@@ -622,16 +661,18 @@ function applyLeagueRead(id, res) {
   }
 }
 
-// A league drawn from this device past LEAGUE_FRESH_MS (opening the page, or picking it in the league menu): read again
-// from its site behind the page, then drawn again. The page used to wait for it: on a visit's first load of the day
-// "Loading" stayed up ~4 s, a Fantrax league being 4-5 requests one after another (Nov 21, 2026). The read goes on the
-// page only if it's still on that league (not another league, the sandbox, the demo or a past season); if it fails, the
-// kept copy stays and says how old it is. Its promise is kept for the tests.
+// A league drawn from this device past READ_PACE's open minutes (opening the page, or picking it in the league menu): read
+// again from its site behind the page, then drawn again if anything changed (res.same: not). The page used to wait for it:
+// on a visit's first load of the day "Loading" stayed up ~4 s, a Fantrax league being 4-5 requests one after another
+// (Nov 21, 2026). The read goes on the page only if it's still on that league (not another league, the sandbox, the demo
+// or a past season); if it fails, the kept copy stays, and says how old it is once that's past LEAGUE_OLD_MS (younger, the
+// stamp's time is enough: a toast every half hour would nag). Its promise is kept for the tests.
 let leagueBehind = null;
 function readLeagueBehind(id) {
-  const at = (readLeagueCache()[id] || {}).at;
+  const at = leagueReadAt(id);
   return (leagueBehind = getLeague(id, true).then(res => {
-    if (state.fxLeagueId !== id || state.browse || state.demo || ui.season || !NBA || !NBA.league || NBA.league.id !== id) return false;
+    if (currentLeagueId() !== id || state.browse || state.demo || ui.season || !NBA || !NBA.league || NBA.league.id !== id) return false;
+    if (res.same) return true;
     applyLeagueRead(id, res);
     if (state.fxTeam && !NBA.league.teams.some(t => t.id === state.fxTeam)) state.fxTeam = null;
     if (state.fxTeam) syncLeagueRules();
@@ -639,7 +680,7 @@ function readLeagueBehind(id) {
     commit();
     return true;
   }, () => {
-    if (state.fxLeagueId === id && at) toast(`Couldn't reach ${SOURCE_NAME[leagueSourceOf(id)]} just now. Showing your league from ${ago(at)}.`);
+    if (currentLeagueId() === id && at && Date.now() - at > LEAGUE_OLD_MS) toast(`Couldn't reach ${SOURCE_NAME[leagueSourceOf(id)]} just now. Showing your league from ${ago(at)}.`);
     return false;
   }));
 }

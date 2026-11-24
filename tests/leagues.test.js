@@ -285,7 +285,69 @@ test("the league is read again from its site 10-20 minutes before a period's fir
   }
 });
 
-test('a league kept over 6 hours is drawn at once and read again from its site behind the page (opening it, or picking it)', async () => {
+test("READ_PACE, one row a site: opening after half an hour, coming back after a few minutes, each game day in a daily league; nothing new redraws nothing", async () => {
+  const app = await sharedApp();
+  const S = app.get('state'), ui = app.get('ui'), P = app.get('READ_PACE'), KEY = 'league-layer-fantrax-v2';
+  const keep = { fxTeam: S.fxTeam, fxLeagueId: S.fxLeagueId, demo: S.demo, browse: S.browse }, kept = app.localStorage.getItem(KEY), pace = JSON.stringify(P);
+  const setAt = (id, t) => { const all = JSON.parse(app.localStorage.getItem(KEY)); all[id].at = t; app.localStorage.setItem(KEY, JSON.stringify(all)); };
+  try {
+    // opening: a copy over 30 minutes old is read again behind the page; raised, it isn't
+    const W = await app.useLeague(POINTS);
+    await app.getLeague(POINTS, true);
+    Object.assign(S, { fxTeam: W.teams[0].id, fxLeagueId: POINTS, demo: false, browse: false });
+    const now = app.Date.now();
+    setAt(POINTS, now - 29 * 60e3);
+    assert.equal(app.leagueStale(POINTS), false, '29 minutes: kept');
+    setAt(POINTS, now - 31 * 60e3);
+    assert.equal(app.leagueStale(POINTS), true, '31 minutes: read again');
+    P.fantrax.open = 360;
+    assert.equal(app.leagueStale(POINTS), false, 'turned down to six hours: kept');
+    assert.equal(app.readPace(ESPN).open, 30, "(ESPN's row is its own)");
+
+    // coming back after a minute or more away, a copy over 5 minutes old (never within RELOAD_COOL)
+    setAt(POINTS, now - 6 * 60e3);
+    assert.equal(app.backReadDue(30e3), false, 'a glance at another tab: no');
+    assert.equal(app.backReadDue(90e3), true, 'back from Fantrax: read again');
+    setAt(POINTS, now - 4 * 60e3);
+    assert.equal(app.backReadDue(90e3), false, 'read 4 minutes ago: no');
+    setAt(POINTS, now - 6 * 60e3);
+    P.fantrax.back = 0;
+    assert.equal(app.backReadDue(90e3), false, 'turned off');
+    P.fantrax.back = 5;
+    S.demo = true; assert.equal(app.backReadDue(90e3), false, 'not in the demo'); S.demo = false;
+
+    // read with nothing new on Fantrax: the page isn't drawn again
+    let draws = 0;
+    const realRender = app.get('render');
+    app.set('render', () => { draws++; });
+    try {
+      await app.checkAutoReload(90e3);
+      assert.equal(app.readLeagueCache()[POINTS].at, app.Date.now(), 'read (and kept from now)');
+      assert.equal(draws, 0, 'nothing new: nothing redrawn');
+    } finally { app.set('render', realRender); }
+
+    // a weekly league: around each period's first game only; a daily one around each game day's too
+    P.fantrax.start = false;
+    assert.equal(app.autoReloadMarks(W).length, 0, 'start off: no marks in a weekly league');
+    P.fantrax.start = true;
+    const D = await app.useLeague(DAILY);
+    S.fxLeagueId = DAILY;
+    const marks = app.autoReloadMarks(D);
+    P.fantrax.daily = false;
+    const noDays = app.autoReloadMarks(D);
+    P.fantrax.daily = true;
+    assert.ok(marks.length > noDays.length, `game days add marks (${marks.length} with, ${noDays.length} without)`);
+    const tonight = app.dayFirstGame(D, app.todayIso());
+    assert.ok(tonight && marks.some(m => m < tonight && m >= tonight - 20 * 60e3) && marks.some(m => m > tonight && m <= tonight + 6 * 60e3), "tonight's first game: before and after");
+  } finally {
+    Object.assign(P, JSON.parse(pace));
+    Object.assign(S, keep);
+    app.get('autoReload').done.clear();
+    if (kept == null) app.localStorage.removeItem(KEY); else app.localStorage.setItem(KEY, kept);
+  }
+});
+
+test('a league kept past its open minutes (READ_PACE) is drawn at once and read again from its site behind the page (opening it, or picking it)', async () => {
   // yesterday's visit: two leagues connected, a team picked in each
   const a = loadApp();
   await a.ready();

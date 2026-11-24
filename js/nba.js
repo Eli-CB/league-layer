@@ -168,8 +168,10 @@ async function loadNba(fresh = false) {
     // dropped it, Nov 18, 2026)
     const sb = !!state.browse;
     const other = !sb && state.fxLeagueId && (!NBA.league || NBA.league.id !== state.fxLeagueId);
-    // someone else's league: from this device, however old (one past 6 hours is read again behind the page, below), else from its site
-    const behind = other && leagueStale(state.fxLeagueId);
+    // someone else's league: from this device, however old (one past READ_PACE's open minutes is read again behind the page,
+    // below), else from its site. The site's own league, made yours: this morning's file, read again the same way
+    const siteId = !sb && !state.demo && !state.fxLeagueId && state.fxTeam && NBA.siteLeague && NBA.league && NBA.league.id === NBA.siteLeague.id ? NBA.league.id : null;
+    const behind = other && !state.demo && leagueStale(state.fxLeagueId) ? state.fxLeagueId : siteId && siteLeagueStale(siteId) ? siteId : null;
     if (other) {
       try {
         await refreshLeague(false, true);
@@ -185,7 +187,7 @@ async function loadNba(fresh = false) {
     const folded = foldPastSeasons();
     if (state.browse) clearLeaguePlayers(); // browsing without a league: none of the site league's on the players
     if (syncLinked() || migrate || folded) commit(); else render();
-    if (behind) readLeagueBehind(state.fxLeagueId);
+    if (behind) readLeagueBehind(behind);
     if (!isFootball()) loadBoxes().then(() => { if (dropPlayedInjuries()) render(); }).catch(() => {}).then(refreshInjuries); // (who's played since his injury entry; then ESPN's report as it is now)
     if (ui.pendingSeason) route(); // a refresh on a past season waited for this data
     return true;

@@ -259,6 +259,12 @@ body:has(.mu-card.full) .container { padding-top: max(12px, env(safe-area-inset-
 .mu-pc svg { color: var(--muted); }
 .mu-score { font-size: 2.2rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .mu-when { margin: -4px 0 10px; }
+/* when the league was read from its site, under the scoreboard: a tap reads it again (amber once it's hours old) */
+.read-stamp { display: flex; align-items: center; gap: 5px; margin: -4px auto 10px; padding: 2px 8px; border: 0; border-radius: 999px; background: none; color: var(--muted); font: inherit; font-size: .74rem; cursor: pointer; }
+.read-stamp:hover { background: var(--surface-2); color: var(--text); }
+.read-stamp.old { background: var(--warn-soft); color: var(--warn); }
+.rs-ico { width: 13px; height: 13px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mu-card.full .read-stamp { display: none; }
 .mu-cats-wrap { overflow-x: auto; margin: 0 0 12px; }
 .mu-cats { width: 100%; border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; table-layout: fixed; }
 .mu-cats th, .mu-cats td { padding: 4px 2px; text-align: center; border-bottom: 1px solid var(--border); }

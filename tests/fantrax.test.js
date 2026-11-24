@@ -143,6 +143,7 @@ test("Fantrax's 'too many requests' in a normal answer waits as long as it says,
     calls++;
     return limited-- > 0 ? Promise.resolve({ ok: true, status: 200, text: async () => busy }) : realFetch(url, init);
   };
+  forgetLeague(POINTS); // (kept from an earlier read, its finished draft isn't asked for at all)
   try {
     const t0 = Date.now();
     const { league } = await app.fetchFantraxLeague(POINTS);
@@ -151,3 +152,26 @@ test("Fantrax's 'too many requests' in a normal answer waits as long as it says,
     assert.ok(Date.now() - t0 >= 1000, 'waited the second it asked for');
   } finally { app.fetch = realFetch; }
 });
+
+test("read again, a Fantrax league asks only for what can change: a finished draft and week 1's rosters come from the copy kept here", async () => {
+  const realFetch = app.fetch, asked = [];
+  app.fetch = (url, init) => { asked.push(String(url).replace(/^.*\/fxea\/general\//, '').split('?')[0] + (String(url).includes('period=1') ? '(1)' : '')); return realFetch(url, init); };
+  try {
+    forgetLeague(POINTS);
+    const first = await app.getLeague(POINTS, true);
+    assert.ok(asked.includes('getDraftResults'), 'the first read asks for the draft');
+    assert.equal(first.league.draft.state, 'completed');
+    asked.length = 0;
+    const again = await app.getLeague(POINTS, true);
+    assert.ok(!asked.includes('getDraftResults') && !asked.includes('getTeamRosters(1)'), `asked: ${asked.join(', ')}`);
+    assert.equal(JSON.stringify(again.league.draft), JSON.stringify(first.league.draft), 'the same draft, keepers and all');
+    assert.equal(JSON.stringify(again.league.openingRosters), JSON.stringify(first.league.openingRosters));
+    assert.ok(again.same, 'nothing new on Fantrax: same');
+    // a past season's read (opening) asks for everything, as before
+    asked.length = 0;
+    await app.fetchFantraxLeague(POINTS, { opening: true });
+    assert.ok(asked.includes('getDraftResults'));
+  } finally { app.fetch = realFetch; }
+});
+
+function forgetLeague(id) { const all = app.readLeagueCache(); delete all[id]; app.localStorage.setItem(app.FX_CACHE_KEY, JSON.stringify(all)); }

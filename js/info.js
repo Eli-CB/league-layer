@@ -165,7 +165,7 @@ const INFO = {
     <p>Until today's first tip-off it shows the last game day; Today then shows each game's tip-off. Players on a game now come first, then finished games, then games still to come, then players with no game (and their next one).</p>
     <p><b>Week</b>: Monday to Sunday so far. Each player's games played and still to come (a game on now with its clock), his stats from those games added up, and their value; players on a game now first, then by that value.</p>`],
   storage: ['Saved on this device', `
-    <p>To keep requests to Fantrax and ESPN low, the site saves what it fetches in this browser: each league you open (the five most recent, reused for 6 hours or until ↻ Reload), each site's player list (and Fantrax's ADP, refreshed daily), and finished weeks' lineups (the 8 most recently used leagues and seasons; a finished week never changes).</p>
+    <p>To keep requests to Fantrax and ESPN low, the site saves what it fetches in this browser: each league you open (the five most recent, read again from its site now and then: opening the page after half an hour, coming back to it after a few minutes, and around each lineup lock; ↻ Reload any time), each site's player list (and Fantrax's ADP, refreshed daily), and finished weeks' lineups (the 8 most recently used leagues and seasons; a finished week never changes).</p>
     <p>Your leagues, team picks and settings are saved too. Browsers allow about 5 MB per site. <b>Clear saved league data</b> removes only what came from Fantrax and ESPN; it's fetched again the next time it's needed.</p>`],
   awDraft: ['Best draft', `
     <p>Everything a team's draft picks produced over the season: every game each pick played from the draft until he was first <b>dropped</b> to free agency, whether he was starting or on the bench. A pick who's <b>traded</b> keeps counting for the team that drafted him; one who's dropped stops counting (if someone picks him up later, that's their Waiver Wire Wizard).</p>
@@ -249,7 +249,7 @@ const INFO = {
     <ul><li><b>NBA.com:</b> active players, last season's stats and game-to-game spreads, and (when reachable) the schedule and box scores.</li>
     <li><b>ESPN:</b> the injury report, plus the schedule and box scores on the website's daily refresh, since NBA.com blocks the cloud servers that run it. Both give identical numbers.</li>
     <li><b>Fantrax or ESPN</b> (wherever your league is): your league's position eligibility, every team's roster and lineup, matchups, and who's available.</li></ul>
-    <p>NBA stats, box scores and injuries refresh every night at about 4 a.m. Eastern, after the last games finish. The site's own league gets its Fantrax data (rosters, lineups, matchups, draft) in that same refresh; other leagues are saved on this device for up to 6 hours. For the latest from your league's site any time, use ↻ Reload in the ⚙ menu.</p>`],
+    <p>NBA stats, box scores and injuries refresh every night at about 4 a.m. Eastern, after the last games finish. The site's own league gets its Fantrax data (rosters, lineups, matchups, draft) in that same refresh; every league is read again from its site now and then (the time is under the Matchup tab's score). For the latest any time, tap that time, or ↻ Reload in the ⚙ menu.</p>`],
 };
 
 const infoBtn = key => `<button type="button" class="info-btn" data-action="info" data-key="${key}" aria-label="How this is calculated" title="How this is calculated">i</button>`;

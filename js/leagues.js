@@ -180,7 +180,7 @@ async function switchLeague(input) {
   if (back) stashLeague(back.id);
   const cur = back ? back.id : currentLeagueId(), was = SPORT.key, fromDemo = !!state.demo;
   let res;
-  const behind = leagueStale(id); // (kept here past 6 hours: on screen at once, read again behind it, below)
+  const behind = leagueStale(id); // (kept here past READ_PACE's open minutes: on screen at once, read again behind it, below)
   ui.hold = true;
   try {
     if (!['fantrax', 'sleeper'].includes(leagueSourceOf(id))) await useSport('nba');
