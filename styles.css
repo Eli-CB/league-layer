@@ -284,7 +284,8 @@ body:has(.mu-card.full) .container { padding-top: max(12px, env(safe-area-inset-
    spilling into the left side */
 .mu-p.right .bplayer { align-self: stretch; }
 .mu-p.right .bname { justify-content: flex-end; }
-.mu-row.bench .mu-p, .mu-p.bench, .mu-p.out { opacity: .62; }
+.mu-row.bench .mu-p, .mu-p.bench { opacity: .78; }
+.mu-p.out, .mu-row.bench .mu-p.out { opacity: .62; }
 .mu-game { font-size: .78rem; color: var(--muted); }
 .mu-game b { color: var(--bad); }
 /* the game itself, in a bubble as on Fantrax: "DET 144 @ WAS 140", the clock while it's on, the tip-off before; a final
