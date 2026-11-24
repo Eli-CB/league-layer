@@ -8,7 +8,7 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
 
 ## Rules settled with the owner (keep them)
 - Fantrax: minimize requests. League data cached on the device, read again from its site now and then, and ↻ Reload by hand (gear menu, or the
-  Matchup tab's stamp; no ↻ Reload within 2 minutes of the league's last read: `RELOAD_COOL`, `reloadWait`, the menu says "read just now").
+  stamp beside the team picker, `readStamp`; no ↻ Reload within 2 minutes of the league's last read: `RELOAD_COOL`, `reloadWait`, the menu says "read just now").
   How often is `READ_PACE` (fantrax.js), a row per site (Nov 24, 2026, the owner's ask: so a site that questions the requests can be turned
   down alone; raise minutes or set false there, nothing else): `open` (30 min: opening the page or picking the league, an older copy is
   drawn and read again behind it, `leagueStale`; the site's own league too, `siteLeagueStale`), `back` (5 min: back on the page after 1+

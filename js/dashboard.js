@@ -275,27 +275,6 @@ function dayToggle({ D, hasToday, week: [label, days], picked, fallback, action 
   return { range, toggle: segBtns('Show games from', action, 'range', opts, range) };
 }
 
-// When your league was last read from its site, under the scoreboard: rosters and lineups are kept on this device and read
-// again now and then (READ_PACE, fantrax.js), so it says which moment you're seeing, and a tap reads it again (↻ Reload,
-// which the gear menu has too). Amber past LEAGUE_OLD_MS. Its time moves in place as a read starts and ends (stampNow),
-// so a read that brings nothing new redraws nothing else. (Nov 24, 2026: new visitors didn't know a move made on their
-// league's site needed a Reload, or where it was.)
-const ICON_STAMP = '<svg class="rs-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66L20 8.5"/><path d="M20 3.5v5h-5"/></svg>';
-function readStamp() {
-  const L = fxLeague();
-  if (!L || state.demo || state.browse || ui.season || !state.fxTeam) return '';
-  const at = leagueReadAt(L.id), src = sourceName(L);
-  if (!at) return '';
-  const reading = leagueReads.has(L.id), old = !reading && Date.now() - at > LEAGUE_OLD_MS;
-  const day = isoDay(new Date(at)), when = day === isoDay(new Date()) ? fmtTime(at) : `${fmtDay(day)}, ${fmtTime(at)}`;
-  const text = reading ? `Reading ${src}…` : `Rosters from ${src} · ${when}`;
-  return `<button type="button" class="read-stamp${old ? ' old' : ''}" data-action="league-reload" title="${reading ? '' : `Read from ${src} ${when}. Tap to read it again`}">${text}${ICON_STAMP}</button>`;
-}
-function stampNow() {
-  if (typeof document === 'undefined') return;
-  for (const el of document.querySelectorAll('.read-stamp')) el.outerHTML = readStamp();
-}
-
 function dashMatchupCard() {
   const L = fxLeague(), today = todayIso();
   const card = (head, body, full) => `<div class="card mu-card${full && ui.dashFull ? ' full' : ''}"><div class="card-head">${head || '<span></span>'}${full ? dashFullBtn() : ''}</div>${body}</div>`;
@@ -325,8 +304,7 @@ function dashMatchupCard() {
       <div class="mu-mid"></div>
       ${B ? big(B, pts ? wk.opp : half(wk, 'opp')) : `<div class="mu-team right"><div class="mu-name muted">No opponent this week</div></div>`}
     </div>`}
-    ${range !== 'day' && live.error ? `<p class="small pos-bad mu-when">ESPN: ${esc(live.error)}</p>` : ''}
-    ${readStamp()}`;
+    ${range !== 'day' && live.error ? `<p class="small pos-bad mu-when">ESPN: ${esc(live.error)}</p>` : ''}`;
 
   // (roto: where you stand, and what the days picked did to it, rotoSpan)
   const spanLabel = range === 'today' ? 'Today' : range === 'week' ? `This ${spanWord()}` : D.day === addDays(today, -1) ? 'Yesterday' : fmtDay(D.day);

@@ -249,7 +249,7 @@ const INFO = {
     <ul><li><b>NBA.com:</b> active players, last season's stats and game-to-game spreads, and (when reachable) the schedule and box scores.</li>
     <li><b>ESPN:</b> the injury report, plus the schedule and box scores on the website's daily refresh, since NBA.com blocks the cloud servers that run it. Both give identical numbers.</li>
     <li><b>Fantrax or ESPN</b> (wherever your league is): your league's position eligibility, every team's roster and lineup, matchups, and who's available.</li></ul>
-    <p>NBA stats, box scores and injuries refresh every night at about 4 a.m. Eastern, after the last games finish. The site's own league gets its Fantrax data (rosters, lineups, matchups, draft) in that same refresh; every league is read again from its site now and then (the time is under the Matchup tab's score). For the latest any time, tap that time, or ↻ Reload in the ⚙ menu.</p>`],
+    <p>NBA stats, box scores and injuries refresh every night at about 4 a.m. Eastern, after the last games finish. The site's own league gets its Fantrax data (rosters, lineups, matchups, draft) in that same refresh; every league is read again from its site now and then (the time is at the top, beside your team). For the latest any time, tap that time, or ↻ Reload in the ⚙ menu.</p>`],
 };
 
 const infoBtn = key => `<button type="button" class="info-btn" data-action="info" data-key="${key}" aria-label="How this is calculated" title="How this is calculated">i</button>`;

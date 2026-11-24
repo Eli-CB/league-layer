@@ -86,6 +86,33 @@ function leagueMenu() {
   </details>`;
 }
 
+// When your league was last read from its site, in the head beside the team picker, on every tab (the owner's ask, Nov 24,
+// 2026: new visitors didn't know a move made on their league's site needed ↻ Reload, or where it was; first under the
+// Matchup tab's score, moved here the same day). Rosters and lineups are kept on this device and read again now and then
+// (READ_PACE, fantrax.js), so it says which moment you're seeing, and a tap reads it again (↻ Reload, which the gear menu
+// has too): "↻ Rosters from Fantrax · 2:14 PM" (phones: the ↻ and the time, or the day when it wasn't today), the ↻ turning while it's read, amber past
+// LEAGUE_OLD_MS. Its time moves in place as a read starts and ends (stampNow), so a read that brings nothing new redraws
+// nothing else. Not in the demo, the sandbox, a past season or before a team is picked.
+const ICON_STAMP = '<svg class="rs-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66L20 8.5"/><path d="M20 3.5v5h-5"/></svg>';
+function readStamp() {
+  const L = fxLeague();
+  if (!L || needsLanding() || state.demo || state.browse || ui.season || !state.fxTeam) return '';
+  const at = leagueReadAt(L.id), src = sourceName(L);
+  if (!at) return '';
+  const reading = leagueReads.has(L.id), old = !reading && Date.now() - at > LEAGUE_OLD_MS;
+  // (phones: the time, or the day when it wasn't today: "Mon")
+  const day = isoDay(new Date(at)), today = day === isoDay(new Date()), when = today ? fmtTime(at) : `${fmtDay(day)}, ${fmtTime(at)}`;
+  const short = today ? when : new Date(day + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' });
+  const say = reading ? `Reading ${src}` : `Rosters from ${src} at ${when}. Tap to read them again`;
+  return `<button type="button" class="read-stamp${old ? ' old' : ''}${reading ? ' reading' : ''}" data-action="league-reload" aria-label="${say}" title="${say}">${ICON_STAMP}${reading
+    ? `<span class="rs-src">Reading </span><span class="rs-time">${src}…</span>` : `<span class="rs-src">Rosters from ${src} · </span><span class="rs-time">${when}</span><span class="rs-short">${short}</span>`}</button>`;
+}
+function stampNow() {
+  if (typeof document === 'undefined') return;
+  const el = $('#readStamp');
+  if (el) el.innerHTML = readStamp();
+}
+
 // The team picker, an icon beside the settings gear (its name too where there's room): the team whose Matchup and Plan
 // Ahead to look at (read only), the demo's team to play as, a past season's roster, or your team before one is picked
 function teamMenu() {
@@ -323,6 +350,7 @@ function render() {
   const landing = needsLanding();
   document.body.classList.toggle('landing', landing);
   leagueMenu();
+  stampNow();
   teamMenu();
   gearMenu();
   ctxBar();

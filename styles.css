@@ -124,6 +124,15 @@ a { color: var(--accent); }
 .hd-ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .head .icon-btn { display: grid; place-items: center; border-color: transparent; box-shadow: none; color: var(--muted); }
 .head .icon-btn:hover { color: var(--text); }
+/* when the league was read from its site, beside the team picker: a tap reads it again (amber once it's hours old; the ↻ turns while it's read) */
+.read-stamp { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 9px; border: 0; border-radius: 6px; background: none; color: var(--muted); font: inherit; font-size: .8rem; white-space: nowrap; cursor: pointer; }
+.read-stamp:hover { background: var(--surface-2); color: var(--text); }
+.read-stamp.old { background: var(--warn-soft); color: var(--warn); }
+.rs-short { display: none; }
+.rs-ico { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.read-stamp.reading .rs-ico { animation: rs-turn 1s linear infinite; }
+@keyframes rs-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .read-stamp.reading .rs-ico { animation: none; } }
 /* the team picker: a jersey, and the team's name where there's room */
 #teamMenu { position: relative; min-width: 0; }
 .tm > summary { list-style: none; display: flex; align-items: center; gap: 7px; height: 30px; padding: 0 9px; max-width: 260px; border-radius: 6px; cursor: pointer; color: var(--muted); font-size: .875rem; font-weight: 500; }
@@ -259,12 +268,6 @@ body:has(.mu-card.full) .container { padding-top: max(12px, env(safe-area-inset-
 .mu-pc svg { color: var(--muted); }
 .mu-score { font-size: 2.2rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .mu-when { margin: -4px 0 10px; }
-/* when the league was read from its site, under the scoreboard: a tap reads it again (amber once it's hours old) */
-.read-stamp { display: flex; align-items: center; gap: 5px; margin: -4px auto 10px; padding: 2px 8px; border: 0; border-radius: 999px; background: none; color: var(--muted); font: inherit; font-size: .74rem; cursor: pointer; }
-.read-stamp:hover { background: var(--surface-2); color: var(--text); }
-.read-stamp.old { background: var(--warn-soft); color: var(--warn); }
-.rs-ico { width: 13px; height: 13px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.mu-card.full .read-stamp { display: none; }
 .mu-cats-wrap { overflow-x: auto; margin: 0 0 12px; }
 .mu-cats { width: 100%; border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; table-layout: fixed; }
 .mu-cats th, .mu-cats td { padding: 4px 2px; text-align: center; border-bottom: 1px solid var(--border); }
@@ -1962,6 +1965,9 @@ a.lm-item { text-decoration: none; }
   .top-right .icon-btn, .tm > summary { width: 40px; height: 40px; padding: 0; justify-content: center; }
   .hd-ico { width: 21px; height: 21px; }
   .tm-name { display: none; }
+  .read-stamp { height: 40px; padding: 0 8px; gap: 5px; font-size: .75rem; }
+  .read-stamp:not(.reading) :is(.rs-src, .rs-time) { display: none; } .rs-short { display: inline; } /* (phones: the ↻ and the time, or the day) */
+  .read-stamp.reading .rs-src { display: none; }
   .lm summary { font-size: 1rem; padding: 8px; }
   .lm-pop { width: min(300px, calc(100vw - 16px)); }
   .topbar { position: fixed; top: auto; bottom: 0; left: 0; right: 0; border-bottom: 0; border-top: 1px solid var(--border); background: var(--surface); backdrop-filter: none; padding-bottom: env(safe-area-inset-bottom, 0px); }

@@ -591,7 +591,7 @@ async function getLeague(id, force, anyAge = false) {
   if (kept) return kept;
   if (!leagueReads.has(id)) {
     leagueReads.set(id, readLeague(id).finally(() => { leagueReads.delete(id); stampNow(); }));
-    stampNow(); // (the Matchup tab's stamp: "reading")
+    stampNow(); // (the stamp beside the team picker: "reading")
   }
   return leagueReads.get(id);
 }
