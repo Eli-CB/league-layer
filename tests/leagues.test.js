@@ -350,6 +350,30 @@ test("READ_PACE, one row a site: opening after half an hour, coming back after a
   }
 });
 
+test("the time a league was read shows at the top only once it's over 6 hours old: amber, a tap reads it again", async () => {
+  const app = await sharedApp();
+  const S = app.get('state'), KEY = 'league-layer-fantrax-v2';
+  const keep = { fxTeam: S.fxTeam, fxLeagueId: S.fxLeagueId, demo: S.demo, browse: S.browse }, kept = app.localStorage.getItem(KEY);
+  const setAt = t => { const all = JSON.parse(app.localStorage.getItem(KEY)); all[POINTS].at = t; app.localStorage.setItem(KEY, JSON.stringify(all)); };
+  try {
+    const L = await app.useLeague(POINTS);
+    await app.getLeague(POINTS, true);
+    Object.assign(S, { fxTeam: L.teams[0].id, fxLeagueId: POINTS, demo: false, browse: false });
+    const now = app.Date.now();
+    setAt(now - 5 * 36e5);
+    assert.equal(app.readStamp(), '', 'five hours: nothing at the top (the reads keep it fresh; ↻ Reload is in the gear menu)');
+    setAt(now - 7 * 36e5);
+    const stamp = app.readStamp();
+    assert.match(stamp, /class="read-stamp old"[^>]*data-action="league-reload"/);
+    assert.match(stamp, /Rosters from Fantrax · /);
+    S.demo = true;
+    assert.equal(app.readStamp(), '', 'not in the demo');
+  } finally {
+    Object.assign(S, keep);
+    if (kept == null) app.localStorage.removeItem(KEY); else app.localStorage.setItem(KEY, kept);
+  }
+});
+
 test('a league kept past its open minutes (READ_PACE) is drawn at once and read again from its site behind the page (opening it, or picking it)', async () => {
   // yesterday's visit: two leagues connected, a team picked in each
   const a = loadApp();

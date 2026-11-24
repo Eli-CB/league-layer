@@ -124,10 +124,10 @@ a { color: var(--accent); }
 .hd-ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .head .icon-btn { display: grid; place-items: center; border-color: transparent; box-shadow: none; color: var(--muted); }
 .head .icon-btn:hover { color: var(--text); }
-/* when the league was read from its site, beside the team picker: a tap reads it again (amber once it's hours old; the ↻ turns while it's read) */
+/* when the league was read from its site, beside the team picker, once that's hours old (amber): a tap reads it again, the ↻ turning while it's read */
 .read-stamp { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 9px; border: 0; border-radius: 6px; background: none; color: var(--muted); font: inherit; font-size: .8rem; white-space: nowrap; cursor: pointer; }
 .read-stamp:hover { background: var(--surface-2); color: var(--text); }
-.read-stamp.old { background: var(--warn-soft); color: var(--warn); }
+.read-stamp.old, .read-stamp.reading { background: var(--warn-soft); color: var(--warn); }
 .rs-short { display: none; }
 .rs-ico { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .read-stamp.reading .rs-ico { animation: rs-turn 1s linear infinite; }
