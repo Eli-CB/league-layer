@@ -82,7 +82,8 @@ function draftData() {
   picks.filter(p => p.val == null).sort((a, b) => a.pick - b.pick).forEach((p, i) => { p.rank = played.length + i + 1; });
   picks.forEach(p => { p.gain = p.pick - p.rank; });
   const maxGp = Math.max(0, ...picks.map(p => p.gp));
-  // keepers: where each would slot among this year's picks, by value per game so far. The better keeper counts as the
+  // keepers: where each would slot among this year's picks and the other keepers (the owner's pick, Nov 24, 2026: against
+  // the picks alone, every keeper better than the best pick was #1, three at once), by the same score. The better keeper counts as the
   // #5 pick, the other as #15: this season by Fantrax ADP; a past season by the season before's value per game (today's
   // ADP says nothing about a past draft), a keeper without one (a rookie) last
   const prior = seasonCtx && L.priorSeason && archives[L.priorSeason] ? L.priorSeason : null;
@@ -98,13 +99,21 @@ function draftData() {
       const gp = s ? Math.round(s.gp) : 0;
       const val = s && gp ? value({ ...s, pos: raw.pos }) : null;
       const sc = score(val, gp);
-      const like = sc == null ? null : played.filter(p => p.score > sc).length + 1;
       const before = prior ? archivedStats(raw, prior) : null;
       const rank = prior ? -(before && before.gp ? value({ ...before, pos: raw.pos }) : -1e9) : (raw.fx && raw.fx.adp) || 999;
       const old = [basis && basis.startsWith('arch:') && basis.slice(5), prior].map(x => x && archives[x] && archives[x].players.get(nba)).find(Boolean);
-      return { nbaId: nba, name: raw.name || (old && old.n) || '', gp, val, like, rank }; // a player gone from the NBA: his archived name
+      return { nbaId: nba, name: raw.name || (old && old.n) || '', gp, val, sc, rank }; // a player gone from the NBA: his archived name
     }).sort((a, b) => a.rank - b.rank);
-    keepers[tid].forEach((k, i) => { k.slot = KEEPER_SLOTS[i] || 25; k.gain = k.like == null ? null : k.slot - k.like; });
+  }
+  // each keeper's place: 1 + the picks and the other keepers doing better (picks keep their own ranks, among picks)
+  const kScores = Object.values(keepers).flat().filter(k => k.sc != null).map(k => k.sc);
+  for (const ks of Object.values(keepers)) {
+    if (ks.some(k => k.past)) continue;
+    ks.forEach((k, i) => {
+      k.like = k.sc == null ? null : played.filter(p => p.score > k.sc).length + kScores.filter(x => x > k.sc).length + 1;
+      k.slot = KEEPER_SLOTS[i] || 25;
+      k.gain = k.like == null ? null : k.slot - k.like;
+    });
   }
   return { picks, played: played.length, maxGp, graded: !!basis, date: L.draft.date, start: L.draft.start || null, type: L.draft.type, perRound: L.draft.perRound || 10, keepers, totals, season: W && W.win,
     slots: L.draft.slots || null, rostered: L.draft.rostered || null, rookies: !!L.draft.rookies }; // (Sleeper: its draft order; a dynasty rookie draft's kept players; rookies only)

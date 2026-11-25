@@ -30,6 +30,20 @@ test('Season totals rank picks by value per game times games, nothing taken off'
   if (busier) assert.ok(busier.rank < best.rank, 'more total VAL ranks higher, whatever the per-game value');
 });
 
+test('keepers rank among the picks and each other: only one can be #1', async () => {
+  await app.useLeague(CATS9);
+  const d = app.draftData();
+  const ks = Object.values(d.keepers).flat().filter(k => k.like != null);
+  assert.ok(ks.length > 4, 'the fixture league has graded keepers');
+  const played = d.picks.filter(p => p.score != null);
+  for (const k of ks) {
+    const ahead = played.filter(p => p.score > k.sc).length + ks.filter(o => o.sc > k.sc).length;
+    assert.equal(k.like, ahead + 1, `${k.name}: the picks and keepers ahead of him, plus one`);
+    assert.equal(k.gain, k.slot - k.like);
+  }
+  assert.ok(ks.filter(k => k.like === 1).length <= 1, 'one keeper at most is #1');
+});
+
 test("a past season grades its keepers: the better one by the season before's value", async () => {
   const P = await app.loadSeason('czqgnyozmf2tbr93');
   await app.loadGameLog('2025-26');

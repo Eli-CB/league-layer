@@ -12,4 +12,6 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   line; raw totals put him 105th. Steal and Bust (`draftSteals`) rank the same way, and Best draft (`draftImpact`) adds up its picks' games the same way.
 - Keepers exist only if draft rounds < roster spots (starters + bench); keepers = opening-week roster minus
   that team's picks. Keepers are graded as the #5 and #15 picks: this season the better one by ADP, a past season by
-  the season before's value per game (`L.priorSeason` archive); never compare today's ADP to a past draft.
+  the season before's value per game (`L.priorSeason` archive); never compare today's ADP to a past draft. A keeper's
+  "playing like #N" counts the picks and the other keepers ahead of him (the owner's pick, Nov 24, 2026: against the
+  picks alone, Luka, Wemby and Jokic were all #1); picks keep their ranks among picks.
