@@ -15,7 +15,7 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
 
 ## Rules settled with the owner (keep them)
 - Awards (current season "so far" + past seasons) all come from weekly starters (ACTIVE status) and game logs:
-  Best draft (picks' games until first dropped, through trades, above replacement in cats), Best manager
+  Best draft (picks' games until first dropped, through trades, VAL or FP with nothing taken off, as the Draft tab's Season totals), Best manager
   (actual wins vs all-play record), Waiver Wire Wizard (pickups' games while starting; trades excluded),
   Street Clothes (games starters missed while starting), Biggest punt / Even Steven (real season totals),
   Old (was Unc Status: starters' ages, week-weighted), Steal / Bust of the Draft (one pick vs its rank over the season, Draft

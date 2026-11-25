@@ -213,22 +213,12 @@ function startersAge(L) {
 
 // What each team's draft produced: every game a drafted player played from the draft until he was first
 // dropped to free agency, starting or on the bench, and through any trades (the drafting team keeps the
-// credit). Category leagues value each game above a replacement-level starter (the per-game value of the
-// last player who'd start in this league), so every game by a player worth starting adds; points leagues
-// use fantasy points. Team id -> [{ nba, name, v, games }]
+// credit). Each game's value (VAL; fantasy points in points leagues), nothing taken off: the owner's pick, Nov 24,
+// 2026, as the Draft tab's Season totals. Team id -> [{ nba, name, v, games }]
 function draftImpact(L, G, picks) {
   if (!L.weeks || !G || !picks.length) return null;
   const fidOf = new Map();
   for (const w of L.weeks) for (const f of w.owner.keys()) { const nba = L.fidNba(f); if (nba && !fidOf.has(nba)) fidOf.set(nba, f); }
-  let repl = 0;
-  if (!isPoints()) {
-    // that season's per-game numbers: this season's so far, or a past season's archive
-    const A = archives[L.season];
-    const stats = L.season === 'cur' ? NBA.players.map(r => nbaStats(r, 'cur')) : A ? [...A.players.keys()].map(pid => archivedStats({ id: pid }, L.season)) : [];
-    const minGp = L.season === 'cur' ? 2 : 10;
-    const vals = stats.filter(x => x && x.gp >= minGp).map(x => value(x)).sort((a, b) => b - a);
-    repl = vals.length ? vals[Math.min(vals.length, fxPickable().length * state.slots.length) - 1] : 0;
-  }
   const weekDays = L.weeks.map(w => periodDays(G, w));
   const out = {};
   for (const p of picks) {
@@ -239,7 +229,7 @@ function draftImpact(L, G, picks) {
       const rows = G.players.get(p.nbaId) || [];
       let k = 0;
       for (; k < L.weeks.length && L.weeks[k].owner.has(f); k++) {
-        for (const r of rows) if (weekDays[k].has(r[0])) { P.v += lineValue(gameLine(G, r)) - repl; P.games++; }
+        for (const r of rows) if (weekDays[k].has(r[0])) { P.v += lineValue(gameLine(G, r)); P.games++; }
       }
       if (k && k < L.weeks.length) P.dropped = L.weeks[k].n || k + 1;
     }
@@ -814,11 +804,12 @@ function draftDetail(T, txt) {
   const ps = [...(T.draftList || [])].sort((a, b) => b.v - a.v);
   if (!ps.length) return '<p class="muted">No picks to grade.</p>';
   const meta = p => `Rd ${p.round}, #${p.pick} · ${p.games} G${p.dropped ? ` · dropped wk ${p.dropped}` : ''}`;
-  const best = ps.filter(p => p.v > 0).slice(0, 10), worst = ps.filter(p => p.v <= 0 && !best.includes(p)).reverse().slice(0, 5);
+  // the top half (10 at most) and the least of the rest (5 at most): every game adds, so few picks are below 0
+  const best = ps.slice(0, Math.min(10, Math.ceil(ps.length / 2))), worst = ps.slice(best.length).reverse().slice(0, 5);
   return `<p class="aw-break-total"><b>${esc(txt)}</b> from ${ps.length} pick${ps.length === 1 ? '' : 's'}</p>
     ${best.length ? `<h3 class="sub">Best picks</h3>${awardRows(best, awardAmount, meta)}` : ''}
     ${worst.length ? `<h3 class="sub">Worst picks</h3>${awardRows(worst, awardAmount, meta)}` : ''}
-    <p class="muted small">${isPoints() ? 'Fantasy points' : "Value above a replacement-level starter"} from each pick's games until he was first dropped, through trades (round and pick · games).</p>`;
+    <p class="muted small">${isPoints() ? 'Fantasy points' : 'Value (VAL)'} from each pick's games until he was first dropped, through trades (round and pick · games).</p>`;
 }
 function streetDetail(T, txt) {
   const ps = [...(T.missedList || [])].sort((a, b) => b.games - a.games || a.sched - b.sched).slice(0, 10);

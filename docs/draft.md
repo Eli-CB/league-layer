@@ -9,7 +9,7 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
 ## Rules settled with the owner (keep them)
 - The board's Season totals ranks picks by VAL (FP) per game times games, nothing taken off (the owner's pick, Nov 24, 2026):
   value above a replacement starter put Kawhi, 2 games and #13 pick, 65th of 109, ahead of every starter just below the
-  line; raw totals put him 105th. Steal and Bust (`draftSteals`) rank the same way; Best draft (`draftImpact`) still counts above replacement.
+  line; raw totals put him 105th. Steal and Bust (`draftSteals`) rank the same way, and Best draft (`draftImpact`) adds up its picks' games the same way.
 - Keepers exist only if draft rounds < roster spots (starters + bench); keepers = opening-week roster minus
   that team's picks. Keepers are graded as the #5 and #15 picks: this season the better one by ADP, a past season by
   the season before's value per game (`L.priorSeason` archive); never compare today's ADP to a past draft.

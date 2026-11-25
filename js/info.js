@@ -169,7 +169,7 @@ const INFO = {
     <p>Your leagues, team picks and settings are saved too. Browsers allow about 5 MB per site. <b>Clear saved league data</b> removes only what came from Fantrax and ESPN; it's fetched again the next time it's needed.</p>`],
   awDraft: ['Best draft', `
     <p>Everything a team's draft picks produced over the season: every game each pick played from the draft until he was first <b>dropped</b> to free agency, whether he was starting or on the bench. A pick who's <b>traded</b> keeps counting for the team that drafted him; one who's dropped stops counting (if someone picks him up later, that's their Waiver Wire Wizard).</p>
-    <p>In category leagues each game is valued against a <b>replacement-level starter</b> (the per-game value of the last player who'd start in your league), so every game by a player worth starting adds to the total and staying healthy pays. Points leagues add up fantasy points.</p>
+    <p>Each game counts its value (VAL), so staying healthy pays; points leagues add up fantasy points. The Draft tab's Season totals counts the same way.</p>
     <p>Totals don't adjust for draft slot, so a great first-round pick usually out-produces a late-round steal. The Draft tab grades each pick against its slot (+/−).</p>
     <p>Tap a team's name to see its best and worst picks.</p>`],
   awManager: ['Best manager', `
