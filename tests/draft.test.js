@@ -16,6 +16,20 @@ test('draft grades per game and by season totals', async () => {
   ui.draftMode = 'game';
 });
 
+test('Season totals rank picks by value per game times games, nothing taken off', async () => {
+  await app.useLeague(CATS9);
+  const ui = app.get('ui');
+  ui.draftMode = 'total';
+  let d;
+  try { d = app.draftData(); } finally { ui.draftMode = 'game'; }
+  const played = d.picks.filter(p => p.val != null);
+  for (const p of played) assert.ok(Math.abs(p.score - p.val * p.gp) < 1e-9, `${p.name}: VAL × GP`);
+  // the best per game, over fewer games than another, ranks below him by total
+  const best = app.sortDesc(played, p => p.val)[0];
+  const busier = played.find(p => p.val * p.gp > best.val * best.gp);
+  if (busier) assert.ok(busier.rank < best.rank, 'more total VAL ranks higher, whatever the per-game value');
+});
+
 test("a past season grades its keepers: the better one by the season before's value", async () => {
   const P = await app.loadSeason('czqgnyozmf2tbr93');
   await app.loadGameLog('2025-26');

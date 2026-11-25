@@ -70,12 +70,11 @@ function draftData() {
     if (s && gp) p.val = value({ ...s, pos: raw.pos });
     return p;
   });
-  // Totals: points leagues add up fantasy points; cats leagues add up value above a replacement-level starter
-  // (the per-game value of the last player who'd start in this league), so games only help players worth starting
+  // Totals: the value per game (VAL, or FP in points leagues) times games played, nothing taken off (the owner's pick,
+  // Nov 24, 2026: value above a replacement starter put a star who'd played 2 games mid-board, ahead of every starter
+  // just below the line; a pick who barely played should sit near the bottom)
   const totals = ui.draftMode === 'total';
-  const perGame = picks.filter(p => p.val != null).map(p => p.val).sort((a, b) => b - a);
-  const repl = isPoints() || !perGame.length ? 0 : perGame[Math.min(perGame.length, Math.max(1, fxPickable().length * state.slots.length)) - 1];
-  const score = (val, gp) => (val == null ? null : totals ? (val - repl) * gp : val);
+  const score = (val, gp) => (val == null ? null : totals ? val * gp : val);
   picks.forEach(p => { p.score = score(p.val, p.gp); });
   const played = picks.filter(p => p.score != null).sort((a, b) => b.score - a.score);
   played.forEach((p, i) => { p.rank = i + 1; });
