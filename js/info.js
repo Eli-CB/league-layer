@@ -185,7 +185,7 @@ const INFO = {
     <p>Sleeper leagues count one game a week for each starter, so a pickup's week is the game that counted.</p>
     <p>Tap a team's name to see which pickups helped and hurt.</p>`],
   awSteal: ['Steal of the Draft', `
-    <p>The single pick that beat its draft slot by the most: where he was taken against where he ranks among all the draft's players over the season, as the Draft tab's Season totals ranks them (value above a replacement-level starter times games played; fantasy points in points leagues). Pick 98 ranking 10th is +88. Keepers aren't picks, so they don't count.</p>
+    <p>The single pick that beat its draft slot by the most: where he was taken against where he ranks among all the draft's players over the season, as the Draft tab's Season totals ranks them (value per game times games played; fantasy points in points leagues). Pick 98 ranking 10th is +88. Keepers aren't picks, so they don't count.</p>
     <p>Tap a team's name to see its best picks.</p>`],
   awBust: ['Bust of the Draft', `
     <p>The single pick that fell furthest short of its draft slot: where he was taken against where he ranks among all the draft's players over the season. A player who hasn't played ranks below everyone who has, so an early pick lost to injury lands here.</p>
@@ -218,7 +218,7 @@ const INFO = {
     <p>Tap a team's name to see the players who moved its average most.</p>`],
   draft: ['How draft picks are graded', `
     <p><b>Now.</b> Every drafted player is ranked using only this season's stats (see Player value). Players who haven't played yet rank below everyone who has.</p>
-    <p><b>Per game or season totals.</b> The toggle at the top re-ranks the whole tab. <b>Per game</b> ranks by value per game, so a player who's missed time isn't held against his pick. <b>Season totals</b> also counts games played: in points leagues it's total fantasy points; in category leagues it's value above a replacement-level starter (the last player who'd start in your league) times games played, so playing more only helps players worth starting.</p>
+    <p><b>Per game or season totals.</b> The toggle at the top re-ranks the whole tab. <b>Per game</b> ranks by value per game, so a player who's missed time isn't held against his pick. <b>Season totals</b> also counts games played: value per game times games (total fantasy points in points leagues), so a high pick who's missed time ranks near the bottom.</p>
     <p><b>+/−.</b> Draft slot minus current rank. A #40 pick who's playing like the #5 player is +35; a #3 pick playing like #50 is −47.</p>
     <p><b>Past seasons.</b> A past draft is graded the same way, on that season's games, so the rank is where each player finished.</p>
     <p><b>Your league's season, not the NBA's.</b> Only games from your league's first week to its last (playoffs included) count. A league that ends weeks before the NBA's regular season does, or starts after opening night, isn't graded on games it never played. This season, that cut starts once your league's season is over (or from the start, for a league that began late).</p>
@@ -240,7 +240,7 @@ const INFO = {
   board: ['Reading the draft board', `
     <p><b>Each cell</b> is one pick: the pick number, the player, and his <b>+/−</b>.</p>
     <p><b>How a pick is ranked.</b> Every drafted player is ranked against the others using this season's stats so far, or that season's full stats for a past draft. #1 is the best player of the whole draft class. Players who haven't played rank below everyone who has.</p>
-    <p><b>Per game or season totals</b> (the toggle at the top of the tab). Per game ranks by value per game (fantasy points per game in points leagues). Season totals also counts games played, so missed games pull a player down: total fantasy points in points leagues, or value above a replacement-level starter times games in category leagues.</p>
+    <p><b>Per game or season totals</b> (the toggle at the top of the tab). Per game ranks by value per game (fantasy points per game in points leagues). Season totals also counts games played, so missed games pull a player down: total fantasy points in points leagues, or value per game times games in category leagues.</p>
     <p><b>+/−</b> is the pick number minus that rank. A #40 pick playing like the #5 player is <b>+35</b>; a #3 pick playing like #50 is <b>−47</b>. "DNP" means he hasn't played.</p>
     <p><b>Colors.</b> Green is outplaying the slot, red is underplaying it, getting stronger the bigger the gap. Hover a cell for the player's rank.</p>
     <p><b>Layout.</b> One row per round, one column per draft slot. A traded pick stays in its original slot, marked "by" the team that made it. "No pick" means the slot went unused.</p>
