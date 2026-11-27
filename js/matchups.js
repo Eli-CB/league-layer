@@ -576,6 +576,56 @@ function lineupSection(ctx) {
     </div>`;
 }
 
+// This period once weekly lineups lock: nothing left to set, so where the week is heading in their place. Each day's
+// starter games, yours against theirs (the days played as they went), the best and toughest nights still to come, the
+// categories' odds, and next period's matchup with the way to plan it
+function restOfPeriod(ctx) {
+  const { dates, asSet, them } = ctx, today = todayIso();
+  const leftId = ui.viewing ? ui.viewA : state.fxTeam;
+  const nextShift = weekShifts().find(s => s > ui.weekShift);
+  let next = '';
+  if (nextShift != null) {
+    const start = weekStartAt(nextShift), opp = fxOpponentFor(start, leftId), k = !SPORT.gameLocks && periodLock(start);
+    const t = k && new Date(k.at);
+    next = `<div class="rp-next"><span class="grow small">Next ${spanWord()}${opp ? `: vs <b>${esc(opp.name)}</b>` : ''}${t ? ` · lineups lock <b>${k.known ? '' : '~'}${lockWhen(t)}</b>` : ''}</span>
+      <button class="btn sm" data-action="week-shift" data-step="1">Plan it ${chev(1)}</button></div>`;
+  }
+  if (!ctx.hasOpp) return next ? `<div class="card">${next}</div>` : '';
+  // (each side's starters with a game that day; still to come: the games not final yet)
+  const who = new Map([...ctx.mine, ...ctx.opp].map(p => [p.id, p]));
+  const count = (side, i, d, open) => (side.days[i] ? [...side.days[i].active].filter(id => !open || !gameFinal(who.get(id), d)).length : 0);
+  const days = dates.map((d, i) => ({ d, a: count(asSet, i, d), b: count(them, i, d), la: count(asSet, i, d, true), lb: count(them, i, d, true), past: d < today }));
+  const ahead = days.filter(x => !x.past && (x.la || x.lb));
+  const sum = (list, k) => list.reduce((n, x) => n + x[k], 0);
+  let strip = '';
+  if (!isOneGame() && !SPORT.oneNumber) { // (one game a week counts: how many each day doesn't)
+    const tile = x => {
+      const cls = x.a > x.b ? 'up' : x.a < x.b ? 'down' : 'even';
+      const tip = `${fmtDay(x.d)}: ${x.a} starter game${x.a === 1 ? '' : 's'} for ${esc(state.teamName)}, ${x.b} for ${esc(state.opp.name || 'them')}${x.past ? ' (played)' : x.d === today ? ' (today)' : ''}`;
+      return `<div class="rp-day ${cls}${x.past ? ' past' : ''}${x.d === today ? ' today' : ''}" title="${tip}"><span class="rp-dn">${x.d === today ? 'Today' : fmtDay(x.d).split(',')[0]}</span><span class="rp-n"><b>${x.a}</b><span class="rp-vs">${x.b}</span></span></div>`;
+    };
+    // the nights still to come with the most games over theirs, and the fewest
+    const gap = x => x.a - x.b, best = ahead.length ? ahead.reduce((m, x) => (gap(x) > gap(m) ? x : m)) : null;
+    const worst = ahead.length ? ahead.reduce((m, x) => (gap(x) < gap(m) ? x : m)) : null;
+    const night = x => `<b>${x.d === today ? 'today' : fmtDay(x.d).split(',')[0]}</b> (${x.a} to ${x.b})`;
+    const notes = [best && gap(best) > 0 ? `Best night left: ${night(best)}` : '', worst && gap(worst) < 0 ? `Toughest: ${night(worst)}` : ''].filter(Boolean);
+    strip = `<div class="rp-days${dates.length > 7 ? ' wk' : ''}">${days.map(tile).join('')}</div>
+      ${notes.length ? `<p class="small muted" style="margin:8px 0 0">${notes.join(' · ')}</p>` : ''}`;
+  }
+  const left = ahead.length ? `<span class="muted small">Starter games left: <b class="rp-me">${sum(ahead, 'la')}</b> to <b>${sum(ahead, 'lb')}</b></span>` : '';
+  const cats = ctx.catsSet;
+  const group = f => cats.filter(f).map(c => c.label);
+  const swing = group(c => c.p > 0.1 && c.p < 0.9), punt = group(c => c.p <= 0.1), safe = group(c => c.p >= 0.9); // (as the table's badges)
+  const how = !isPoints() ? `<p class="small muted" style="margin:0 0 10px">${swing.length ? `Swing: <b>${swing.join(', ')}</b>` : 'No category is close'}${safe.length ? ` · Locked: <b>${safe.join(', ')}</b>` : ''}${punt.length ? ` · Punt: <b>${punt.join(', ')}</b>` : ''}</p>` : '';
+  return `
+    <div class="card">
+      <div class="card-head"><h2>Rest of the ${spanWord()}</h2>${left}</div>
+      ${strip}
+      ${!isPoints() ? `<h3 class="sub" style="margin-top:16px">Categories ${infoBtn('win')}</h3>${how}${catCompareTable(ctx, false)}` : ''}
+      ${next}
+    </div>`;
+}
+
 function pickupIdeas(ctx) {
   const { dates, them, oBest: baseOdds } = ctx;
   const mine = ctx.mine;
@@ -1023,7 +1073,7 @@ function viewWeek() {
     ${fxNoTeam()}
     ${past || `${scoreboard}
     ${matchupBoard(ctx)}
-    ${weekly ? lineupSection(ctx) : dailyCards}
+    ${weekly ? (ctx.locked ? restOfPeriod(ctx) : lineupSection(ctx)) : dailyCards}
     ${ctx.locked && weekly ? '' : pickupsCard(ctx)}`}
   </div>`;
 }

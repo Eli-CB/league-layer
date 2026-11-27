@@ -359,3 +359,34 @@ test("Plan Ahead in a points league: each shooting pair is one column, 8.2/17.1 
     } finally { S.points = pts; }
   });
 });
+
+test("this period once weekly lineups lock: the days' starter games, the categories' odds and next period, in place of suggestions", async () => {
+  const L = await app.useLeague(CATS9);
+  const tid = L.standings[0].id;
+  useTeam(tid);
+  const ui = app.get('ui'), st = app.get('state'), was = { opp: st.opp, shift: ui.weekShift };
+  try {
+    app.setClock('2026-10-26T21:00:00-04:00'); // (period 2 began at 7 PM)
+    ui.weekShift = 0;
+    const opp = app.fxOpponentFor(app.weekStart(), tid);
+    app.loadFxTeam(opp.id);
+    const ctx = app.weekContext();
+    assert.equal(ctx.locked, true);
+    const html = app.viewWeek();
+    assert.match(html, /<h2>Rest of the period<\/h2>/);
+    assert.doesNotMatch(html, /Lineup for this week|Suggested changes/, 'nothing to set');
+    assert.equal((html.match(/class="rp-day /g) || []).length, ctx.dates.length, 'a tile a day');
+    assert.match(html, /class="rp-day [a-z]+ today"[^>]*><span class="rp-dn">Today</, "today's marked");
+    // each tile: your starters with a game that day over theirs, the lineups as set
+    const first = html.match(/class="rp-n"><b>(\d+)<\/b><span class="rp-vs">(\d+)<\/span>/);
+    assert.deepEqual([+first[1], +first[2]], [ctx.asSet.days[0].active.size, ctx.them.days[0].active.size]);
+    assert.match(html, /Starter games left: <b class="rp-me">\d+<\/b> to <b>\d+<\/b>/);
+    assert.ok(html.includes('<table class="cat-table">'), "the categories' odds");
+    const next = app.fxOpponentFor(app.weekStartAt(1), tid);
+    assert.ok(html.includes(`Next period: vs <b>${app.esc(next.name)}</b> · lineups lock <b>`), 'next period, and when it locks');
+    assert.match(html, /data-action="week-shift" data-step="1">Plan it/);
+  } finally {
+    app.setClock(); st.opp = was.opp; ui.weekShift = was.shift;
+    ui.tab = 'standings'; clearTimeout(app.get('live').timer); // (this period's Plan Ahead keeps live scores going)
+  }
+});

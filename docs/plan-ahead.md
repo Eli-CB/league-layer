@@ -34,6 +34,10 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   Until then the week's notes give that time as the deadline, "lineups lock today 5:00 PM" (the owner's ask, Nov 23, 2026:
   `fxWeekNotes`, `lockWhen`; `periodLock`/`periodKickoff` say whether it's known), "~" before it when it's the 7 PM ET guess.
   A week turning with Plan Ahead open loads the new week's real opponent (`planAheadWeek`).
+- This period once weekly lineups lock (Nov 27, 2026; it showed only the scoreboard and the board, as suggestions and pickups
+  stop there): "Rest of the period" (`restOfPeriod`) in the suggestions' place: a tile a day of starter games, yours over
+  theirs (green/red by who has more; played days faded), the best and toughest nights left, the categories' odds
+  (`catCompareTable`, Swing/Locked/Punt), and next period's opponent and lock time with "Plan it" (`week-shift`).
 - No title row (the owner's pick from mockups, Nov 23, 2026): the week's picker, ‹ its name › (a menu of every week) with
   its days under, sits across the scoreboard under the win chance, a half-circle gauge (`weekPicker`, `.sb-week`, `winGauge`).
   With no scoreboard (a finished week, roto, no opponent yet) it heads the card shown instead, so the week can always be
