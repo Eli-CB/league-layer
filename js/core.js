@@ -487,10 +487,8 @@ function injBadge(inj, where = '') {
 const isRookie = raw => !raw.exp && !(raw.pos && raw.pos[0] === 'DEF');
 const rookieBadge = (raw, where = '') => (isRookie(raw) ? `<span class="badge rk${where ? ' ' + where : ''}" title="Rookie">R</span>` : '');
 
-function statusBadge(p) {
-  const cls = p.status === 'Out' ? 'bad' : p.status === 'DTD' ? 'warn' : 'good';
-  return `<span class="badge ${cls}">${esc(p.status)}</span>`;
-}
+// A lineup player's injury as the same letter (O, D, Q, IR...: injBadge), everywhere (the owner's ask, Nov 27, 2026); '' healthy
+const statusBadge = p => (!p.status || p.status === 'Healthy' ? '' : injBadge(p.inj || { status: p.status, label: p.status === 'DTD' ? 'Day-To-Day' : p.status }));
 
 // ‹ [dropdown] ›: step buttons joined to a picker (a select that looks like the league bar's). The buttons call
 // `action` with data-step -1 / 1; `ends` disables them at the first or last choice.
