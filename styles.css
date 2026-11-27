@@ -1787,6 +1787,15 @@ body.landing::before {
 .pvf-table .sdot { width: 6px; height: 6px; margin: -3px 0 0 -3px; }
 .pvf-table .sdot.this { width: 10px; height: 10px; margin: -5px 0 0 -5px; }
 .pv-fcard .pvc-head span b { color: var(--text); }
+/* the three cards end level (the owner's ask, Nov 27, 2026): each takes the tallest one's height (the deck's one grid cell),
+   and the player's games and an NBA team's Who's out fill what's left of it, the last one cut and faded, as a list that
+   goes on. Their wrapper adds nothing to the card's own height (its list sits inside it), so the fantasy team's card, which
+   has no such list, sets the height; never under about three rows. */
+.pvx-deck > .pv-card { display: flex; flex-direction: column; }
+.pvx-fill { flex: 1 1 0; min-height: 96px; position: relative; overflow: hidden; margin-bottom: 8px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent); }
+.pvx-fill > * { position: absolute; inset: 0 0 auto; margin-top: 0; }
+.pv-pcard .pvx-fill { margin-top: 6px; }
 /* both team cards' own pieces (.tc-per, .tc-out, .tc-star, .tc-wk), a size down; the Players tab link first */
 .pvt-link { margin: -6px 0 0; font-size: .78rem; font-weight: 600; color: var(--accent); }
 .proj-grid.pvt-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 10px; }

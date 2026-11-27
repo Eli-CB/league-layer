@@ -416,7 +416,14 @@ const LAND_CARD = { id: 1628983, name: 'Shai Gilgeous-Alexander', team: 'OKC', p
   // each category: how far above (+) or below (−) an average rostered player, in the card's half-bar widths (%)
   prof: [['FG%', 5], ['FT%', 13], ['3PM', 8], ['PTS', 50], ['REB', -13], ['AST', 2], ['STL', -11], ['BLK', 14], ['TO', -1]],
   // each game: as the card's (its date and opponent, green won, red lost), FG, 3PM, PTS, REB, VAL
-  games: [['18/11 vs ATL', 'W', '14/29', 3, 34, 5, '0.20'], ['15/11 @ SAC', 'W', '13/20', 4, 37, 2, '0.45'], ['13/11 @ LAC', 'L', '15/26', 2, 40, 4, '0.31']] };
+  // (as many as the card has room for: the last one fades, pvx-fill)
+  games: [['18/11 vs ATL', 'W', '14/29', 3, 34, 5, '0.20'], ['15/11 @ SAC', 'W', '13/20', 4, 37, 2, '0.45'], ['13/11 @ LAC', 'L', '15/26', 2, 40, 4, '0.31'],
+    ['11/11 vs MEM', 'W', '11/21', 1, 29, 6, '0.27'], ['9/11 @ POR', 'W', '12/22', 2, 33, 4, '0.36'], ['7/11 vs GSW', 'W', '10/19', 3, 31, 5, '0.38'],
+    ['5/11 @ LAL', 'L', '9/23', 1, 26, 3, '0.08'], ['3/11 vs DEN', 'W', '13/24', 2, 35, 7, '0.41'], ['1/11 vs HOU', 'W', '12/25', 2, 30, 4, '0.22'],
+    ['30/10 @ DAL', 'W', '11/18', 3, 32, 6, '0.44'], ['28/10 vs PHX', 'W', '10/20', 1, 28, 5, '0.25'], ['26/10 @ UTA', 'W', '14/24', 4, 39, 3, '0.47'],
+    ['24/10 vs SAS', 'L', '10/22', 2, 27, 4, '0.15'], ['22/10 @ MIN', 'W', '12/21', 3, 33, 5, '0.39'], ['20/10 vs NOP', 'W', '11/19', 2, 30, 6, '0.33'],
+    ['18/10 @ CHI', 'W', '13/23', 1, 31, 4, '0.29'], ['16/10 vs SAC', 'W', '9/17', 2, 25, 5, '0.21'], ['14/10 @ BOS', 'L', '10/24', 1, 24, 3, '0.06'],
+    ['12/10 vs IND', 'W', '12/20', 3, 34, 6, '0.42'], ['10/10 vs ORL', 'W', '11/22', 2, 29, 5, '0.26']] };
 function landCard() {
   const { id, name, team, pos, prof, games } = LAND_CARD;
   const photo = playerPhoto({ id, name, team }).replace(/ data-photo="[^"]*"/g, '');
@@ -432,8 +439,8 @@ function landCard() {
       <div class="proj"><div class="k">Games next period</div><div class="v">4</div></div>
       <div class="proj"><div class="k">VAL per game</div><div class="v">0.32</div><div class="pc-rank">#13 of 351</div></div>
     </div>
-    <table class="pvc-games"><thead><tr><th>Game</th><th>FG</th><th>3PM</th><th>PTS</th><th>REB</th><th>VAL</th></tr></thead>
-      <tbody>${games.map(([g, wl, fg, ...v], i) => `<tr style="--i:${i}"><td class="${wl === 'W' ? 'pos-good' : 'pos-bad'}">${g}</td><td>${fg}</td>${v.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    <div class="pvx-fill"><table class="pvc-games"><thead><tr><th>Game</th><th>FG</th><th>3PM</th><th>PTS</th><th>REB</th><th>VAL</th></tr></thead>
+      <tbody>${games.map(([g, wl, fg, ...v], i) => `<tr style="--i:${Math.min(i, 5)}"><td class="${wl === 'W' ? 'pos-good' : 'pos-bad'}">${g}</td><td>${fg}</td>${v.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
   </div>`;
 }
 // An NBA team's card (showSportTeamCard): its record and its games in each playoff period, the link to the Players tab, its
@@ -443,8 +450,11 @@ function landCard() {
 const LAND_TEAM = { team: 'OKC', name: 'Oklahoma City Thunder', rec: '14-2', po: '4-3-4-3-4', tiles: [['Next game', 'Fri vs NOP'], ['Games left this week', 2]],
   periods: [[8, 4, 3.5, 1], [9, 3, 3.4, 0], [10, 4, 3.4, 1], [11, 2, 3.1, 0], [12, 4, 3.6, 1]],
   out: [[1631114, 'Jalen Williams', ['SG', 'SF', 'PF'], 'O', 'Wrist · missed 5 of 16', [['Holmgren', '+0.11', '30 → 33'], ['Wallace', '+0.08', '24 → 29']]],
-    [1627936, 'Alex Caruso', ['PG', 'SG', 'SF'], 'D', 'Day-To-Day · missed 2 of 16', []]],
-  free: [[1642349, 'Ajay Mitchell', ['PG', 'SG', 'SF'], 16, '+1.1'], [1641717, 'Cason Wallace', ['PG', 'SG', 'SF'], 16, '+0.9']] };
+    // (Out first, then day-to-day, six at most, as the real card; as many as the card has room for: the last one fades, pvx-fill)
+    [1628392, 'Isaiah Hartenstein', ['C'], 'O', 'Calf · missed 4 of 16', [['Holmgren', '+0.06', '30 → 32'], ['Sorber', '+0.05', '12 → 19']]],
+    [1642272, 'Jared McCain', ['SG'], 'O', 'Thumb · missed 9 of 16', [['Mitchell', '+0.09', '22 → 27']]], [1642260, 'Nikola Topić', ['PG'], 'O', 'Knee · missed 16 of 16', []],
+    [1627936, 'Alex Caruso', ['PG', 'SG', 'SF'], 'D', 'Day-To-Day · missed 2 of 16', []], [1642850, 'Thomas Sorber', ['PF', 'C'], 'D', 'Day-To-Day · missed 1 of 16', []]],
+  free: [[1642349, 'Ajay Mitchell', ['PG', 'SG', 'SF'], 16, '+1.1'], [1641717, 'Cason Wallace', ['PG', 'SG', 'SF'], 16, '+0.9'], [1642363, 'Nique Clifford', ['SG', 'SF'], 15, '+0.6']] };
 const landLink = what => `<p class="pvt-link">See ${what} on the Players tab</p>`;
 function landTeamCard() {
   const { team, name, rec, po, tiles, periods, out, free } = LAND_TEAM;
@@ -458,8 +468,8 @@ function landTeamCard() {
     <p class="pvt-sub">Games ahead <span>by period, against the average team</span></p>
     <div class="tc-pers">${periods.map(per).join('')}</div>
     <p class="pvt-sub">Who's out</p>
-    ${out.map(hurt).join('')}
-    <p class="pvt-sub">Free agents <span>15 of 17 on fantasy teams</span></p>
+    <div class="pvx-fill"><div>${out.map(hurt).join('')}</div></div>
+    <p class="pvt-sub">Free agents <span>14 of 17 on fantasy teams</span></p>
     <table class="pvc-games pvt-table"><tbody>${free.map(([id, n, pos, gp, v]) => `<tr><td class="pvt-p"><div class="bplayer">${landFace(id, n, 28)}<div class="bmain"><b>${n}</b><div>${posTags(pos)} · <span class="badge fa">Waivers</span></div></div></div></td><td class="pvt-gp">${gp} GP</td><td>${v}</td></tr>`).join('')}</tbody></table>
   </div>`;
 }
