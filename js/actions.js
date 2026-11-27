@@ -25,6 +25,18 @@ const pickPerf = () => savePick('perf', { v: ui.perfRange, per: ui.perfPer, at: 
 // The league and the recap a button's week is for
 const recapOn = el => { const L = fxLeague(); return { L, X: L && recaps.get(`${L.id}|${+el.dataset.week}`) }; };
 
+// Open the Players tab on a team's players (a sport team's card, a fantasy team's: `over`, the filter that picks them) over
+// the season, every other filter off and the panel open to say why the list is short; the card closed
+function showOnPlayers(over) {
+  const d = $('#detailDialog');
+  if (d && d.open) d.close();
+  Object.assign(ui, { perfWhose: { ...PERF_WHOSE }, perfOthers: [], perfSpot: 'all', perfPos: [], perfTeam: [], perfMenu: null, perfQ: '', perfFiltOpen: true }, over);
+  if (!isFootball()) { Object.assign(ui, { perfRange: 'year', perfMore: { sig: '', n: 0 } }); pickPerf(); }
+  Object.assign(ui.perfOnly, { rookie: false, inj: false });
+  if (location.hash === '#players') render(); else location.hash = '#players';
+  window.scrollTo(0, 0);
+}
+
 const actions = {
   'nav-toggle'(el) { setNav(!document.body.classList.contains('nav-open')); },
   'clear-saved'() {
@@ -517,14 +529,12 @@ const actions = {
   'sport-team'(el) { showSportTeamCard(el.dataset.team); },
   // the foot of that card: the Players tab showing that team's players over the season (a day could have no game of
   // theirs; football keeps its projections), every other filter off and the panel open to say so
-  'team-players'(el) {
-    const d = $('#detailDialog');
-    if (d && d.open) d.close();
-    Object.assign(ui, { perfWhose: { ...PERF_WHOSE }, perfOthers: [], perfSpot: 'all', perfPos: [], perfTeam: [el.dataset.team], perfMenu: null, perfQ: '', perfFiltOpen: true });
-    if (!isFootball()) { Object.assign(ui, { perfRange: 'year', perfMore: { sig: '', n: 0 } }); pickPerf(); }
-    Object.assign(ui.perfOnly, { rookie: false, inj: false });
-    if (location.hash === '#players') render(); else location.hash = '#players';
-    window.scrollTo(0, 0);
+  'team-players'(el) { showOnPlayers({ perfTeam: [el.dataset.team] }); },
+  // the same at the foot of a fantasy team's card: only that team's players (yours, the opponent's, or one of the other teams picked)
+  'fantasy-team-players'(el) {
+    const tid = el.dataset.team, { mine, opp } = perfOwners();
+    const k = tid === mine ? 'me' : opp && tid === opp.id ? 'opp' : 'other';
+    showOnPlayers({ perfWhose: { me: false, opp: false, other: false, fa: false, [k]: true }, perfOthers: k === 'other' ? [tid] : [] });
   },
   'perf-clear'() {
     Object.assign(ui, { perfWhose: { ...PERF_WHOSE }, perfOthers: [], perfSpot: 'all', perfPos: [], perfTeam: [], perfMenu: null });

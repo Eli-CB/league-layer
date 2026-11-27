@@ -340,3 +340,28 @@ test("the player card: how he came to his fantasy team", async () => {
   assert.equal(app.cardHow(E, { id: ep[3] }, ep[2], 'x'), `Drafted · round ${ep[0]}, pick ${ep[1]}`);
   assert.equal(app.cardHow(E, { id: ep[3] }, E.teams.find(t => t.id !== ep[2]).id, 'x'), 'Added after the draft');
 });
+
+test("a fantasy team's card ends with a link to the Players tab showing that team's players alone", async () => {
+  const L = await app.useLeague(CATS9);
+  const mine = L.standings[0].id;
+  useTeam(mine);
+  const opp = app.fxOpponentFor(app.weekStartAt(0), mine), ui = app.get('ui');
+  const other = L.teams.find(t => t.id !== mine && !(opp && t.id === opp.id));
+  assert.ok(app.teamCardHtml(other.id).includes(`data-action="fantasy-team-players" data-team="${other.id}">See ${app.esc(other.name)} on the Players tab<`), 'the link, by its name');
+  assert.match(app.teamCardHtml(mine), />See your team on the Players tab</);
+  const ids = h => h.split('<tbody>')[1].split('</tr>').slice(0, -1).map(tr => +tr.match(/data-nba="(\d+)"/)[1]);
+  const { owner } = app.rosterOwners(L);
+  for (const [tid, key] of [[mine, 'me'], [opp && opp.id, 'opp'], [other.id, 'other']]) {
+    if (!tid) continue;
+    Object.assign(ui, { perfPos: ['C'], perfQ: 'zz' });
+    app.location.hash = ''; // (from another tab: on the Players tab itself it draws, and a game night's live updates would keep the run open)
+    app.actions['fantasy-team-players']({ dataset: { team: tid } });
+    assert.deepEqual(Object.keys(ui.perfWhose).filter(k => ui.perfWhose[k]), [key], `${key}: that one group on`);
+    assert.deepEqual([...ui.perfOthers], key === 'other' ? [tid] : [], 'another team: picked alone in Other teams');
+    assert.ok(!ui.perfPos.length && !ui.perfQ && ui.perfFiltOpen && ui.perfRange === 'year', 'other filters off, over the season, the panel open');
+    const shown = ids(app.topPerformancesCard());
+    assert.ok(shown.length && shown.every(id => owner.get(id) === tid), `${key}: only that team's players`);
+  }
+  Object.assign(ui, { perfWhose: { me: true, opp: true, other: true, fa: true }, perfOthers: [], perfFiltOpen: false });
+  app.location.hash = '';
+});

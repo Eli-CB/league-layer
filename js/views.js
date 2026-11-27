@@ -343,7 +343,8 @@ function teamCardHtml(tid) {
     ${!me && state.fxTeam && !isRoto() ? `<div><button type="button" class="btn sm" data-action="team-compare" data-team="${esc(tid)}">Compare on Plan Ahead</button></div>` : ''}
     ${cats}
     <div class="perf-wrap"><table class="perf-table tc-roster"><thead><tr>${th('name', 'Player', 'pf-name')}${football ? '' : th('gp', 'GP', 'sc', 'Games played') + th('min', 'MIN', 'sc', 'Minutes a game')}${cols.map((c, i) => th(i, c.label, 'sc')).join('')}${th('v', unit, 'num pf-v', '', football ? '' : ` data-tip="${esc(seasonTotalTip())}"`)}</tr></thead>
-      <tbody>${rows}</tbody></table></div></div>`;
+      <tbody>${rows}</tbody></table></div>
+    <p style="margin:0"><button type="button" class="link-btn quiet" data-action="fantasy-team-players" data-team="${esc(tid)}">See ${me ? 'your team' : esc(fxTeamName(tid))} on the Players tab</button></p></div>`;
 }
 
 // ----- Season totals: what each team's starters actually produced -----
