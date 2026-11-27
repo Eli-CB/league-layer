@@ -323,6 +323,10 @@ test("the player card: how he came to his fantasy team", async () => {
     assert.equal(how(pick[3], 'pick'), `Drafted · round ${pick[0]}, pick ${pick[1]}`);
     assert.equal(how(1, 'added'), 'Pickup · week 2');
     assert.equal(how(2, 'traded'), `Traded from ${app.fxTeamName(t2)} · week 2`);
+    // the team he came from: a link to its card, on the card's line
+    const out = {}, line = app.howBadge(app.cardHow(L, { id: 2 }, t1, 'traded', out), out.from);
+    assert.equal(out.from, t2);
+    assert.ok(line.includes(`from ${app.teamLink(t2)} · week 2`) && line.includes('data-action="team-card"'), line);
     assert.equal(how(3, 'new'), 'Pickup · this week', 'not on the latest weekly rosters yet');
   } finally { if (was) loads[L.id] = was; else delete loads[L.id]; }
   // without weekly rosters (ESPN): the draft, else added after it

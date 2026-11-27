@@ -430,8 +430,8 @@ function cardOwner(raw) {
   for (const [tid, r] of Object.entries(L.rosters)) {
     const x = r.find(y => y.nba === raw.id);
     if (!x) continue;
-    const how = cardHow(L, raw, tid, x.fid);
-    return `<p class="pc-owner"><b>${teamLink(tid)}</b> <span class="badge ${x.st === 'ACTIVE' ? 'active' : x.st === 'INJURED_RESERVE' ? 'bad' : 'bench'}">${x.st === 'ACTIVE' ? 'Active' : x.st === 'INJURED_RESERVE' ? 'IR' : x.st === 'TAXI' ? 'Taxi' : 'Bench'}</span>${howBadge(how)}</p>`;
+    const out = {}, how = cardHow(L, raw, tid, x.fid, out);
+    return `<p class="pc-owner"><b>${teamLink(tid)}</b> <span class="badge ${x.st === 'ACTIVE' ? 'active' : x.st === 'INJURED_RESERVE' ? 'bad' : 'bench'}">${x.st === 'ACTIVE' ? 'Active' : x.st === 'INJURED_RESERVE' ? 'IR' : x.st === 'TAXI' ? 'Taxi' : 'Bench'}</span>${howBadge(how, out.from)}</p>`;
   }
   const fa = faBadge(raw);
   return fa ? `<p class="pc-owner">${fa}</p>` : '';
@@ -502,16 +502,19 @@ function catProfile(raw) {
 
 // The card's line for it: the Roster tab's badge (same colors; Drafted blue, as grey is a free agent's), then the rest in grey
 const HOW_BADGE = [[/^Keeper$/, 'Keeper', 'accent'], [/^Drafted · /, 'Drafted', 'info'], [/^Pickup · /, 'Pickup', 'good'], [/^Added /, 'Added', 'good'], [/^Traded /, 'Trade', 'warn']];
-function howBadge(how) {
+// from: the team a trade brought him from, its name a link to its card (the owner's ask, Nov 27, 2026)
+function howBadge(how, from) {
   if (!how) return '';
   const b = HOW_BADGE.find(([re]) => re.test(how));
   if (!b) return `<span class="pc-how muted">${esc(how)}</span>`;
-  const rest = how.replace(b[0], '');
-  return `<span class="pc-how muted"><span class="badge ${b[2]}">${b[1]}</span>${rest ? ' ' + esc(rest) : ''}</span>`;
+  let rest = how.replace(b[0], '') && esc(how.replace(b[0], ''));
+  if (from && rest) rest = rest.replace(`from ${esc(fxTeamName(from))}`, () => `from ${teamLink(from)}`);
+  return `<span class="pc-how muted"><span class="badge ${b[2]}">${b[1]}</span>${rest ? ' ' + rest : ''}</span>`;
 }
 // How a rostered player came to his fantasy team: kept, drafted (round and pick), a waiver add or a trade, and when.
 // Weekly rosters (Fantrax, Sleeper) follow him back to the week he joined; elsewhere the draft is all there is.
-function cardHow(L, raw, tid, fid) {
+// out (optional): out.from is the team a trade brought him from, for its name as a link (howBadge)
+function cardHow(L, raw, tid, fid, out = {}) {
   const d = L.draft;
   const pick = d && d.picks.find(p => p[3] === raw.id && p[2] === tid);
   const fromDraft = d && d.keepers && (d.keepers[tid] || []).includes(raw.id) ? 'Keeper' : pick ? `Drafted · round ${pick[0]}, pick ${pick[1]}` : null;
@@ -531,12 +534,14 @@ function cardHow(L, raw, tid, fid) {
   const last = weeks[weeks.length - 1];
   if (!on(last)) { // joined since the latest rosters
     const was = last.owner.get(fid);
+    if (was) out.from = was.tid;
     return was ? `Traded from ${fxTeamName(was.tid)} · this week` : 'Pickup · this week';
   }
   let j = weeks.length - 1;
   while (j > 0 && on(weeks[j - 1])) j--;
   if (!j) return fromDraft || `On the team since ${when(weeks[0])}`;
   const prev = weeks[j - 1].owner.get(fid);
+  if (prev) out.from = prev.tid;
   return prev ? `Traded from ${fxTeamName(prev.tid)} · ${when(weeks[j])}` : `Pickup · ${when(weeks[j])}`;
 }
 // Every game he's played this season, newest first: the saved box scores (and today's, as they're played), else
