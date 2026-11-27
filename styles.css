@@ -639,6 +639,8 @@ button.dr-award-btn:hover { text-decoration: underline; text-underline-offset: 2
 .perf-table .pf-name .pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .badge.inj, .badge.rk { flex: none; margin-left: 5px; padding: 0 5px; font-size: .64rem; line-height: 1.5; letter-spacing: .02em; } /* the name gives way, not the badge */
 .badge.inj.in-meta, .badge.rk.in-meta { display: none; margin: 0 4px 0 0; }
+.bname > .badge.inj, .bname > .badge.rk { margin-left: 0; } /* by the name: the row's 4px gap alone (the owner's ask, Nov 27, 2026: 9px read as apart) */
+.bname:has(> .badge.inj, > .badge.rk) { flex-wrap: nowrap; } .bname:has(> .badge.inj, > .badge.rk) > .pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; } /* a long name takes "…" so the badge stays at its end, not on a line of its own */
 .badge.inj.fresh { box-shadow: inset 0 0 0 1.5px currentColor; } /* a status changed in the last 3 hours (injFresh) */
 .badge.rk { background: var(--info-soft); color: var(--info); } /* blue, the site's color for a fact (as Drafted), apart from the injury badges' red and yellow: the owner's pick, Nov 27, 2026 */
 @media (max-width: 640px) { .badge.inj.by-name, .badge.rk.by-name { display: none; } .badge.inj.in-meta, .badge.rk.in-meta { display: inline-block; } } /* phones: under the name, which keeps its room */
