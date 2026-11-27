@@ -445,7 +445,7 @@ test('performances: Active and Bench filters, and an Active badge', async () => 
     assert.ok(rowsOf(html).filter(tr => tr.startsWith('<tr class="pf-me"') || tr.includes('<tr class="pf-me">')).every(tr => tr.includes('class="perf-owner mine"')), 'your team in orange');
     assert.ok(rowsOf(html).filter(tr => tr.includes('class="pf-opp"')).every(tr => tr.includes('class="perf-owner opp"')), 'the opponent in bold');
     assert.ok(me && html.includes('class="perf-owner mine"'));
-    // IR: a red badge and the fantasy team's name
+    // IR: a red dot and the fantasy team's name
     const owners = new Map(Object.entries(L.rosters).flatMap(([tid, r]) => r.filter(x => x.nba).map(x => [x.nba, tid])));
     app.ui.perfRange = 'avg';
     const avg = rowsOf(app.topPerformancesCard()).filter(tr => stOf(tr) === 'INJURED_RESERVE');
@@ -453,7 +453,7 @@ test('performances: Active and Bench filters, and an Active badge', async () => 
     assert.ok(avg.length, 'IR players in Per game');
     for (const tr of avg) {
       const tid = owners.get(+tr.match(/data-nba="(\d+)"/)[1]);
-      assert.ok(tr.includes('<span class="badge bad" title="On injured reserve">IR</span>'), 'red IR badge');
+      assert.ok(tr.includes('<span class="lu-ico ir" role="img" aria-label="On injured reserve" title="On injured reserve"></span>') && !tr.includes('>IR</span>'), 'red IR dot, no badge');
       // (its whole name as the tip: a long one is cut short with "…" on a computer)
       assert.ok(/<span class="perf-owner( mine| opp)?" title="[^"]+">/.test(tr) && tr.includes(` title="${app.esc(app.fxTeamName(tid))}">${app.teamLink(tid)}</span>`) && tr.includes(`data-action="team-card" data-team="${tid}"`), `${app.fxTeamName(tid)}'s IR player shows the team, a link to its card`);
     }

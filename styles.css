@@ -624,6 +624,7 @@ button.dr-award-btn:hover { text-decoration: underline; text-underline-offset: 2
 .lu-ico { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 2px; vertical-align: 0; box-sizing: border-box; }
 .lu-ico.active { background: var(--text); }
 .lu-ico.bench { border: 1.5px solid var(--muted); }
+.lu-ico.ir { border: 1.5px solid var(--bad); } .lu-ico.taxi { border: 1.5px dashed var(--muted); } /* every lineup spot a dot (perfOwners) */
 /* not on a roster: grey, so it doesn't read as a good number */
 .badge.fa { background: var(--surface-2); color: var(--muted); }
 .badge.bench { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--border); }

@@ -261,12 +261,13 @@ function perfOwners() {
   const opp = L && owner.size && mine ? fxOpponentFor(weekStartAt(0), mine) : null;
   // where a player is: in a team's starting lineup (active), on its bench (IR included), or on no roster (waivers)
   const statusOf = id => (!spot.has(id) ? 'fa' : spot.get(id).st === 'ACTIVE' ? 'active' : 'bench');
+  // one small dot for every spot, the owner's ask (Nov 27, 2026: IR and Taxi were badges beside the dots): filled for the
+  // starting lineup, hollow for the bench, hollow in red for injured reserve, dashed for the taxi squad; its label on hover
   const lineupBadge = id => {
     const x = spot.get(id);
-    // a small mark rather than a word: filled for the starting lineup, hollow for the bench; IR keeps its red badge
-    if (x.st === 'ACTIVE') { const t = `In the starting lineup${x.slot ? ` at ${esc(x.slot)}` : ''}`; return `<span class="lu-ico active" role="img" aria-label="${t}" title="${t}"></span>`; }
-    if (x.st === 'TAXI') return '<span class="badge bench" title="On the taxi squad">Taxi</span>';
-    return x.st === 'INJURED_RESERVE' ? '<span class="badge bad" title="On injured reserve">IR</span>' : '<span class="lu-ico bench" role="img" aria-label="On the bench" title="On the bench"></span>';
+    const [cls, t] = x.st === 'ACTIVE' ? ['active', `In the starting lineup${x.slot ? ` at ${esc(x.slot)}` : ''}`]
+      : x.st === 'TAXI' ? ['taxi', 'On the taxi squad'] : x.st === 'INJURED_RESERVE' ? ['ir', 'On injured reserve'] : ['bench', 'On the bench'];
+    return `<span class="lu-ico ${cls}" role="img" aria-label="${t}" title="${t}"></span>`;
   };
   // your players and the opponent's are tinted rows instead (see the row classes), so they only need the lineup badge,
   // except on IR (out of the lineup, so whose he is helps)
