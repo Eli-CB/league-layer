@@ -1812,9 +1812,11 @@ body.landing::before {
 .pv-fcard :is(.tc-wk-n, .tc-wk-s) { font-size: .56rem; }
 .pvf-allplay { margin: 6px 0 0; font-size: .7rem; color: var(--muted); }
 .pvf-allplay b:not(.pos-good) { color: var(--text); }
-.pvf-built { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 12px; font-size: .7rem; color: var(--muted); }
-.pvf-built span { padding: 3px 8px; border-radius: 6px; background: var(--surface-2); }
-.pvf-built b { color: var(--text); }
+.pvf-built { margin: 4px 0 10px; }
+.pvf-built .tc-how { padding: 4px 0; font-size: .72rem; }
+.pvf-built .tc-how:last-child { border-bottom: 0; }
+.pvf-built .tc-how-k { flex-basis: 76px; }
+.pvf-built .tc-how-v b { font-weight: 600; }
 /* the three cards in turn, 4 s each, the one showing lit above them (a loop of CSS alone); held while the pointer's on them;
    a tap on a name shows that card and stops the turns ([data-pick], 'land-card') */
 .pvx-seg { display: flex; width: max-content; margin: 0 auto 12px; font-size: .78rem; }
