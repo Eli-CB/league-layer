@@ -955,6 +955,7 @@ fieldset.field legend { padding: 0; margin-bottom: 6px; }
 .empty strong { display: block; color: var(--text); margin-bottom: 4px; font-size: 1rem; }
 /* Loading: the logo's Ls drop in from above and stack, the thin one first, hold, fade, and go again */
 .ll-loader { display: block; width: 56px; height: 40px; margin: 4px auto 14px; overflow: visible; }
+.ll-loader:has(+ .sr-only) { margin-bottom: 4px; } /* the first screen: the mark alone, centered */
 .ll-loader.sm { display: inline-block; width: 21px; height: 15px; margin: 0 7px 0 0; vertical-align: -3px; }
 .ll-loader .ll-main { fill: var(--text); }
 .ll-loader .ll-edge { fill: #7f8a9c; }
