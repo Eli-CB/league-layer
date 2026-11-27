@@ -7,7 +7,7 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   search, then one Filters button (`ui.perfFiltOpen`) opening a panel (and the tab's one (i), beside it: `INFO.perf`, kept to what no tip on screen says, short enough for a phone; Per game's line names its stats with no (i) of its own: the owner's ask, Nov 20, 2026; on phones, ≤640px, neither this (i) nor the line of days, update time and player count shows: "too messy", the owner's ask, Nov 21, 2026): Show toggles (`ui.perfWhose`: me, opp, other, fa, any together, never none; Other teams is also a menu of those teams to pick any number of, the owner's ask: `perfOtherMenu`, `ui.perfOthers`, none picked = all), Lineup All / Active / Bench (`ui.perfSpot`, rostered players only: waivers have no lineup), position and NBA team (each a menu to pick any number from, the owner's ask: `perfMenu`, lists `ui.perfPos` / `ui.perfTeam`, empty = all; a player at any picked position), Rookies, Injured.
 - A row's injury (O out, D day-to-day: one letter, the owner's ask, Nov 27, 2026) and rookie (a blue R, the owner's pick) badges always sit
   on the name's line, phones too, the name cut with "…" to make room (the owner's ask, Nov 27, 2026; before, they dropped to the line under a
-  cut name, as a fantasy team's card still does: `fitNameBadges`, render.js).
+  cut name).
 - A rostered row's lineup spot is one small gray dot (`lineupBadge` in `perfOwners`), never a word: filled starter, ring bench, dotted
   injured reserve, half filled taxi (the owner's ask, Nov 27, 2026: IR and Taxi were badges; then no red, as the O/D badge already is,
   and a dashed taxi ring read as IR's dotted one). On computers it sits on the photo's corner (`photo`, `.hs-spot`), on phones (≤640px,

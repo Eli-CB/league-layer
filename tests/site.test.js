@@ -233,8 +233,7 @@ test('shared helpers: the toggles, a table sorted with empty cells last, whose a
     a.actions['land-browse']();
     const p = a.sortDesc(a.nbaPlayers().filter(x => x.gp && x.team), x => x.val)[0];
     a.actions['sb-add']({ dataset: { id: String(p.nbaId) } });
-    a.actions['sport-team']({ dataset: { team: p.team } });
-    assert.ok(els['#detailBody'].innerHTML.includes('<span class="perf-owner mine"><span class="team-mine">My team</span></span>'), 'My team on his NBA team card');
+    assert.equal(a.ownerTag(a.rosterOwners().owner, p.nbaId), '<span class="perf-owner mine"><span class="team-mine">My team</span></span>', 'My team, wherever whose he is shows');
     // a player's games sorted by FG%: by makes, then attempts ("8/15")
     const raw = a.NBA.players.find(r => { const g = a.cardGames(r); return g.some((x, i) => g.some((y, j) => i !== j && x.fgm === y.fgm && x.fga !== y.fga)); });
     assert.ok(raw, 'a player with two games of the same makes');

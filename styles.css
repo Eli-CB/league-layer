@@ -473,9 +473,8 @@ label [data-photo], #detailBody [data-photo] { cursor: inherit; }
   .detail-title .dt-team-po { grid-column: 1 / -1; margin-left: 0; padding-left: 0; border-left: 0; font-size: .85rem; }
 }
 .proj-grid.tc-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.proj-grid.tc-tiles.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .tc-table td { vertical-align: middle; }
-.tc-table td:first-child { width: 18px; padding-right: 0; }
-@media (max-width: 640px) { .tc-table .show-sm { display: inline; } } /* (phones: whose he is after his positions) */
 .detail-title .dt-bio .pt:not(.pc) { color: var(--text); } /* (a position with its lineup-spot color keeps it) */
 /* the card's top: the photo, his fantasy team beside it, the tiles beside that (on a phone the tiles go under) */
 .pc-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: flex-start; gap: 12px; }
@@ -652,8 +651,6 @@ button.dr-award-btn:hover { text-decoration: underline; text-underline-offset: 2
 .badge.inj.fresh { box-shadow: inset 0 0 0 1.5px currentColor; } /* a status changed in the last 3 hours (injFresh) */
 .badge.rk { background: var(--info-soft); color: var(--info); } /* blue, the site's color for a fact (as Drafted), apart from the injury badges' red and yellow: the owner's pick, Nov 27, 2026 */
 @media (max-width: 640px) { .badge.inj.by-name, .badge.rk.by-name { display: none; } .badge.inj.in-meta, .badge.rk.in-meta { display: inline-block; } } /* phones: under the name, which keeps its room */
-.tc-roster .pf-name:not(.tight) .badge.by-name { display: inline-block; } .tc-roster .pf-name:not(.tight) .badge.in-meta { display: none; }
-.tc-roster .pf-name.tight .badge.by-name { display: none; } .tc-roster .pf-name.tight .badge.in-meta { display: inline-block; } /* a team card: beside the name if it shows whole there (fitNameBadges) */
 .pl-table .pf-name .badge.by-name { display: inline-block; } /* the Players tab: always beside the name, phones too, the name cut with "…" (the owner's ask, Nov 27, 2026) */
 .perf-table .pf-name .pmeta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* a long fantasy team's name is cut short with its own "…" (its whole name in its tip): the line's "…" can't cut into a
@@ -745,10 +742,49 @@ td.player { min-width: 170px; }
 .team-link { color: inherit; font-weight: inherit; text-align: inherit; }
 .team-link.mine, .team-mine { color: var(--accent); } /* your own team, wherever its name is */
 .team-link:hover { text-decoration: underline; }
-.tc-roster td { vertical-align: middle; }
 /* a fantasy team's card: its parts 16 px apart */
 .tc-body > * + * { margin-top: 16px; }
-.tc-roster td.sc { border-bottom: 1px solid var(--border); } /* (no shaded cells here: the row's line runs across) */
+/* the links at a team card's top: the Players tab, then Plan Ahead's comparison */
+.tc-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.tc-links .link-btn { font-weight: 600; }
+/* a fantasy team's best players: a tile each, four across, two on phones */
+.tc-stars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.tc-star { display: flex; gap: 8px; align-items: flex-start; background: var(--surface-2); border-radius: 8px; padding: 8px; min-width: 0; }
+.tc-star .bmain { min-width: 0; }
+.tc-star .bname { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.tc-star .bname .pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.tc-worth { font-size: .8rem; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.tc-worth b { color: var(--text); }
+@media (max-width: 640px) { .tc-stars { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tc-star { padding: 6px; gap: 6px; } .tc-star .bname .pname { white-space: normal; text-align: left; } } /* (phones: the name wraps rather than cut short) */
+/* its season week by week: a chip a week, the week's number, W/L/T, the score */
+.tc-weeks { display: flex; flex-wrap: wrap; gap: 4px; }
+.tc-wk { display: flex; flex-direction: column; align-items: center; min-width: 40px; padding: 4px 4px 3px; border-radius: 6px; background: var(--surface-2); font-variant-numeric: tabular-nums; line-height: 1.15; }
+.tc-wk b { font-size: .95rem; }
+.tc-wk-n, .tc-wk-s { font-size: .66rem; color: var(--muted); }
+.tc-wk.won { background: var(--good-soft); } .tc-wk.won b { color: var(--good); }
+.tc-wk.lost { background: var(--bad-soft); } .tc-wk.lost b { color: var(--bad); }
+.tc-allplay { margin: 8px 0 0; }
+/* how it was built: a line a way in (Kept, Drafted...), its players after */
+.tc-how { display: flex; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: .88rem; }
+.tc-how-k { flex: 0 0 96px; color: var(--muted); }
+.tc-how-k b { color: var(--text); }
+.tc-how-v { min-width: 0; }
+.tc-nw { white-space: nowrap; } /* a name and its comma: a comma never starts a line */
+.tc-best { margin: 8px 0 0; }
+@media (max-width: 640px) { .tc-best .tc-sep, .tc-out .tc-sep { display: block; height: 0; overflow: hidden; } } /* (phones: one a line) */
+/* a sport team's games ahead: a tile a period, more games than the average team green, fewer red */
+.tc-pers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.tc-per { display: flex; flex-direction: column; background: var(--surface-2); border-radius: 8px; padding: 6px 8px; min-width: 0; font-variant-numeric: tabular-nums; }
+.tc-per .k { font-size: .66rem; color: var(--muted); font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-per b { font-size: 1.15rem; }
+.tc-per-s { font-size: .7rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-per.more { background: var(--good-soft); } .tc-per.more b { color: var(--good); }
+.tc-per.fewer { background: var(--bad-soft); } .tc-per.fewer b { color: var(--bad); }
+@media (max-width: 640px) { .tc-pers { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* who's out: a row each, the teammates who've done more without him under */
+.tc-out { padding: 6px 0; border-bottom: 1px solid var(--border); }
+.tc-out .bname { display: flex; align-items: center; gap: 4px; }
+.tc-without { margin-top: 2px; }
 .pmeta { color: var(--muted); font-size: .8rem; }
 
 .badge {

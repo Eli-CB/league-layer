@@ -3,7 +3,7 @@ const { test, assert, sharedApp, CATS9, POINTS, ESPN, useTeam, between } = requi
 let app;
 test.before(async () => { app = await sharedApp(); });
 
-test("a fantasy team's name opens its card: record, opponent, roster by spot, category ranks", async () => {
+test("a fantasy team's name opens its card: record, opponent, its best players, category ranks", async () => {
   const L = await app.useLeague(CATS9);
   useTeam(L.standings[0].id);
   const other = L.teams.find(t => t.id !== L.standings[0].id);
@@ -17,19 +17,18 @@ test("a fantasy team's name opens its card: record, opponent, roster by spot, ca
   const opp = app.fxOpponentFor(app.weekStartAt(0), other.id);
   if (opp) assert.ok(title.includes(`<span class="dt-vs">This week vs <span class="dt-rec">${app.teamLink(opp.id)}</span></span>`), "this week's opponent in the title too");
   assert.doesNotMatch(html, /This week vs|No matchup this week/, 'and not in the card');
-  assert.doesNotMatch(html, /slot-label|>Roster<|>Starters<|>Bench</, 'no lineup spots or group labels');
-  // an injured player: his letter by his name (the note on hover), not the report's words under it
-  const hurt = L.teams.flatMap(t => app.fxTeamSide(t.id).players.map(p => [t.id, p])).find(([, p]) => p.inj && p.inj.note);
-  assert.ok(hurt, 'an injured player to look at');
-  const card = app.teamCardHtml(hurt[0]);
-  assert.ok(card.includes(app.injBadge(hurt[1].inj, 'by-name')) && !card.includes('pmeta inj'), hurt[1].name);
-  const vals = [...html.matchAll(/<td class="num pf-v">([^<]+)<\/td>/g)].map(m => +m[1].replace('−', '-'));
-  assert.equal(vals.length, app.fxTeamSide(other.id).players.length);
-  assert.deepEqual(vals, [...vals].sort((a, b) => b - a), 'every player in one list, best value over the season first');
-  assert.match(html, /Compare on Plan Ahead/);
+  assert.doesNotMatch(html, /slot-label|>Roster<|>Starters<|>Bench<|tc-roster/, 'no roster table: the Players tab has it');
+  // its best players as tiles, best value over the season first, each opening his card
+  const stars = html.split('class="tc-star"').slice(1);
+  assert.equal(stars.length, Math.min(4, app.fxTeamSide(other.id).players.length));
+  const ids = stars.map(t => +t.match(/data-action="player-detail" data-nba="(\d+)"/)[1]);
+  const vals = ids.map(id => app.seasonTotal(app.nbaById.get(id)).v);
+  assert.deepEqual(vals, [...vals].sort((a, b) => b - a), 'best value over the season first');
+  const best = app.sortDesc(app.fxTeamSide(other.id).players, p => app.seasonTotal(app.nbaById.get(p.nbaId)).v)[0];
+  assert.equal(ids[0], best.nbaId, 'the best of them first');
+  // the links first: the Players tab, then Plan Ahead
+  assert.ok(html.indexOf('data-action="fantasy-team-players"') < html.indexOf('Compare on Plan Ahead') && html.indexOf('Compare on Plan Ahead') < html.indexOf('tc-star'), 'the links at the top');
   assert.match(html, /By category <span[^>]*>top \d+, against every team</, "each team's best players, as many as it starts");
-  const side = app.fxTeamSide(other.id);
-  assert.equal((html.slice(html.indexOf('tc-roster')).match(/data-action="player-detail"/g) || []).length, side.players.length, 'every player, each opening his card');
   // the full category strengths (once a card on Standings): a row a category with its rank, the league's teams on one line
   assert.equal((html.match(/<tr class="cs-row"/g) || []).length, app.scoreCats().length, 'a row for each category');
   assert.equal((html.match(/class="sdot this"/g) || []).length, app.scoreCats().length, "this team's dot in each row");
@@ -237,8 +236,9 @@ test("team codes link to the Players tab filtered by that team; a player's photo
   Object.assign(ui, { perfTeam: [], perfFiltOpen: false });
 });
 
-test("a team's code opens its card in the popup: its schedule, then its players by value, each with whose he is", async () => {
-  await app.useLeague(CATS9);
+test("a team's code opens its card in the popup: the Players tab link first, its games ahead, who's out, its free agents", async () => {
+  const L = await app.useLeague(CATS9);
+  await app.loadBoxes();
   const doc = app.document, realQuery = doc.querySelector, els = {};
   doc.querySelector = sel => (['#detailBody', '#detailTitle', '#detailDialog'].includes(sel) ? (els[sel] = els[sel] || { innerHTML: '', open: false, showModal() { this.open = true; }, close() { this.open = false; } }) : realQuery(sel));
   try {
@@ -249,17 +249,77 @@ test("a team's code opens its card in the popup: its schedule, then its players 
     assert.ok(els['#detailTitle'].innerHTML.includes(app.SPORT.teamNames[tri]), `its full name: ${app.SPORT.teamNames[tri]}`);
     const html = els['#detailBody'].innerHTML;
     assert.match(html, /Next game/);
-    const ids = [...html.matchAll(/data-action="player-detail" data-nba="(\d+)"/g)].map(m => +m[1]);
-    const team = app.nbaPlayers().filter(p => p.team === tri);
-    assert.equal(new Set(ids).size, team.length, 'every player on the team');
-    const vals = ids.map(id => app.seasonTotal(app.nbaById.get(id))).filter(t => t.gp).map(t => t.v);
-    assert.deepEqual(vals, [...vals].sort((a, b) => b - a), 'by value over the season (a game or two can\'t top it), best first');
-    const one = team.find(p => p.gp);
-    assert.ok(Math.abs(app.seasonTotal(app.nbaById.get(one.nbaId)).v - app.value({ ...app.nbaStats(app.nbaById.get(one.nbaId), 'cur'), pos: one.pos }) * one.gp) < 1e-9, 'his average game this season times his games');
+    const link = html.indexOf(`data-action="team-players" data-team="${tri}"`);
+    assert.ok(link > -1 && link < html.indexOf('Next game'), 'the whole team on the Players tab, from the top');
+    assert.doesNotMatch(html, /<h3 class="sub"[^>]*>Players/, 'no players table: the Players tab has it');
+    // games ahead: each next period's games, the average team's beside them
+    const pers = [...html.matchAll(/<div class="tc-per[^"]*" title="[^"]*"><span class="k">[^<]+<\/span><b>(\d+)<\/b><span class="tc-per-s">avg (\d+\.\d)/g)];
+    assert.ok(pers.length >= 1 && pers.length <= 5, `${pers.length} periods`);
+    const next = app.weekShifts().filter(x => x > 0)[0], dates = app.matchDates(app.weekStartAt(next));
+    assert.equal(+pers[0][1], dates.filter(d => app.teamDates.get(tri).has(d)).length, "next period's games");
+    // free agents: its best players on no fantasy team, by value over the season
+    const { owner } = app.rosterOwners(L), team = app.nbaPlayers().filter(p => p.team === tri);
+    assert.ok(html.includes(`${team.filter(p => owner.has(p.nbaId)).length} of ${team.length} on fantasy teams`));
+    const fa = html.split('<table class="tc-table tc-free">')[1] || '';
+    const ids = [...fa.matchAll(/data-action="player-detail" data-nba="(\d+)"/g)].map(m => +m[1]);
+    assert.ok(ids.every(id => !owner.has(id)), 'only players nobody has');
+    const want = app.sortDesc(team.filter(p => !owner.has(p.nbaId) && app.seasonTotal(app.nbaById.get(p.nbaId)).gp), p => app.seasonTotal(app.nbaById.get(p.nbaId)).v).slice(0, 3).map(p => p.nbaId);
+    assert.deepEqual(ids, want, 'the best three, best first');
     assert.match(html, /class="pt pt-\w+ pc pc-/, 'positions in their lineup-spot colors');
-    assert.match(html, new RegExp(`data-action="team-players" data-team="${tri}"`), 'the whole team on the Players tab, from the foot');
     assert.equal(Object.keys(app.SPORTS.nba.teamNames).length, 30);
   } finally { doc.querySelector = realQuery; }
+});
+
+test("a team's card: who's out, and the teammates who've done more in the games he missed", async () => {
+  await app.useLeague(CATS9);
+  const B = await app.loadBoxes();
+  // a regular with 3+ of his team's games missed, on the report (made so: the fixture's report changes day to day)
+  const tri = app.NBA.players.find(r => r.team && r.cur).team;
+  const games = id => (B.byPlayer.get(id) || []).filter(g => g[3] === tri && (g[1].min || 0) > 0);
+  const dates = [...B.finals].filter(x => x.slice(11) === tri).map(x => x.slice(0, 10));
+  // (the fixture's box scores have a few games a team: a regular who missed 3+ if there is one, else anyone who missed one)
+  const raw = app.NBA.players.find(r => r.team === tri && games(r.id).length >= 3 && app.median(games(r.id).map(g => g[1].min)) >= 20 && dates.length - games(r.id).length >= 3)
+    || app.NBA.players.find(r => r.team === tri && games(r.id).length && games(r.id).length < dates.length);
+  assert.ok(raw, 'a player who missed a game');
+  const was = raw.inj;
+  raw.inj = { status: 'Out', label: 'Out', note: 'Knee' };
+  app.changed('players');
+  try {
+    const html = app.sportOutHtml(tri);
+    assert.ok(html.includes(`data-nba="${raw.id}"`) && html.includes(app.injBadge(raw.inj)), 'him, with his letter');
+    assert.ok(html.includes(`missed ${dates.length - games(raw.id).length} of ${dates.length}`), 'the games he missed');
+    const w = html.split(`data-nba="${raw.id}"`)[1].split('class="tc-out"')[0];
+    if (w.includes('Without him')) assert.match(w, /<b class="pos-good">\+\d\.\d\d VAL<\/b> <span class="muted">a game, \d+ → \d+ min/, 'a teammate: his value a game more, and his minutes');
+  } finally { raw.inj = was; app.changed('players'); }
+});
+
+test("a fantasy team's card: its season week by week against everyone, then how it was built", async () => {
+  const L = await app.useLeague(CATS9);
+  useTeam(L.standings[0].id);
+  const tid = L.standings[1].id;
+  if (!app.curSeasonLeague(L)) assert.match(app.teamCardHtml(tid), /data-tc-wait>.*Loading this season/s, 'loading, the first time');
+  await app.loadCurSeason(L);
+  const html = app.teamCardHtml(tid);
+  assert.doesNotMatch(html, /data-tc-wait/, 'drawn once they are in');
+  const L2 = app.curSeasonLeague(L), A = L2 && app.viewingLeague(L2, app.state.fxTeam, () => app.allPlayRecords(L2, app.gameLogs.cur, false));
+  const list = A && A[tid] ? A[tid].list : [];
+  const chips = [...html.matchAll(/<span class="tc-wk (won|lost|tied)"[^>]*><span class="tc-wk-n">(\d+)<\/span><b>([WLT])<\/b><span class="tc-wk-s">([\d.]+)-([\d.]+)<\/span>/g)];
+  assert.equal(chips.length, list.length, 'a chip a finished week');
+  for (const [, cls, n, r, a, b] of chips) {
+    const x = list.find(y => y.n === +n);
+    assert.equal(r, x.wa > x.wb ? 'W' : x.wa < x.wb ? 'L' : 'T', `week ${n}`);
+    assert.equal(cls, { W: 'won', L: 'lost', T: 'tied' }[r]);
+    assert.deepEqual([+a, +b], [x.wa, x.wb], 'its categories won and lost');
+  }
+  if (list.length) assert.match(html, /Against every team each week: <b>[\d.]+-[\d.]+<\/b> \(\d+%\)/);
+  // how it was built: every player in one of the groups, as his own card says it
+  const how = html.split('How it was built')[1] || '';
+  const named = [...how.matchAll(/class="tc-how-k">[^<]+<b>(\d+)<\/b>/g)].reduce((t, m) => t + +m[1], 0);
+  assert.ok(named > 0 && named <= L.rosters[tid].length, `${named} of ${L.rosters[tid].length}`);
+  const x = L.rosters[tid].find(y => y.nba && app.nbaById.get(y.nba));
+  const line = app.cardHow(L, app.nbaById.get(x.nba), tid, x.fid);
+  const group = /^Keeper/.test(line) ? 'Kept' : /^(Drafted|On the team since)/.test(line) ? 'Drafted' : /^Traded/.test(line) ? 'Traded for' : 'Picked up';
+  assert.ok(how.split(`>${group} <b>`)[1].split('</div></div>')[0].includes(`data-nba="${x.nba}"`) || how.split(`>${group} <b>`)[1].split('class="tc-how"')[0].includes(`data-nba="${x.nba}"`), `${line}: under ${group}`);
 });
 
 test("a team's card has its record: its finals, then today's game once it's over (not a preseason one)", async () => {

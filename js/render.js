@@ -437,7 +437,6 @@ function toggleRoll(card) {
 // and scrolls inside (its header and the name and value columns stay put). Never under 5 rows and a peek of the 6th,
 // measured, as rows change height when names or stats wrap. Runs again when the window resizes.
 function fitPerfLists() {
-  fitNameBadges();
   const wraps = [...document.querySelectorAll('.perf-wrap.scroll')];
   if (!wraps.length) return;
   const bar = $('.topbar'), room = window.innerHeight - (bar ? bar.getBoundingClientRect().height : 0) - 16;
@@ -446,17 +445,6 @@ function fitPerfLists() {
     const least = sixth ? sixth.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop + 22 : 0;
     wrap.style.maxHeight = `${Math.max(least, room)}px`;
   });
-}
-
-// A fantasy team card's injury and rookie badges sit beside the name when it still shows whole beside them (phones too), else
-// under it, in the line below (the owner's ask, Nov 27, 2026): a row marked "tight" has its name cut short beside them.
-// (The Players tab keeps them beside the name always, the name cut with "…": the owner's ask, Nov 27, 2026.)
-// Measured, as it hangs on each name's length; cleared first, so a wider window puts them back.
-function fitNameBadges() {
-  const cells = [...document.querySelectorAll('.tc-roster td.pf-name')].filter(td => td.querySelector('.bname .badge'));
-  cells.forEach(td => td.classList.remove('tight'));
-  cells.filter(td => { const n = td.querySelector('.bname .pname'); return n && n.scrollWidth > n.clientWidth + 1; })
-    .forEach(td => td.classList.add('tight'));
 }
 
 // A league that hasn't drafted: no picks made and every roster empty

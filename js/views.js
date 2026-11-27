@@ -268,10 +268,11 @@ function movesCard() {
   return card(sub, `${body}${got.at ? `<p class="muted small mv-when">Period ${got.n} · ${got.rosters ? 'rosters ' : ''}as of ${fmtTime(got.at, { weekday: 'short' })} · ↻ Reload in ⚙ for the latest</p>` : ''}`);
 }
 
-// ----- A fantasy team's card: its record and this week's opponent (the title), its category strengths (teamStrengths), its roster -----
-let teamCardOpen = null; // the fantasy team whose card is showing, for its table's sort (team-sort)
-function showTeamCard(tid, sorting) {
-  if (!sorting) ui.teamSort = { key: 'v', dir: -1 }; // (a card just opened: best first by the last column)
+// ----- A fantasy team's card: its record and this week's opponent (the title), then its best players, its season week by
+// week, its category strengths (teamStrengths) and how it was built. The whole roster is the Players tab's, from the link at
+// its top (the owner's ask, Nov 27, 2026: a roster table here said what that tab says better)
+let teamCardOpen = null; // the fantasy team whose card is showing
+function showTeamCard(tid, keepScroll) {
   const html = teamCardHtml(tid);
   if (!html) return;
   teamCardOpen = tid;
@@ -281,8 +282,14 @@ function showTeamCard(tid, sorting) {
   sportCardOpen = null;
   const d = $('#detailDialog');
   if (!d.open) d.showModal();
-  fitNameBadges();
-  if (!sorting) $('#detailBody').scrollTop = 0;
+  if (!keepScroll) $('#detailBody').scrollTop = 0;
+}
+// Draw the card again once this season's weeks are in, if it's still the one showing and still waiting for them
+function teamCardWait(L, tid) {
+  loadCurSeason(L).finally(() => {
+    const body = $('#detailBody'), d = $('#detailDialog');
+    if (d && d.open && teamCardOpen === tid && body && body.querySelector && body.querySelector('[data-tc-wait]')) showTeamCard(tid, true);
+  });
 }
 // the card's title: the team's name, (you) on your own, then its record, standing, points for and this week's opponent
 // (as an NBA team's card)
@@ -296,55 +303,107 @@ function teamCardTitle(tid) {
   return `<span class="dt-name">${esc(fxTeamName(tid))}${tid === state.fxTeam ? ' <span class="muted small">(you)</span>' : ''}</span><span class="dt-bio">${bio}</span>`;
 }
 
+// Its best players, as tiles: photo, name, positions and team, and what he's worth (his value over the season, seasonTotal:
+// a game or two can't top him; football: this week's projection). The rest are on the Players tab.
+const TC_TOP = 4;
+function teamTopHtml(tid) {
+  const side = fxTeamSide(tid), football = isFootball(), week = matchDates(weekStartAt(0));
+  const tot = new Map(side.players.map(p => [p.id, seasonTotal(nbaById.get(p.nbaId))]));
+  const order = p => (football ? (gamesIn(p, week) ? footballPts(p, week) : -1) : tot.get(p.id).gp ? tot.get(p.id).v : -1e9);
+  const top = sortDesc(side.players, order).slice(0, TC_TOP);
+  if (!top.length) return '';
+  const worth = p => (football ? (gamesIn(p, week) ? `<b>${fmt(footballPts(p, week), 1)}</b> proj` : '<span class="muted">Bye</span>')
+    : tot.get(p.id).gp ? `<b>${fmtTotal(tot.get(p.id).v)}</b> ${totalLabel()} · ${tot.get(p.id).gp} GP` : '<span class="muted">No games yet</span>');
+  const tile = p => `<div class="tc-star">${headshot(p, 40)}<div class="bmain">
+      <div class="bname">${p.nbaId ? playerBtn(p.nbaId, p.name) : `<span class="pname">${esc(p.name)}</span>`}${injBadge(p.inj)}</div>
+      <div class="pmeta">${[posTags(p.pos), p.team && teamBtn(p.team)].filter(Boolean).join(' · ')}</div>
+      <div class="tc-worth"${football ? '' : ` title="${esc(seasonTotalTip())}"`}>${worth(p)}</div></div></div>`;
+  return `<div><h3 class="sub" style="margin-top:0">${football ? 'Top projected this week' : 'Best players'} <span class="muted small">of ${side.players.length}</span></h3>
+    <div class="tc-stars">${top.map(tile).join('')}</div></div>`;
+}
+
+// Its season so far, week by week: each finished regular-season week's result against its opponent (categories, or points)
+// from the starters' box scores, then how it did against every team (the all-play record, as Best manager on Awards) and its
+// luck, its record against that. Fantrax and Sleeper only: their weekly lineups say who started (hasLineupHistory).
+const halves = n => fmt(n, 1).replace(/\.0$/, '');
+function teamWeeksHtml(tid) {
+  const L = fxLeague();
+  if (!hasLineupHistory(L) || isRoto()) return '';
+  const head = `<h3 class="sub" style="margin-top:0">Season so far ${infoBtn('awManager')}</h3>`;
+  const C = curAwards[L.id];
+  if (!C || C.loading) { teamCardWait(L, tid); return `<div data-tc-wait>${head}<p class="muted small" style="margin:0">Loading this season’s lineups and games…</p></div>`; }
+  const L2 = curSeasonLeague(L);
+  if (!L2) return '';
+  const each = !isPoints() && (matchupScoring() === 'each' || !mostCatsWins(L.scoring));
+  const A = viewingLeague(L2, state.fxTeam, () => allPlayRecords(L2, gameLogs.cur, each));
+  const mine = A && A[tid];
+  if (!mine || !mine.list.length) return '';
+  const pts = isPoints(), list = [...mine.list].sort((x, y) => x.n - y.n);
+  const res = x => (x.wa > x.wb ? 'W' : x.wa < x.wb ? 'L' : 'T');
+  const score = x => (pts ? `${fmtFp(x.theirs + x.margin)}-${fmtFp(x.theirs)}` : `${halves(x.wa)}-${halves(x.wb)}`);
+  const chip = x => `<span class="tc-wk ${{ W: 'won', L: 'lost', T: 'tied' }[res(x)]}" title="${esc(`Week ${x.n} vs ${fxTeamName(x.opp)}: ${score(x)}. Against everyone: beat ${halves(x.beat)} of ${x.of}`)}"><span class="tc-wk-n">${x.n}</span><b>${res(x)}</b><span class="tc-wk-s">${score(x)}</span></span>`;
+  // the streak it's on (two or more), from the latest week back
+  const last = res(list[list.length - 1]);
+  let k = list.length - 1;
+  while (k > 0 && res(list[k - 1]) === last) k--;
+  const run = list.length - k;
+  const streak = run >= 2 && last !== 'T' ? ` · ${last === 'W' ? 'won' : 'lost'} ${run} in a row` : '';
+  // against everyone: teams beaten of teams faced, and its luck: wins over the all-play's expected (Best manager's)
+  const beat = sum(list.map(x => x.beat)), faced = sum(list.map(x => x.of));
+  const r = slpEstimated(L) ? { w: list.filter(x => x.res === 1).length, t: list.filter(x => x.res === 0.5).length } : standingOf(tid);
+  const luck = r ? r.w + (r.t || 0) / 2 - mine.exp : null, unit = each ? 'categories' : 'wins';
+  const luckTxt = luck == null ? '' : Math.abs(luck) < 0.5 ? ' · its record about what its play deserves'
+    : ` · <b class="${luck > 0 ? 'pos-good' : 'pos-bad'}">${signed(luck, 1)}</b> ${unit} over its all-play: ${luck > 0 ? 'lucky' : 'unlucky'}`;
+  return `<div>${head}
+    <div class="tc-weeks">${list.map(chip).join('')}</div>
+    <p class="muted small tc-allplay">Against every team each week: <b>${halves(beat)}-${halves(faced - beat)}</b> (${Math.round(mine.pct * 100)}%)${luckTxt}${streak}</p></div>`;
+}
+
+// How it was built: its players by how they got there (cardHow, the player card's line: keepers, the draft, pickups, trades),
+// then the pickup and the draft pick that have done the most for it this season (Awards' counting: a pickup's starts, a pick's
+// games until he was dropped; players since gone too)
+function teamBuildHtml(tid) {
+  const L = fxLeague(), C = hasLineupHistory(L) ? curAwards[L.id] : null;
+  const head = '<h3 class="sub" style="margin-top:0">How it was built</h3>';
+  if (hasLineupHistory(L) && (!C || C.loading)) { teamCardWait(L, tid); return `<div data-tc-wait>${head}<p class="muted small" style="margin:0">Loading this season’s lineups…</p></div>`; }
+  const groups = { keep: [], draft: [], pickup: [], trade: [] };
+  for (const x of (L.rosters || {})[tid] || []) {
+    const raw = x.nba && nbaById.get(x.nba);
+    if (!raw) continue;
+    const out = {}, how = cardHow(L, raw, tid, x.fid, out);
+    const g = /^Keeper/.test(how) ? 'keep' : /^(Drafted|On the team since)/.test(how) ? 'draft' : /^Traded/.test(how) ? 'trade' : /^(Pickup|Added after)/.test(how) ? 'pickup' : null;
+    if (g) groups[g].push({ raw, from: out.from });
+  }
+  const name = ({ raw }) => playerBtn(raw.id, raw.name, esc(nameShown(raw.name, raw.id, 'last')));
+  const rows = [['keep', 'Kept'], ['draft', 'Drafted'], ['pickup', 'Picked up'], ['trade', 'Traded for']].filter(([g]) => groups[g].length)
+    .map(([g, label]) => `<div class="tc-how"><span class="tc-how-k">${label} <b>${groups[g].length}</b></span><span class="tc-how-v">${groups[g].map((x, i, all) => {
+      const c = i < all.length - 1 ? ',' : ''; // (kept with the name before it: a comma never starts a line)
+      return g === 'trade' && x.from ? `${name(x)} <span class="muted small">from <span class="tc-nw">${teamLink(x.from)}${c}</span></span>` : `<span class="tc-nw">${name(x)}${c}</span>`;
+    }).join(' ')}</span></div>`);
+  if (!rows.length) return '';
+  const L2 = C && curSeasonLeague(L), best = [];
+  if (L2) {
+    viewingLeague(L2, state.fxTeam, () => {
+      const top = list => (list && list.length ? list.reduce((a, b) => (b.v > a.v ? b : a)) : null);
+      const d = draftData(), pk = top((pickupImpact(L2, gameLogs.cur) || {})[tid]);
+      const dr = top(d && d.graded ? (draftImpact(L2, gameLogs.cur, d.picks) || {})[tid] : null);
+      if (pk && pk.v > 0 && pk.nba) best.push(`Best pickup: ${playerBtn(pk.nba, pk.name)} <b>${fmtAmount(pk.v)}</b> in his starts`);
+      if (dr && dr.v > 0 && dr.nba) best.push(`Best pick: ${playerBtn(dr.nba, dr.name)} <span class="muted">round ${dr.round}</span> <b>${fmtAmount(dr.v)}</b>`);
+    });
+  }
+  return `<div>${head}${rows.join('')}${best.length ? `<p class="small tc-best">${best.join('<span class="tc-sep"> · </span>')}</p>` : ''}</div>`;
+}
+
 function teamCardHtml(tid) {
   const L = fxLeague();
   if (!L || !fxPickable().some(t => t.id === tid)) return '';
-  const side = fxTeamSide(tid), me = tid === state.fxTeam;
-  const football = isFootball(), week = matchDates(weekStartAt(0));
-  // each player's worth: football's projection this week, else his value over the whole season (seasonTotal: a game or
-  // two can't top the list), with its games
-  const tot = new Map(side.players.map(p => [p.id, seasonTotal(nbaById.get(p.nbaId))]));
-  const worth = p => (football ? (gamesIn(p, week) ? `${fmt(footballPts(p, week), 1)}` : '<span class="muted">Bye</span>') : tot.get(p.id).gp ? fmtTotal(tot.get(p.id).v) : '—');
-  const unit = football ? 'Proj' : totalLabel();
-  // each player's season a game, as the Players tab's Per game shows it (the stats chosen under Stats used): games, minutes,
-  // then the league's categories (a points league: every stat it scores, a shooting pair as one "11.9/25.6 FG": lineCats);
-  // football shows its projection alone
-  const cols = football ? [] : lineCats().filter(c => !c.fp);
-  const cell = (p, c) => {
-    if (!p.gp) return '<td class="sc muted">—</td>';
-    if (c.shot) return `<td class="sc" title="${c.label}: ${signed(fantasyPoints(p, shotPoints(c)), 1)} FP a game">${shotVol(statVal(p, c.made), statVal(p, c.att))}</td>`;
-    if (!c.pct) return `<td class="sc">${fmt(statVal(p, c.key), c.dec || 1)}</td>`;
-    const m = statVal(p, c.made), a = statVal(p, c.att);
-    return `<td class="sc"${c.rate ? '' : ` title="${c.label}: ${fmt(m, 1)}/${fmt(a, 1)} a game"`}>${!a ? '—' : c.rate ? fmt(m / a, 2) : fmtPct(m / a)}</td>`;
-  };
-  // the player: photo, name, then his positions in their lineup-spot colors and his NBA team; an injury is its letter (O, D...:
-  // injBadge, the note on hover and his card; the owner's ask, Nov 27, 2026), beside the name if it fits (fitNameBadges)
-  const who = p => {
-    const raw = nbaById.get(p.nbaId) || {};
-    return `<td class="pf-name"><div class="bplayer">${headshot(p, 34)}<div class="bmain">
-      <div class="bname">${p.nbaId ? playerBtn(p.nbaId, p.name) : `<span class="pname">${esc(p.name)}</span>`}${rookieBadge(raw, 'by-name')}${injBadge(p.inj, 'by-name')}</div>
-      <div class="pmeta">${rookieBadge(raw, 'in-meta')}${injBadge(p.inj, 'in-meta')}${[posTags(p.pos), p.team && teamBtn(p.team)].filter(Boolean).join(' · ')}</div></div></div></td>`;
-  };
-  // every player in one list, best first by what the last column shows (football: this week's projection, a bye last),
-  // or by the column whose heading was clicked (ui.teamSort; a player with nothing in that column always last);
-  // injured reserve greyed where it falls (the owner's ask: no starters / bench split)
-  const il = new Set(side.il);
-  const order = p => (football ? (gamesIn(p, week) ? footballPts(p, week) : -1) : tot.get(p.id).gp ? tot.get(p.id).v : -1e9);
-  const row = p => `<tr${il.has(p.id) ? ' class="muted-row"' : ''}>${who(p)}${football ? '' : `<td class="sc">${tot.get(p.id).gp || '—'}</td><td class="sc">${p.gp ? fmt(p.min, 1) : '—'}</td>`}${cols.map(c => cell(p, c)).join('')}<td class="num pf-v">${worth(p)}</td></tr>`;
-  const so = ui.teamSort;
-  const pctOf = (p, c) => { const a = statVal(p, c.att); return a ? statVal(p, c.made) / a : null; };
-  const sortVal = p => (so.key === 'v' ? ((football ? gamesIn(p, week) : tot.get(p.id).gp) ? order(p) : null) : so.key === 'name' ? p.name.toLowerCase() : so.key === 'gp' ? tot.get(p.id).gp || null
-    : !p.gp || (so.key !== 'min' && !cols[so.key]) ? null : so.key === 'min' ? p.min : cols[so.key].shot ? fantasyPoints(p, shotPoints(cols[so.key])) : cols[so.key].pct ? pctOf(p, cols[so.key]) : statVal(p, cols[so.key].key));
-  const rows = sortRows(sortDesc(side.players, order), sortVal, so.dir).map(row).join(''); // (ties stay best first)
-  const th = (key, label, cls, tip, attrs) => sortTh('team-sort', key, label, so, { cls, tip, attrs, down: so.dir < 0 });
-  const cats = football ? '' : `${isRoto() ? rotoCardStanding(tid) : ''}${teamStrengths(tid)}`;
+  const me = tid === state.fxTeam;
+  // the whole roster on the Players tab first, then Plan Ahead side by side (the owner's ask, Nov 27, 2026: the link near the top)
+  const compare = !me && state.fxTeam && !isRoto() ? `<button type="button" class="btn sm" data-action="team-compare" data-team="${esc(tid)}">Compare on Plan Ahead</button>` : '';
+  const links = `<div class="tc-links"><button type="button" class="link-btn" data-action="fantasy-team-players" data-team="${esc(tid)}">See ${me ? 'your team' : esc(fxTeamName(tid))} on the Players tab</button>${compare}</div>`;
+  const cats = isFootball() ? '' : `${isRoto() ? rotoCardStanding(tid) : ''}${teamStrengths(tid)}`;
   // (each part 16 px below the one before: .tc-body)
-  return `<div class="tc-body">
-    ${!me && state.fxTeam && !isRoto() ? `<div><button type="button" class="btn sm" data-action="team-compare" data-team="${esc(tid)}">Compare on Plan Ahead</button></div>` : ''}
-    ${cats}
-    <div class="perf-wrap"><table class="perf-table tc-roster"><thead><tr>${th('name', 'Player', 'pf-name')}${football ? '' : th('gp', 'GP', 'sc', 'Games played') + th('min', 'MIN', 'sc', 'Minutes a game')}${cols.map((c, i) => th(i, c.label, 'sc')).join('')}${th('v', unit, 'num pf-v', '', football ? '' : ` data-tip="${esc(seasonTotalTip())}"`)}</tr></thead>
-      <tbody>${rows}</tbody></table></div>
-    <p style="margin:0"><button type="button" class="link-btn quiet" data-action="fantasy-team-players" data-team="${esc(tid)}">See ${me ? 'your team' : esc(fxTeamName(tid))} on the Players tab</button></p></div>`;
+  return `<div class="tc-body">${links}${teamTopHtml(tid)}${teamWeeksHtml(tid)}${cats}${teamBuildHtml(tid)}</div>`;
 }
 
 // ----- Season totals: what each team's starters actually produced -----

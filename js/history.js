@@ -943,21 +943,35 @@ function seasonAwards() {
 // The season underway: the same awards, from this season's weekly lineups and box scores so far
 const curAwards = {}; // league id -> { weeks, fidNba } once loaded
 keep('box league', id => dropKept(curAwards, id));
+// this season's weekly lineups and box scores, loaded once per league: Awards so far and a fantasy team's card (its weeks)
+function loadCurSeason(L) {
+  const C = curAwards[L.id];
+  if (C) return C.loading ? C.p : Promise.resolve(C);
+  const p = Promise.all([loadRosterWeeks(L).catch(() => null), loadGameLog('cur')])
+    .then(([weeks]) => (curAwards[L.id] = { weeks, fidNba: currentFidNba() }), () => (curAwards[L.id] = { weeks: null }));
+  curAwards[L.id] = { loading: true, p };
+  return p;
+}
+// that league with this season's weeks on it, for the awards' counting (null until they're in)
+function curSeasonLeague(L) {
+  const C = curAwards[L.id];
+  return C && C.weeks && gameLogs.cur ? { ...L, weeks: C.weeks, season: 'cur', fidNba: C.fidNba } : null;
+}
 function viewAwardsSoFar() {
   const L = fxLeague();
   if (!L || !NBA) return '';
   if (!hasLineupHistory(L)) return `<div class="card"><div class="empty"><strong>No awards for ${esc(sourceName(L))} leagues yet</strong>Awards come from every day's lineups, which the site reads from Fantrax and Sleeper only for now.</div></div>`;
   const C = curAwards[L.id];
-  if (!C) {
-    curAwards[L.id] = { loading: true };
-    Promise.all([loadRosterWeeks(L).catch(() => null), loadGameLog('cur')]).then(([weeks]) => {
-      curAwards[L.id] = { weeks, fidNba: currentFidNba() };
-    }).finally(() => { if (ui.tab === 'awards' && !ui.season) render(); });
+  if (!C || C.loading) {
+    if (!C || !C.tabWaits) { // (once: a team's card may have started the load)
+      loadCurSeason(L).finally(() => { if (ui.tab === 'awards' && !ui.season) render(); });
+      curAwards[L.id].tabWaits = true;
+    }
+    return loadingCard('Loading this season’s lineups and games…');
   }
-  if (!C || C.loading) return loadingCard('Loading this season’s lineups and games…');
-  if (!C.weeks || !gameLogs.cur) return '<div class="card"><div class="empty"><strong>No awards yet</strong>They start once the season’s first week of lineups and games is in.</div></div>';
   // run the awards on a copy of the league that carries this season's weeks
-  const L2 = { ...L, weeks: C.weeks, season: 'cur', fidNba: C.fidNba };
+  const L2 = curSeasonLeague(L);
+  if (!L2) return '<div class="card"><div class="empty"><strong>No awards yet</strong>They start once the season’s first week of lineups and games is in.</div></div>';
   const done = C.weeks.filter(periodOver).length;
   return viewingLeague(L2, state.fxTeam, () => {
     const known = slpEstimated(L) ? C.weeks.filter(w => periodOver(w) && slpWeekPts(L2, w.n)).length : done;

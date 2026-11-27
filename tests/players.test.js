@@ -486,10 +486,8 @@ test("a points league's shooting pairs are one column on the Players tab, the te
     const perf = app.topPerformancesCard(), ph = head(perf, 'perf-table pl-table');
     assert.ok(together(ph), ph);
     assert.match(perf, /<td class="sc" title="FG: [+−]?\d+\.\d FP[^"]*">(<span[^>]*>[^<]*<\/span>)?\d+\/\d+<\/td>/, 'makes/attempts in one cell');
-    // a team's card: its roster and By category
-    const tc = app.teamCardHtml(t2), roster = head(tc, 'perf-table tc-roster');
-    assert.ok(together(roster), roster);
-    assert.match(tc, /<td class="sc" title="FG: [+−]?\d+\.\d FP a game">\d+\.\d\/\d+\.\d<\/td>/);
+    // a team's card: By category
+    const tc = app.teamCardHtml(t2);
     const cs = (tc.match(/<table class="cs-table">[\s\S]*?<\/table>/) || [''])[0];
     assert.ok(cs.includes('<b>FG</b>') && cs.includes('<b>FT</b>') && !/<b>(FGM|FGA|FTM|FTA)<\/b>/.test(cs), 'By category: one FG row');
     assert.match(cs, /<td class="num"><b>\d+\.\d\/\d+\.\d<\/b><span class="cs-avg">avg \d+\.\d\/\d+\.\d<\/span>/);

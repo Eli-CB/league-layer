@@ -634,39 +634,96 @@ function teamRecord(tri) {
   return isHockey() || o ? `${w}-${l}-${o}` : `${w}-${l}`;
 }
 // ----- A team's card (NBA, NHL or NFL): a team's code anywhere opens it, in the player card's popup -----
-// Its next game and how many it plays this period and next, then its players by their value over the season (seasonTotal:
-// a game or two can't top the list), with whose each is in the league and any injury; a name opens his card. The whole
-// team on the Players tab from its foot.
-function showSportTeamCard(tri) {
-  if (!NBA || !tri) return;
-  const t = teamInfo(tri), { owner } = rosterOwners();
-  const whose = p => ownerTag(owner, p.nbaId);
-  const tot = new Map(nbaPlayers().filter(p => p.team === tri).map(p => [p, seasonTotal(nbaById.get(p.nbaId))]));
-  const list = sortDesc([...tot.keys()], p => (tot.get(p).gp ? tot.get(p).v : -1e9 + (p.inj ? 0 : 1)));
+// Its next game and how many it plays this period and next, then the periods after (its games against the average team's),
+// who's out and who's done more without him, and its best players nobody in the league has. Its whole roster is the
+// Players tab's, from the link at the top (the owner's ask, Nov 27, 2026: a players table here said what that tab says better).
+const SCHED_AHEAD = 5; // periods shown after this one
+const TC_FREE = 3; // free agents shown
+// its games in each of the next few matchup periods, beside the average team's, with its back-to-backs (not football's: a game a week)
+function sportScheduleHtml(tri) {
+  const ds = teamDates.get(tri);
+  if (isFootball() || !ds || !ds.size) return '';
+  const L = fxLeague(), all = [...teamDates.values()];
+  const cells = weekShifts().filter(x => x > 0).slice(0, SCHED_AHEAD).map(sh => {
+    const start = weekStartAt(sh), dates = matchDates(start), p = L && L.periods ? fxPeriodFor(start) : null;
+    if (!dates.length) return '';
+    const n = dates.filter(d => ds.has(d)).length, avg = sum(all.map(t => dates.filter(d => t.has(d)).length)) / all.length;
+    const b2b = dates.filter(d => ds.has(d) && ds.has(addDays(d, -1))).length;
+    const po = !!(p && L.playoffPeriod && p.n >= L.playoffPeriod);
+    const tone = n - avg >= 0.75 ? ' more' : avg - n >= 0.75 ? ' fewer' : '';
+    const span = `${fmtMonthDay(dates[0])} – ${fmtMonthDay(dates[dates.length - 1])}`;
+    const tip = `${p ? `Period ${p.n}${po ? ' (playoffs)' : ''}, ` : ''}${span}: ${n} game${n === 1 ? '' : 's'}, the average team ${fmt(avg, 1)}${b2b ? `; ${b2b} on the second night of a back-to-back` : ''}`;
+    return `<div class="tc-per${tone}${po ? ' po' : ''}" title="${esc(tip)}"><span class="k">${p ? `${po ? 'Playoffs ' : 'Period '}${p.n}` : fmtMonthDay(dates[0])}</span><b>${n}</b><span class="tc-per-s">avg ${fmt(avg, 1)}${b2b ? ` · ${b2b} B2B` : ''}</span></div>`;
+  }).filter(Boolean);
+  return cells.length ? `<div><h3 class="sub">Games ahead <span class="muted small">by period, against the average team</span></h3><div class="tc-pers">${cells.join('')}</div></div>` : '';
+}
+// Who's on the injury report, worst first, and for a regular, the teammates who've done more in the games he missed: each
+// one's average game (VAL, or fantasy points) and minutes without him against with him, from the box scores (3+ games each)
+function sportOutHtml(tri) {
+  const team = nbaPlayers().filter(p => p.team === tri);
+  const hurt = sortDesc(team.filter(p => p.inj), p => (p.inj.status === 'Out' ? 1e6 : 0) + seasonTotal(nbaById.get(p.nbaId)).v).slice(0, 6);
+  const head = `<h3 class="sub">Who's out</h3>`;
+  if (!hurt.length) return `<div>${head}<p class="muted small" style="margin:0">No one on the injury report.</p></div>`;
+  const played = id => ((BOX && BOX.byPlayer.get(id)) || []).filter(g => g[3] === tri && (g[1].min || 0) > 0);
+  const dates = BOX ? [...BOX.finals].filter(x => x.slice(11) === tri).map(x => x.slice(0, 10)) : [];
+  const per = v => (isPoints() ? `${signed(v, 1)} FP` : `${signed(v, 2)} VAL`);
+  const splits = H => {
+    const mine = played(H.nbaId), on = new Set(mine.map(g => g[0]));
+    const missed = dates.filter(d => !on.has(d)).length;
+    const regular = mine.length && median(mine.map(g => g[1].min || 0)) >= (isHockey() ? 15 : 20);
+    if (isFootball() || isGoalie(H) || !regular || missed < 3) return { missed, gains: [] };
+    const gains = team.filter(T => T !== H && !isGoalie(T)).map(T => {
+      const g = played(T.nbaId), off = g.filter(x => !on.has(x[0])), with_ = g.filter(x => on.has(x[0]));
+      if (off.length < 3 || with_.length < 3) return null;
+      const v = xs => mean(xs.map(x => lineValue(x[1]))), m = xs => mean(xs.map(x => x[1].min || 0));
+      return { T, gain: v(off) - v(with_), minWith: m(with_), minOff: m(off), n: off.length };
+    }).filter(x => x && x.gain > 0);
+    return { missed, gains: sortDesc(gains, x => x.gain).slice(0, 2) };
+  };
+  const row = H => {
+    const { missed, gains } = splits(H);
+    const why = [H.inj.label || H.inj.status, dates.length && missed ? `missed ${missed} of ${dates.length}` : ''].filter(Boolean).map(esc).join(' · ');
+    const without = gains.map(x => `${playerBtn(x.T.nbaId, x.T.name, esc(nameShown(x.T.name, x.T.nbaId, 'last')))} <b class="pos-good">${per(x.gain)}</b> <span class="muted">a game, ${Math.round(x.minWith)} → ${Math.round(x.minOff)} min</span>`);
+    return `<div class="tc-out"><div class="bplayer">${headshot(H, 28)}<div class="bmain"><div class="bname">${playerBtn(H.nbaId, H.name)}${injBadge(H.inj)}</div>
+      <div class="pmeta">${posTags(H.pos)} · ${why}</div>${without.length ? `<div class="tc-without small">Without him: ${without.join('<span class="tc-sep"> · </span>')}</div>` : ''}</div></div></div>`;
+  };
+  return `<div>${head}${hurt.map(row).join('')}</div>`;
+}
+// Its best players on no fantasy team in the league (by value over the season), and how many of its players are rostered
+function sportFreeHtml(tri) {
+  const L = fxLeague();
+  if (!L || !L.rosters) return '';
+  const { owner } = rosterOwners(), team = nbaPlayers().filter(p => p.team === tri);
+  const tot = new Map(team.map(p => [p, seasonTotal(nbaById.get(p.nbaId))]));
+  const free = sortDesc(team.filter(p => !owner.has(p.nbaId) && tot.get(p).gp), p => tot.get(p).v).slice(0, TC_FREE);
+  const head = `<h3 class="sub">Free agents <span class="muted small">${team.filter(p => owner.has(p.nbaId)).length} of ${team.length} on fantasy teams</span></h3>`;
+  if (!free.length) return `<div>${head}<p class="muted small" style="margin:0">Everyone of theirs who has played is on a fantasy team.</p></div>`;
+  const rows = free.map(p => {
+    const raw = nbaById.get(p.nbaId), { gp, v } = tot.get(p);
+    return `<tr><td><div class="bplayer">${headshot(p, 28)}<div class="bmain"><div class="bname">${playerBtn(p.nbaId, p.name)}${raw ? injBadge(raw.inj) : ''}</div>
+        <div class="pmeta">${posTags(p.pos)} · ${faBadge(raw) || 'Free agent'}</div></div></div></td>
+      <td class="num muted">${gp}</td><td class="num"><b class="${v < 0 && !isPoints() ? 'pos-bad' : ''}">${fmtTotal(v)}</b></td></tr>`;
+  }).join('');
+  return `<div>${head}<div class="table-wrap"><table class="tc-table tc-free"><thead><tr><th>Player</th><th class="num">GP</th><th class="num" data-tip="${esc(seasonTotalTip())}">${totalLabel()}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+function sportTeamBody(tri) {
+  const t = teamInfo(tri);
   const next = weekShifts().filter(x => x > 0)[0], nextDates = next ? matchDates(weekStartAt(next)) : [];
   const nextN = t && nextDates.length ? nextDates.filter(d => (t.dates || []).includes(d)).length : null;
-  const tiles = `<div class="proj-grid tc-tiles">
+  // (Games next period only when Games ahead doesn't show it, the first of its periods)
+  const ahead = sportScheduleHtml(tri), three = !isFootball() && !ahead;
+  const tiles = `<div class="proj-grid tc-tiles${three ? '' : ' two'}">
       <div class="proj"><div class="k">Next game</div><div class="v">${t && t.next ? linkTeams(nextGame(t.next)) : '—'}</div></div>
       <div class="proj"><div class="k">Games left this week</div><div class="v">${t ? t.left : '—'}</div></div>
-      ${isFootball() ? '' : `<div class="proj"><div class="k">Games next period</div><div class="v">${nextN == null ? '—' : nextN}</div></div>`}
+      ${three ? `<div class="proj"><div class="k">Games next period</div><div class="v">${nextN == null ? '—' : nextN}</div></div>` : ''}
     </div>`;
-  const VAL = totalLabel();
-  const rows = list.map((p, i) => {
-    const raw = nbaById.get(p.nbaId), { gp, v } = tot.get(p);
-    return `<tr><td class="num muted">${i + 1}</td>
-      <td><div class="bplayer">${headshot(p, 28)}<div class="bmain"><div class="bname">${playerBtn(p.nbaId, p.name)}${raw ? injBadge(raw.inj) : ''}</div>
-        <div class="pmeta">${posTags(p.pos)}<span class="show-sm"> · ${whose(p) || 'no team'}</span></div></div></div></td>
-      <td class="hide-sm">${whose(p)}</td>
-      <td class="num hide-sm">${gp || '—'}</td>
-      <td class="num"><b class="${gp && v < 0 && !isPoints() ? 'pos-bad' : ''}">${gp ? fmtTotal(v) : '—'}</b></td></tr>`;
-  }).join('');
-  $('#detailBody').innerHTML = `${tiles}
-    <h3 class="sub" style="margin-top:16px">Players <span class="muted small">${list.length}</span></h3>
-    <div class="table-wrap"><table class="tc-table">
-      <thead><tr><th></th><th>Player</th><th class="hide-sm">Fantasy team</th><th class="num hide-sm">GP</th><th class="num" data-tip="${esc(seasonTotalTip())}">${VAL}</th></tr></thead>
-      <tbody>${rows || `<tr><td colspan="5" class="muted small">No players on ${esc(tri)} in the data.</td></tr>`}</tbody>
-    </table></div>
-    <p style="margin:14px 0 0"><button type="button" class="link-btn quiet" data-action="team-players" data-team="${esc(tri)}">See ${esc(tri)} on the Players tab</button></p>`;
+  // (the whole team on the Players tab first: the owner's ask, Nov 27, 2026, the link near the top; each part 16 px apart: .tc-body)
+  return `<div class="tc-body"><div class="tc-links"><button type="button" class="link-btn" data-action="team-players" data-team="${esc(tri)}">See ${esc(tri)} on the Players tab</button></div>
+    ${tiles}${ahead}${sportOutHtml(tri)}${sportFreeHtml(tri)}</div>`;
+}
+function showSportTeamCard(tri) {
+  if (!NBA || !tri) return;
+  $('#detailBody').innerHTML = sportTeamBody(tri);
   // the title: its name, then its record (filled in once the box scores are in, if they weren't yet; no code: the name says it)
   const name = (SPORT.teamNames || {})[tri] || tri;
   const recTip = isHockey() ? 'Wins-losses-overtime losses' : isFootball() ? 'Wins-losses(-ties)' : 'Wins-losses';
@@ -683,7 +740,7 @@ function showSportTeamCard(tri) {
   sportCardOpen = tri;
   const d = $('#detailDialog');
   if (!d.open) d.showModal();
-  if (!BOX) loadBoxes().then(() => { if (d.open && sportCardOpen === tri) $('#detailTitle').innerHTML = title(); }).catch(() => {});
+  if (!BOX) loadBoxes().then(() => { if (d.open && sportCardOpen === tri) { $('#detailTitle').innerHTML = title(); $('#detailBody').innerHTML = sportTeamBody(tri); } }).catch(() => {});
 }
 
 function showPlayerDetail(nbaId) {
