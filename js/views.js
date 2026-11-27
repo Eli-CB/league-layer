@@ -352,16 +352,26 @@ function teamWeeksHtml(tid) {
   const beat = sum(list.map(x => x.beat)), faced = sum(list.map(x => x.of));
   const r = slpEstimated(L) ? { w: list.filter(x => x.res === 1).length, t: list.filter(x => x.res === 0.5).length } : standingOf(tid);
   const luck = r ? r.w + (r.t || 0) / 2 - mine.exp : null, unit = each ? 'categories' : 'wins';
-  const luckTxt = luck == null ? '' : Math.abs(luck) < 0.5 ? ' · its record about what its play deserves'
-    : ` · <b class="${luck > 0 ? 'pos-good' : 'pos-bad'}">${signed(luck, 1)}</b> ${unit} over its all-play: ${luck > 0 ? 'lucky' : 'unlucky'}`;
+  // (only a lucky or unlucky one: the owner's ask, Nov 27, 2026)
+  const luckTxt = luck == null || Math.abs(luck) < 0.5 ? '' : ` · <b class="${luck > 0 ? 'pos-good' : 'pos-bad'}">${signed(luck, 1)}</b> ${unit} over its all-play: ${luck > 0 ? 'lucky' : 'unlucky'}`;
   return `<div>${head}
     <div class="tc-weeks">${list.map(chip).join('')}</div>
     <p class="muted small tc-allplay">Against every team each week: <b>${halves(beat)}-${halves(faced - beat)}</b> (${Math.round(mine.pct * 100)}%)${luckTxt}${streak}</p></div>`;
 }
 
 // How it was built: its players by how they got there (cardHow, the player card's line: keepers, the draft, pickups, trades),
-// then the pickup and the draft pick that have done the most for it this season (Awards' counting: a pickup's starts, a pick's
-// games until he was dropped; players since gone too)
+// a row a way in: the player card's badge (HOW_BADGE) and how many, their photos overlapped, best first, then their names (the
+// owner's ask, Nov 27, 2026); then the pickup and the draft pick that have done the most for it this season (Awards' counting:
+// a pickup's starts, a pick's games until he was dropped; players since gone too)
+const TC_HOW = [['keep', 'Keeper'], ['draft', 'Drafted'], ['pickup', 'Pickup'], ['trade', 'Trade']];
+const TC_FACES = 6; // photos a row, then "+2"
+// a row (the landing page's preview draws its own with it): g its group, faces each player's photo (HTML), names theirs, as drawn
+function tcHowRow(g, faces, names) {
+  const label = TC_HOW.find(x => x[0] === g)[1], tone = HOW_BADGE.find(b => b[1] === label)[2];
+  const more = faces.length > TC_FACES ? `<span class="tc-more">+${faces.length - TC_FACES}</span>` : '';
+  return `<div class="tc-how"><span class="tc-how-k"><span class="badge ${tone}">${label}</span> <b>${faces.length}</b></span>`
+    + `<span class="tc-faces">${faces.slice(0, TC_FACES).join('')}${more}</span><span class="tc-how-v">${names}</span></div>`;
+}
 function teamBuildHtml(tid) {
   const L = fxLeague(), C = hasLineupHistory(L) ? curAwards[L.id] : null;
   const head = '<h3 class="sub" style="margin-top:0">How it was built</h3>';
@@ -374,12 +384,16 @@ function teamBuildHtml(tid) {
     const g = /^Keeper/.test(how) ? 'keep' : /^(Drafted|On the team since)/.test(how) ? 'draft' : /^Traded/.test(how) ? 'trade' : /^(Pickup|Added after)/.test(how) ? 'pickup' : null;
     if (g) groups[g].push({ raw, from: out.from });
   }
+  const worth = x => { const t = seasonTotal(x.raw); return t.gp ? t.v : -1e9; };
   const name = ({ raw }) => playerBtn(raw.id, raw.name, esc(nameShown(raw.name, raw.id, 'last')));
-  const rows = [['keep', 'Kept'], ['draft', 'Drafted'], ['pickup', 'Picked up'], ['trade', 'Traded for']].filter(([g]) => groups[g].length)
-    .map(([g, label]) => `<div class="tc-how"><span class="tc-how-k">${label} <b>${groups[g].length}</b></span><span class="tc-how-v">${groups[g].map((x, i, all) => {
-      const c = i < all.length - 1 ? ',' : ''; // (kept with the name before it: a comma never starts a line)
+  const rows = TC_HOW.filter(([g]) => groups[g].length).map(([g]) => {
+    const list = sortDesc(groups[g], worth);
+    const names = list.map((x, i) => {
+      const c = i < list.length - 1 ? ',' : ''; // (kept with the name before it: a comma never starts a line)
       return g === 'trade' && x.from ? `${name(x)} <span class="muted small">from <span class="tc-nw">${teamLink(x.from)}${c}</span></span>` : `<span class="tc-nw">${name(x)}${c}</span>`;
-    }).join(' ')}</span></div>`);
+    }).join(' ');
+    return tcHowRow(g, list.map(x => headshot({ nbaId: x.raw.id, name: x.raw.name }, 28)), names);
+  });
   if (!rows.length) return '';
   const L2 = C && curSeasonLeague(L), best = [];
   if (L2) {

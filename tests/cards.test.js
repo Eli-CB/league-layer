@@ -252,8 +252,9 @@ test("a team's code opens its card in the popup: the Players tab link first, its
     const link = html.indexOf(`data-action="team-players" data-team="${tri}"`);
     assert.ok(link > -1 && link < html.indexOf('Next game'), 'the whole team on the Players tab, from the top');
     assert.doesNotMatch(html, /<h3 class="sub"[^>]*>Players/, 'no players table: the Players tab has it');
-    // games ahead: each next period's games, the average team's beside them
-    const pers = [...html.matchAll(/<div class="tc-per[^"]*" title="[^"]*"><span class="k">[^<]+<\/span><b>(\d+)<\/b><span class="tc-per-s">avg (\d+\.\d)/g)];
+    // games ahead: each next period's games (the average team's on hover alone: the owner's ask)
+    assert.doesNotMatch(html, /against the average team|tc-per-s">avg/);
+    const pers = [...html.matchAll(/<div class="tc-per[^"]*" title="[^"]*the average team \d+\.\d[^"]*"><span class="k">[^<]+<\/span><b>(\d+)<\/b>/g)];
     assert.ok(pers.length >= 1 && pers.length <= 5, `${pers.length} periods`);
     const next = app.weekShifts().filter(x => x > 0)[0], dates = app.matchDates(app.weekStartAt(next));
     assert.equal(+pers[0][1], dates.filter(d => app.teamDates.get(tri).has(d)).length, "next period's games");
@@ -314,12 +315,21 @@ test("a fantasy team's card: its season week by week against everyone, then how 
   if (list.length) assert.match(html, /Against every team each week: <b>[\d.]+-[\d.]+<\/b> \(\d+%\)/);
   // how it was built: every player in one of the groups, as his own card says it
   const how = html.split('How it was built')[1] || '';
-  const named = [...how.matchAll(/class="tc-how-k">[^<]+<b>(\d+)<\/b>/g)].reduce((t, m) => t + +m[1], 0);
+  // (a row each: the player card's badge and how many, a photo each, then the names)
+  const rows = how.split('<div class="tc-how">').slice(1);
+  let named = 0;
+  for (const r of rows) {
+    const n = +r.match(/class="tc-how-k"><span class="badge \w+">\w+<\/span> <b>(\d+)<\/b>/)[1];
+    const faces = (r.split('<span class="tc-faces">')[1].split('<span class="tc-how-v">')[0].match(/class="hs\b/g) || []).length;
+    assert.equal(faces, Math.min(n, app.TC_FACES), 'a photo each, up to the stack');
+    named += n;
+  }
   assert.ok(named > 0 && named <= L.rosters[tid].length, `${named} of ${L.rosters[tid].length}`);
   const x = L.rosters[tid].find(y => y.nba && app.nbaById.get(y.nba));
   const line = app.cardHow(L, app.nbaById.get(x.nba), tid, x.fid);
-  const group = /^Keeper/.test(line) ? 'Kept' : /^(Drafted|On the team since)/.test(line) ? 'Drafted' : /^Traded/.test(line) ? 'Traded for' : 'Picked up';
-  assert.ok(how.split(`>${group} <b>`)[1].split('</div></div>')[0].includes(`data-nba="${x.nba}"`) || how.split(`>${group} <b>`)[1].split('class="tc-how"')[0].includes(`data-nba="${x.nba}"`), `${line}: under ${group}`);
+  const group = /^Keeper/.test(line) ? 'Keeper' : /^(Drafted|On the team since)/.test(line) ? 'Drafted' : /^Traded/.test(line) ? 'Trade' : 'Pickup';
+  const row = rows.find(r => r.includes(`>${group}</span> <b>`));
+  assert.ok(row && row.split('<span class="tc-how-v">')[1].includes(`data-nba="${x.nba}"`), `${line}: under ${group}`);
 });
 
 test("a team's card has its record: its finals, then today's game once it's over (not a preseason one)", async () => {

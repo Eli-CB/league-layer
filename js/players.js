@@ -634,12 +634,13 @@ function teamRecord(tri) {
   return isHockey() || o ? `${w}-${l}-${o}` : `${w}-${l}`;
 }
 // ----- A team's card (NBA, NHL or NFL): a team's code anywhere opens it, in the player card's popup -----
-// Its next game and how many it plays this period and next, then the periods after (its games against the average team's),
+// Its next game and how many it plays this period and next, then the periods after (green more games than the average team, red fewer),
 // who's out and who's done more without him, and its best players nobody in the league has. Its whole roster is the
 // Players tab's, from the link at the top (the owner's ask, Nov 27, 2026: a players table here said what that tab says better).
 const SCHED_AHEAD = 5; // periods shown after this one
 const TC_FREE = 3; // free agents shown
-// its games in each of the next few matchup periods, beside the average team's, with its back-to-backs (not football's: a game a week)
+// its games in each of the next few matchup periods, green or red against the average team's (its number on hover: the owner's ask,
+// Nov 27, 2026, dropped from the tile), with its back-to-backs (not football's: a game a week)
 function sportScheduleHtml(tri) {
   const ds = teamDates.get(tri);
   if (isFootball() || !ds || !ds.size) return '';
@@ -653,9 +654,9 @@ function sportScheduleHtml(tri) {
     const tone = n - avg >= 0.75 ? ' more' : avg - n >= 0.75 ? ' fewer' : '';
     const span = `${fmtMonthDay(dates[0])} – ${fmtMonthDay(dates[dates.length - 1])}`;
     const tip = `${p ? `Period ${p.n}${po ? ' (playoffs)' : ''}, ` : ''}${span}: ${n} game${n === 1 ? '' : 's'}, the average team ${fmt(avg, 1)}${b2b ? `; ${b2b} on the second night of a back-to-back` : ''}`;
-    return `<div class="tc-per${tone}${po ? ' po' : ''}" title="${esc(tip)}"><span class="k">${p ? `${po ? 'Playoffs ' : 'Period '}${p.n}` : fmtMonthDay(dates[0])}</span><b>${n}</b><span class="tc-per-s">avg ${fmt(avg, 1)}${b2b ? ` · ${b2b} B2B` : ''}</span></div>`;
+    return `<div class="tc-per${tone}${po ? ' po' : ''}" title="${esc(tip)}"><span class="k">${p ? `${po ? 'Playoffs ' : 'Period '}${p.n}` : fmtMonthDay(dates[0])}</span><b>${n}</b>${b2b ? `<span class="tc-per-s">${b2b} B2B</span>` : ''}</div>`;
   }).filter(Boolean);
-  return cells.length ? `<div><h3 class="sub">Games ahead <span class="muted small">by period, against the average team</span></h3><div class="tc-pers">${cells.join('')}</div></div>` : '';
+  return cells.length ? `<div><h3 class="sub">Games ahead</h3><div class="tc-pers">${cells.join('')}</div></div>` : '';
 }
 // Who's on the injury report, worst first, and for a regular, the teammates who've done more in the games he missed: each
 // one's average game (VAL, or fantasy points) and minutes without him against with him, from the box scores (3+ games each)

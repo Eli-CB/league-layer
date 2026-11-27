@@ -458,14 +458,14 @@ const LAND_TEAM = { team: 'OKC', name: 'Oklahoma City Thunder', rec: '14-2', po:
 const landLink = what => `<p class="pvt-link">See ${what} on the Players tab</p>`;
 function landTeamCard() {
   const { team, name, rec, po, tiles, periods, out, free } = LAND_TEAM;
-  const per = ([n, g, avg, b2b]) => `<div class="tc-per${g - avg >= 0.75 ? ' more' : avg - g >= 0.75 ? ' fewer' : ''}"><span class="k">Period ${n}</span><b>${g}</b><span class="tc-per-s">avg ${avg}${b2b ? ' · B2B' : ''}</span></div>`;
+  const per = ([n, g, avg, b2b]) => `<div class="tc-per${g - avg >= 0.75 ? ' more' : avg - g >= 0.75 ? ' fewer' : ''}"><span class="k">Period ${n}</span><b>${g}</b>${b2b ? '<span class="tc-per-s">1 B2B</span>' : ''}</div>`;
   const hurt = ([id, n, pos, l, why, gains]) => `<div class="tc-out"><div class="bplayer">${landFace(id, n, 28)}<div class="bmain"><div class="bname"><b>${n}</b><span class="badge inj ${l === 'O' ? 'bad' : 'warn'}">${l}</span></div>
       <div class="pmeta">${posTags(pos)} · ${why}</div>${gains.length ? `<div class="tc-without">Without him: ${gains.map(([t, v, m]) => `<b>${t}</b> <b class="pos-good">${v}</b> <span class="muted">${m} min</span>`).join(' · ')}</div>` : ''}</div></div></div>`;
   return `<div class="pv-card pv-tcard" aria-hidden="true">
     <div class="pvc-head pvt-head">${teamLogo(team, 28)}<b>${name}</b><span class="pvt-rec">${rec}</span><span class="pvt-po">Playoff Games: <b>${po}</b></span></div>
     ${landLink(team)}
     <div class="proj-grid pvc-tiles pvt-tiles">${tiles.map(([k, v]) => `<div class="proj"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
-    <p class="pvt-sub">Games ahead <span>by period, against the average team</span></p>
+    <p class="pvt-sub">Games ahead</p>
     <div class="tc-pers">${periods.map(per).join('')}</div>
     <p class="pvt-sub">Who's out</p>
     <div class="pvx-fill"><div>${out.map(hurt).join('')}</div></div>
@@ -477,7 +477,7 @@ function landTeamCard() {
 // week (each week's result and score, then against every team), each category's number a player against every team in the league
 // (rank, and every team's dot on one line, yours the big orange one) and how it was built. [category, number, your dot's place (%),
 // the other teams' places]; stars: [NBA.com id, name, positions, team, total]; weeks: [result, score]; built: its players by
-// how they came, named as the card names them (the owner's ask, Nov 27, 2026)
+// how they came ([NBA.com id, name], best first), drawn and named as the card does them (tcHowRow; the owner's ask, Nov 27, 2026)
 const LAND_FANTASY = {
   cats: [['FG%', '.485', 62, [38, 78, 55, 25, 39, 79, 68, 36, 20, 47, 58]], ['FT%', '.832', 74, [30, 52, 61, 44, 81, 22, 66, 39, 57, 48, 35]],
     ['3PM', '2.0', 66, [41, 49, 72, 33, 58, 26, 62, 47, 80, 38, 55]], ['PTS', '19.6', 71, [32, 45, 64, 50, 27, 77, 41, 58, 36, 53, 62]],
@@ -486,8 +486,9 @@ const LAND_FANTASY = {
     ['TO', '2.0', 76, [52, 63, 45, 68, 34, 58, 41, 80, 49, 37, 60]]],
   stars: [[1641705, 'Wembanyama', ['C'], 'SAS', '8.3'], [1628983, 'Gilgeous-Alexander', ['PG'], 'OKC', '4.8'], [1630595, 'Cunningham', ['PG', 'SG'], 'DET', '4.6'], [1630178, 'Maxey', ['PG'], 'PHI', '3.9']],
   weeks: [['W', '6-3'], ['W', '5-4'], ['L', '3-6'], ['W', '7-2'], ['W', '5-4'], ['L', '4-5'], ['W', '6-3'], ['W', '8-1'], ['W', '5-4'], ['L', '2-7'], ['W', '6-3'], ['W', '5-4']],
-  built: [['Kept', ['Wembanyama', 'Gilgeous-Alexander']], ['Drafted', ['Cunningham', 'Maxey', 'Mobley', 'Barnes', 'Kuminga', 'Coulibaly', 'Ivey']],
-    ['Picked up', ['A. Mitchell', 'Wallace', 'Sheppard']], ['Traded for', ['Murray']]],
+  built: [['keep', [[1641705, 'Wembanyama'], [1628983, 'Gilgeous-Alexander']]],
+    ['draft', [[1630595, 'Cunningham'], [1630178, 'Maxey'], [1630596, 'Mobley'], [1630567, 'Barnes'], [1630228, 'Kuminga'], [1630532, 'Wagner'], [1641731, 'Coulibaly']]],
+    ['pickup', [[1642349, 'A. Mitchell'], [1641717, 'Wallace'], [1642263, 'Sheppard']]], ['trade', [[1627750, 'Murray']]]],
 };
 function landFantasyCard() {
   const { cats, stars, weeks, built } = LAND_FANTASY, n = cats[0][3].length + 1;
@@ -510,7 +511,8 @@ function landFantasyCard() {
     <table class="pvc-games pvf-table"><thead><tr><th>Cat</th><th>Per player</th><th>Rank</th><th>Every team (you in orange)</th></tr></thead>
       <tbody>${cats.map(row).join('')}</tbody></table>
     <p class="pvt-sub">How it was built</p>
-    <div class="pvf-built">${built.map(([k, who]) => `<div class="tc-how"><span class="tc-how-k">${k} <b>${who.length}</b></span><span class="tc-how-v">${who.map((n, i) => `<b class="tc-nw">${n}${i < who.length - 1 ? ',' : ''}</b>`).join(' ')}${k === 'Traded for' ? ' <span class="muted">from Rim Rockers</span>' : ''}</span></div>`).join('')}</div>
+    <div class="pvf-built">${built.map(([g, who]) => tcHowRow(g, who.map(([id, n]) => landFace(id, n, 22)),
+      who.map(([, n], i) => `<b class="tc-nw">${n}${i < who.length - 1 ? ',' : ''}</b>`).join(' ') + (g === 'trade' ? ' <span class="muted">from Rim Rockers</span>' : ''))).join('')}</div>
   </div>`;
 }
 // The three cards in turn, 4 s each (a CSS loop, so nothing runs in the background or the tests), the one showing lit in

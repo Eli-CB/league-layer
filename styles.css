@@ -764,10 +764,15 @@ td.player { min-width: 170px; }
 .tc-wk.won { background: var(--good-soft); } .tc-wk.won b { color: var(--good); }
 .tc-wk.lost { background: var(--bad-soft); } .tc-wk.lost b { color: var(--bad); }
 .tc-allplay { margin: 8px 0 0; }
-/* how it was built: a line a way in (Kept, Drafted...), its players after */
-.tc-how { display: flex; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: .88rem; }
-.tc-how-k { flex: 0 0 96px; color: var(--muted); }
-.tc-how-k b { color: var(--text); }
+/* how it was built: a row a way in, its badge and count, then its players' photos overlapped and their names under them */
+.tc-how { display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 8px; row-gap: 4px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: .88rem; }
+.tc-how:last-of-type { border-bottom: 0; }
+.tc-how-k { grid-row: 1 / 3; align-self: start; padding-top: 5px; white-space: nowrap; }
+.tc-how-k b { margin-left: 2px; }
+.tc-faces { display: flex; align-items: center; }
+.tc-faces > :is(.hs, .tc-more) { box-shadow: inset 0 0 0 1px var(--border), 0 0 0 2px var(--surface); }
+.tc-faces > * + * { margin-left: -8px; }
+.tc-more { display: inline-grid; place-items: center; flex: none; min-width: 28px; height: 28px; padding: 0 4px; box-sizing: border-box; border-radius: 14px; background: var(--surface-2); font-size: .7rem; font-weight: 700; color: var(--muted); }
 .tc-how-v { min-width: 0; }
 .tc-nw { white-space: nowrap; } /* a name and its comma: a comma never starts a line */
 .tc-best { margin: 8px 0 0; }
@@ -1822,9 +1827,11 @@ body.landing::before {
 .pvf-allplay { margin: 6px 0 0; font-size: .7rem; color: var(--muted); }
 .pvf-allplay b:not(.pos-good) { color: var(--text); }
 .pvf-built { margin: 4px 0 10px; }
-.pvf-built .tc-how { padding: 4px 0; font-size: .72rem; }
-.pvf-built .tc-how:last-child { border-bottom: 0; }
-.pvf-built .tc-how-k { flex-basis: 76px; }
+.pvf-built .tc-how { grid-template-columns: 76px minmax(0, 1fr); row-gap: 3px; padding: 5px 0; font-size: .72rem; }
+.pvf-built .tc-how-k { padding-top: 3px; }
+.pvf-built .badge { font-size: .64rem; padding: 0 5px; }
+.pvf-built .tc-faces > * + * { margin-left: -6px; }
+.pvf-built .tc-more { min-width: 22px; height: 22px; font-size: .6rem; }
 .pvf-built .tc-how-v b { font-weight: 600; }
 /* the three cards in turn, 4 s each, the one showing lit above them (a loop of CSS alone); held while the pointer's on them;
    a tap on a name shows that card and stops the turns ([data-pick], 'land-card') */
