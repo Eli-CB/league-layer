@@ -734,7 +734,6 @@ td.player { min-width: 170px; }
 .team-link { color: inherit; font-weight: inherit; text-align: inherit; }
 .team-link.mine, .team-mine { color: var(--accent); } /* your own team, wherever its name is */
 .team-link:hover { text-decoration: underline; }
-#detailDialog .team-link:hover { text-decoration-color: currentColor; }
 .tc-roster td { vertical-align: middle; }
 /* a fantasy team's card: its parts 16 px apart */
 .tc-body > * + * { margin-top: 16px; }
