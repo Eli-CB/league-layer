@@ -250,6 +250,12 @@ const INFO = {
     <li><b>ESPN:</b> the injury report, plus the schedule and box scores on the website's daily refresh, since NBA.com blocks the cloud servers that run it. Both give identical numbers.</li>
     <li><b>Fantrax or ESPN</b> (wherever your league is): your league's position eligibility, every team's roster and lineup, matchups, and who's available.</li></ul>
     <p>NBA stats, box scores and injuries refresh every night at about 4 a.m. Eastern, after the last games finish. The site's own league gets its Fantrax data (rosters, lineups, matchups, draft) in that same refresh; every league is read again from its site now and then: opening the page, coming back to it, and around each lineup lock (if it's been hours, the time shows in amber at the top; tap it). For the latest any time, use ↻ Reload in the ⚙ menu.</p>`],
+  // the footer's Privacy link (its own words were the footer's line until Nov 27, 2026, the owner's ask: what's sent is
+  // reportError's body and the Web Analytics beacon, docs/hosting.md; keep this in step with them)
+  privacy: ['Privacy', `
+    <p><b>Your leagues stay in your browser.</b> The leagues you add and your settings are saved on this device. There's no account, and League Layer keeps no copy of them.</p>
+    <p><b>Visits are counted without cookies</b> (Cloudflare Web Analytics): how many people visit and which pages, nothing that follows you from site to site.</p>
+    <p><b>If a page breaks,</b> the error is sent so it can be fixed: the error message, the page, the league's ID and your browser and device type. Reports are kept for 30 days.</p>`],
 };
 
 const infoBtn = key => `<button type="button" class="info-btn" data-action="info" data-key="${key}" aria-label="How this is calculated" title="How this is calculated">i</button>`;

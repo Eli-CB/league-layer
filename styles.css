@@ -180,6 +180,7 @@ a { color: var(--accent); }
 .site-foot p { margin: 0 0 4px; }
 .site-foot a { color: var(--accent); font-weight: 600; text-decoration: none; }
 .site-foot a:hover { text-decoration: underline; }
+.site-foot .link-btn { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; } /* Privacy: grey, not orange (that's for your team) */
 .top-right { display: flex; align-items: center; gap: 10px; flex: none; }
 .top-right .icon-btn { width: 30px; height: 30px; }
 /* settings gear */
