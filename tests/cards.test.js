@@ -18,6 +18,11 @@ test("a fantasy team's name opens its card: record, opponent, roster by spot, ca
   if (opp) assert.ok(title.includes(`<span class="dt-vs">This week vs <span class="dt-rec">${app.teamLink(opp.id)}</span></span>`), "this week's opponent in the title too");
   assert.doesNotMatch(html, /This week vs|No matchup this week/, 'and not in the card');
   assert.doesNotMatch(html, /slot-label|>Roster<|>Starters<|>Bench</, 'no lineup spots or group labels');
+  // an injured player: his letter by his name (the note on hover), not the report's words under it
+  const hurt = L.teams.flatMap(t => app.fxTeamSide(t.id).players.map(p => [t.id, p])).find(([, p]) => p.inj && p.inj.note);
+  assert.ok(hurt, 'an injured player to look at');
+  const card = app.teamCardHtml(hurt[0]);
+  assert.ok(card.includes(app.injBadge(hurt[1].inj, 'by-name')) && !card.includes('pmeta inj'), hurt[1].name);
   const vals = [...html.matchAll(/<td class="num pf-v">([^<]+)<\/td>/g)].map(m => +m[1].replace('−', '-'));
   assert.equal(vals.length, app.fxTeamSide(other.id).players.length);
   assert.deepEqual(vals, [...vals].sort((a, b) => b - a), 'every player in one list, best value over the season first');

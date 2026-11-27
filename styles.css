@@ -642,8 +642,8 @@ button.dr-award-btn:hover { text-decoration: underline; text-underline-offset: 2
 .badge.inj.fresh { box-shadow: inset 0 0 0 1.5px currentColor; } /* a status changed in the last 3 hours (injFresh) */
 .badge.rk { background: var(--info-soft); color: var(--info); } /* blue, the site's color for a fact (as Drafted), apart from the injury badges' red and yellow: the owner's pick, Nov 27, 2026 */
 @media (max-width: 640px) { .badge.inj.by-name, .badge.rk.by-name { display: none; } .badge.inj.in-meta, .badge.rk.in-meta { display: inline-block; } } /* phones: under the name, which keeps its room */
-.pl-table .pf-name:not(.tight) .badge.by-name { display: inline-block; } .pl-table .pf-name:not(.tight) .badge.in-meta { display: none; }
-.pl-table .pf-name.tight .badge.by-name { display: none; } .pl-table .pf-name.tight .badge.in-meta { display: inline-block; } /* the Players tab: beside the name if it shows whole there (fitNameBadges) */
+:is(.pl-table, .tc-roster) .pf-name:not(.tight) .badge.by-name { display: inline-block; } :is(.pl-table, .tc-roster) .pf-name:not(.tight) .badge.in-meta { display: none; }
+:is(.pl-table, .tc-roster) .pf-name.tight .badge.by-name { display: none; } :is(.pl-table, .tc-roster) .pf-name.tight .badge.in-meta { display: inline-block; } /* the Players tab and a team card: beside the name if it shows whole there (fitNameBadges) */
 .perf-table .pf-name .pmeta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* a long fantasy team's name is cut short with its own "…" (its whole name in its tip): the line's "…" can't cut into a
    button, and swapped the whole name for "…". So that line is a row (spaces kept), the name taking the room left over */
@@ -740,7 +740,6 @@ td.player { min-width: 170px; }
 /* a fantasy team's card: its parts 16 px apart */
 .tc-body > * + * { margin-top: 16px; }
 .tc-roster td.sc { border-bottom: 1px solid var(--border); } /* (no shaded cells here: the row's line runs across) */
-.tc-roster .pf-name .pmeta.inj { white-space: nowrap; } /* an injury's note on one line, phones too (the whole note is its tip and on his card) */
 .pmeta { color: var(--muted); font-size: .8rem; }
 
 .badge {
@@ -1014,7 +1013,6 @@ html:has(dialog[open]) { overflow: hidden; scrollbar-gutter: stable; }
 .filters { display: grid; grid-template-columns: minmax(180px, 2fr) repeat(4, minmax(110px, 1fr)); gap: 10px; margin-bottom: 8px; }
 .filters .field { margin: 0; }
 
-.pmeta.inj { color: var(--bad); }
 button.link-btn.pname { color: var(--text); text-align: left; }
 button.link-btn.pname:hover { color: var(--accent); text-decoration: underline; }
 .modal-lg { width: min(860px, calc(100vw - 24px)); }

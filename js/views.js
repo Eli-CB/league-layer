@@ -281,6 +281,7 @@ function showTeamCard(tid, sorting) {
   sportCardOpen = null;
   const d = $('#detailDialog');
   if (!d.open) d.showModal();
+  fitNameBadges();
   if (!sorting) $('#detailBody').scrollTop = 0;
 }
 // the card's title: the team's name, (you) on your own, then its record, standing, points for and this week's opponent
@@ -316,13 +317,13 @@ function teamCardHtml(tid) {
     const m = statVal(p, c.made), a = statVal(p, c.att);
     return `<td class="sc"${c.rate ? '' : ` title="${c.label}: ${fmt(m, 1)}/${fmt(a, 1)} a game"`}>${!a ? '—' : c.rate ? fmt(m / a, 2) : fmtPct(m / a)}</td>`;
   };
-  // the player: photo, name, then his positions in their lineup-spot colors and his NBA team; any injury under it
+  // the player: photo, name, then his positions in their lineup-spot colors and his NBA team; an injury is its letter (O, D...:
+  // injBadge, the note on hover and his card; the owner's ask, Nov 27, 2026), beside the name if it fits (fitNameBadges)
   const who = p => {
     const raw = nbaById.get(p.nbaId) || {};
-    const inj = p.inj ? `<div class="pmeta inj" title="${esc(p.inj.note)}">${esc(p.inj.label)}${p.inj.note ? ': ' + esc(p.inj.note) : ''}</div>` : '';
     return `<td class="pf-name"><div class="bplayer">${headshot(p, 34)}<div class="bmain">
-      <div class="bname">${p.nbaId ? playerBtn(p.nbaId, p.name) : `<span class="pname">${esc(p.name)}</span>`}${rookieBadge(raw, 'by-name')}</div>
-      <div class="pmeta">${rookieBadge(raw, 'in-meta')}${[posTags(p.pos), p.team && teamBtn(p.team)].filter(Boolean).join(' · ')}</div>${inj}</div></div></td>`;
+      <div class="bname">${p.nbaId ? playerBtn(p.nbaId, p.name) : `<span class="pname">${esc(p.name)}</span>`}${rookieBadge(raw, 'by-name')}${injBadge(p.inj, 'by-name')}</div>
+      <div class="pmeta">${rookieBadge(raw, 'in-meta')}${injBadge(p.inj, 'in-meta')}${[posTags(p.pos), p.team && teamBtn(p.team)].filter(Boolean).join(' · ')}</div></div></div></td>`;
   };
   // every player in one list, best first by what the last column shows (football: this week's projection, a bye last),
   // or by the column whose heading was clicked (ui.teamSort; a player with nothing in that column always last);
