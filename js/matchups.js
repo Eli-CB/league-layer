@@ -545,7 +545,7 @@ function catCompareTable(ctx, changed) {
       // 🔒 a category that's all but won (90%+, "Locked")
       const lock = lbl === 'Locked' ? ' <span class="cat-lock" role="img" aria-label="Locked" title="Locked: 90% or better to win">🔒</span>' : '';
       return `<tr class="${moved ? 'moved' : ''}"><td><b>${c.label}</b>${lock}</td><td class="num">${fmtCat(c, c.b)}</td><td class="num">${fmtCat(c, s.a)}</td>${changed ? `<td class="num">${fmtCat(c, c.a)}</td>` : ''}
-        <td class="pbar-cell">${bars}<span class="badge ${cls}">${lbl}</span></td></tr>`;
+        <td class="pbar-cell"><div class="pbar-in">${bars}<span class="badge ${cls}">${lbl}</span></div></td></tr>`;
     }).join('')}</tbody>
   </table></div>`;
 }
@@ -587,7 +587,7 @@ function restOfPeriod(ctx) {
   if (nextShift != null) {
     const start = weekStartAt(nextShift), opp = fxOpponentFor(start, leftId), k = !SPORT.gameLocks && periodLock(start);
     const t = k && new Date(k.at);
-    next = `<div class="rp-next"><span class="grow small">Next ${spanWord()}${opp ? `: vs <b>${esc(opp.name)}</b>` : ''}${t ? ` · lineups lock <b>${k.known ? '' : '~'}${lockWhen(t)}</b>` : ''}</span>
+    next = `<div class="rp-next"><span class="grow small"><span>Next ${spanWord()}${opp ? `: vs <b>${esc(opp.name)}</b>` : ''}</span>${t ? `<span class="muted">Lineups lock <b>${k.known ? '' : '~'}${lockWhen(t)}</b></span>` : ''}</span>
       <button class="btn sm" data-action="week-shift" data-step="1">Plan it ${chev(1)}</button></div>`;
   }
   if (!ctx.hasOpp) return next ? `<div class="card">${next}</div>` : '';
@@ -616,7 +616,8 @@ function restOfPeriod(ctx) {
   const cats = ctx.catsSet;
   const group = f => cats.filter(f).map(c => c.label);
   const swing = group(c => c.p > 0.1 && c.p < 0.9), punt = group(c => c.p <= 0.1), safe = group(c => c.p >= 0.9); // (as the table's badges)
-  const how = !isPoints() ? `<p class="small muted" style="margin:0 0 10px">${swing.length ? `Swing: <b>${swing.join(', ')}</b>` : 'No category is close'}${safe.length ? ` · Locked: <b>${safe.join(', ')}</b>` : ''}${punt.length ? ` · Punt: <b>${punt.join(', ')}</b>` : ''}</p>` : '';
+  // (each group whole on its line as a phone wraps them, no dot left hanging at a line's end)
+  const how = !isPoints() ? `<div class="rp-how small muted">${[swing.length ? `Swing: <b>${swing.join(', ')}</b>` : 'No category is close', safe.length ? `Locked: <b>${safe.join(', ')}</b>` : '', punt.length ? `Punt: <b>${punt.join(', ')}</b>` : ''].filter(Boolean).map(x => `<span>${x}</span>`).join('')}</div>` : '';
   return `
     <div class="card">
       <div class="card-head"><h2>Rest of the ${spanWord()}</h2>${left}</div>

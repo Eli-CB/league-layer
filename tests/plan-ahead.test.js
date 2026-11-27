@@ -383,7 +383,7 @@ test("this period once weekly lineups lock: the days' starter games, the categor
     assert.match(html, /Starter games left: <b class="rp-me">\d+<\/b> to <b>\d+<\/b>/);
     assert.ok(html.includes('<table class="cat-table">'), "the categories' odds");
     const next = app.fxOpponentFor(app.weekStartAt(1), tid);
-    assert.ok(html.includes(`Next period: vs <b>${app.esc(next.name)}</b> · lineups lock <b>`), 'next period, and when it locks');
+    assert.ok(html.includes(`<span>Next period: vs <b>${app.esc(next.name)}</b></span><span class="muted">Lineups lock <b>`), 'next period, and when it locks');
     assert.match(html, /data-action="week-shift" data-step="1">Plan it/);
   } finally {
     app.setClock(); st.opp = was.opp; ui.weekShift = was.shift;
