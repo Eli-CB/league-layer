@@ -472,12 +472,13 @@ function injWhen(inj) {
   if (typeof inj.was !== 'string') return `updated ${when}`;
   return `since ${when}${injFresh(inj) ? ` (${inj.was ? `was ${inj.was}` : 'newly listed'})` : ''}`;
 }
-// The injury report in a few letters, for tight rows (the full word and the news on hover): Q, D, IR, SUS, PUP, else OUT or DTD
+// The injury report in a letter or few, for tight rows (the full word and the news on hover): Q, D (doubtful), IR, SUS, PUP,
+// else O (out) or D (day-to-day): one letter, the owner's ask (Nov 27, 2026), red or yellow telling them apart
 function injBadge(inj, where = '') {
   if (!inj) return '';
   const l = String(inj.label || '').toLowerCase();
   const short = l === 'ir' || l.includes('reserve') ? 'IR' : l.startsWith('quest') ? 'Q' : l.startsWith('doubt') ? 'D' : l.startsWith('sus') ? 'SUS' : l === 'pup' ? 'PUP'
-    : inj.status === 'Out' ? 'OUT' : 'DTD';
+    : inj.status === 'Out' ? 'O' : 'D';
   const fresh = injFresh(inj), tip = [[inj.label || inj.status, fresh ? injWhen(inj) : ''].filter(Boolean).join(' '), inj.note].filter(Boolean).join(': ');
   return `<span class="badge inj ${inj.status === 'Out' ? 'bad' : 'warn'}${fresh ? ' fresh' : ''}${where ? ' ' + where : ''}" title="${esc(tip)}">${short}</span>`;
 }

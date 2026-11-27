@@ -5,8 +5,8 @@ test.before(async () => { app = await sharedApp(); });
 
 test('a player out or day-to-day says so in a few letters on the Players table', () => {
   const short = inj => app.injBadge(inj).replace(/<[^>]*>/g, '');
-  assert.equal(short({ status: 'Out', label: 'Out' }), 'OUT');
-  assert.equal(short({ status: 'DTD', label: 'Day-To-Day' }), 'DTD');
+  assert.equal(short({ status: 'Out', label: 'Out' }), 'O');
+  assert.equal(short({ status: 'DTD', label: 'Day-To-Day' }), 'D');
   assert.equal(short({ status: 'Out', label: 'Injured Reserve' }), 'IR');
   assert.equal(short({ status: 'Out', label: 'IR' }), 'IR');
   assert.equal(short({ status: 'DTD', label: 'Questionable' }), 'Q');
