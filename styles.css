@@ -1776,10 +1776,8 @@ body.landing::before {
 .pvt-table .bmain { min-width: 0; }
 .pvt-table .bmain > b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .pvt-table .bmain > div { font-size: .68rem; color: var(--muted); }
-.pvt-table .pvt-n { width: 14px; color: var(--muted); }
-.pvt-table :is(.pvt-p, .pvt-t) { text-align: left; }
+.pvt-table .pvt-p { text-align: left; }
 .pvt-table td.pvt-p { max-width: 0; width: 52%; }
-.pvt-table td.pvt-t { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pvt-table .badge.fa { font-size: .66rem; }
 .pvf-table { margin-top: 2px; }
 .pvf-table td { padding-block: 4px; }
@@ -1788,9 +1786,35 @@ body.landing::before {
 .pvf-table .strip { height: 14px; }
 .pvf-table .sdot { width: 6px; height: 6px; margin: -3px 0 0 -3px; }
 .pvf-table .sdot.this { width: 10px; height: 10px; margin: -5px 0 0 -5px; }
-.pv-fcard .pvt-table { margin-top: 8px; }
-.pv-fcard .pvt-table td.pvt-p { width: 85%; }
 .pv-fcard .pvc-head span b { color: var(--text); }
+/* both team cards' own pieces (.tc-per, .tc-out, .tc-star, .tc-wk), a size down; the Players tab link first */
+.pvt-link { margin: -6px 0 0; font-size: .78rem; font-weight: 600; color: var(--accent); }
+.proj-grid.pvt-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 10px; }
+:is(.pv-tcard, .pv-fcard) :is(.tc-pers, .tc-stars, .tc-weeks) { margin-top: 6px; }
+.pv-tcard .tc-pers { gap: 5px; }
+.pv-tcard .tc-per { padding: 5px 6px; }
+.pv-tcard .tc-per .k { font-size: .56rem; }
+.pv-tcard .tc-per b { font-size: .95rem; }
+.pv-tcard .tc-per-s { font-size: .6rem; }
+.pv-tcard .tc-out { padding: 6px 0; font-size: .76rem; }
+.pv-tcard .tc-out .bname b { font-weight: 600; }
+.pv-tcard .tc-out .pmeta { font-size: .66rem; }
+.pv-tcard .tc-without { font-size: .68rem; }
+.pv-tcard .pvt-table { margin-top: 2px; }
+.pv-fcard .tc-stars { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.pv-fcard .tc-star { flex-direction: column; align-items: center; gap: 4px; padding: 6px 4px; text-align: center; }
+.pv-fcard .tc-star .bmain { width: 100%; }
+.pv-fcard .tc-star .bmain > b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .72rem; font-weight: 600; }
+.pv-fcard .tc-star .bmain > div { font-size: .62rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pv-fcard .tc-weeks { flex-wrap: nowrap; gap: 3px; }
+.pv-fcard .tc-wk { flex: 1 1 0; min-width: 0; padding: 3px 0 2px; }
+.pv-fcard .tc-wk b { font-size: .78rem; }
+.pv-fcard :is(.tc-wk-n, .tc-wk-s) { font-size: .56rem; }
+.pvf-allplay { margin: 6px 0 0; font-size: .7rem; color: var(--muted); }
+.pvf-allplay b:not(.pos-good) { color: var(--text); }
+.pvf-built { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 12px; font-size: .7rem; color: var(--muted); }
+.pvf-built span { padding: 3px 8px; border-radius: 6px; background: var(--surface-2); }
+.pvf-built b { color: var(--text); }
 /* the three cards in turn, 4 s each, the one showing lit above them (a loop of CSS alone); held while the pointer's on them;
    a tap on a name shows that card and stops the turns ([data-pick], 'land-card') */
 .pvx-seg { display: flex; width: max-content; margin: 0 auto 12px; font-size: .78rem; }
@@ -1870,7 +1894,7 @@ body.landing::before {
   :is(.pv-pcard, .pv-tcard, .pv-fcard) { padding: 12px 12px 2px; }
   .pvc-top { gap: 10px; }
   .pvc-top .pc-photo { width: 112px; }
-  .pvt-table .pvt-gp { display: none; } /* (an NBA team's games played: the fantasy team gets the room) */
+  .pvt-table .pvt-gp { display: none; } /* (a free agent's games played: his name gets the room) */
 }
 
 tr.me-row td { background: var(--accent-soft); }

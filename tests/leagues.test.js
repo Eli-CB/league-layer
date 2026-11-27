@@ -55,6 +55,10 @@ test('the demo: every tab filled in as a team, and leaving it keeps nothing', as
   const land = a.viewLanding();
   assert.deepEqual([...land.matchAll(/class="lsh-tab">[^]*?<\/svg>([^<]+)<\/p>/g)].map(m => m[1]), ['Matchup', 'Plan Ahead', 'Cards', 'Draft', 'Recap']);
   assert.match(land, /class="pvx-deck"[^>]*>[^]*?pv-pcard[^]*?pv-tcard[^]*?Playoff Games[^]*?pv-fcard/);
+  // the team cards as the real ones: the Players tab link first, then their sections (no players table)
+  const deck = land.split('class="pvx-deck"')[1];
+  assert.match(deck, /pv-tcard[^]*?See OKC on the Players tab[^]*?Games ahead[^]*?Who's out[^]*?Free agents[^]*?pv-fcard[^]*?See your team on the Players tab[^]*?Best players[^]*?Season so far[^]*?By category[^]*?How it was built/);
+  assert.doesNotMatch(deck, /Fantasy team<\/th>/);
   assert.equal([...land.matchAll(/data-action="land-card" data-i="(\d)"/g)].map(m => m[1]).join(), '0,1,2');
   assert.ok(!/class="pvx" data-pick/.test(land));
   a.actions['land-card']({ dataset: { i: '2' }, closest: () => null });

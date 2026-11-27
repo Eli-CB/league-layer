@@ -25,10 +25,11 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   the owner's ask; the demo and sandbox cards a row under both columns, not under the form: beside it they left a blank patch under
   the headline, the owner's ask, Nov 22, 2026); adding a league or season and Step 2 (each team with its initials) stay one card. The head shows the site's mark and name there (`leagueMenu`).
   Under the hero, `landShow`'s rows (Nov 20, 2026, the owner's ask): the Matchup tab live, Plan Ahead, "In-depth cards" (a player's, an NBA team's with
-  its playoff games, a fantasy team's, taking turns 4 s each in a CSS loop, `landCards`; a tap on a name above them picks one and stops the turns,
+  its playoff games, a fantasy team's, taking turns 4 s each in a CSS loop, `landCards`; the team cards drawn as the real ones are since Nov 27, 2026,
+  the owner's ask, a size down, with the cards' own `.tc-*` classes; the fantasy one's How it was built as counts alone, so the three stay near one height; a tap on a name above them picks one and stops the turns,
   `land-card`/`ui.landCard`; Trends only in the grid at the foot, not here: the owner's asks), the draft board, and
   the Recap's picture with the Draft Recap's beside it (the owner's ask; a row to swipe on phones), made up too but drawn with each tab's own
-  classes (`.mu-chip`, `.game-pill`, `.bmeta`/`.dots`, `.swap`, `.pc-photo`/`.cp-row`, `.strip`/`.sdot`, `.dr-cell` + `shade`, `RC_IMG`), so check its row after restyling one of those. Players there are real, with their
+  classes (`.mu-chip`, `.game-pill`, `.bmeta`/`.dots`, `.swap`, `.pc-photo`/`.cp-row`, `.strip`/`.sdot`, `.tc-per`/`.tc-out`/`.tc-star`/`.tc-wk`, `.dr-cell` + `shade`, `RC_IMG`), so check its row after restyling one of those. Players there are real, with their
   real photos (the owner's ask): `landFace`/`playerPhoto` by NBA.com id, `data-photo` taken off so a photo isn't a way to his card. A row's moment (a
   basket turning PTS and the score, the swap going in, the picks coming in) plays once its picture is half in view (`landReveal`, run by `render` after the landing; `.in`);
   its button is `land-demo` with `data-tab`, the demo opened at that tab (`data-player`: with his card open). The pill says "Free · No sign-up" and the footer "League Layer is free." (never "forever", the owner's ask).
