@@ -230,7 +230,7 @@ function savedSize() {
 }
 
 // Feedback by email (Cloudflare forwards feedback@leaguelayer.com), with what's needed to look into it already filled
-// in: the league (its site and ID), the page, this version and the browser. A plain email link does nothing on a
+// in: the league (its site and ID, or one typed in the popup's League ID field), the page, this version and the browser. A plain email link does nothing on a
 // computer without an email app, so the menu opens a popup: Gmail in the browser, the email app, or copy it all.
 const TIP_URL = 'https://ko-fi.com/leaguelayerdev'; // tips (also in index.html's footer)
 // The settings menu's icons
@@ -248,9 +248,13 @@ const GEAR_TRASH = menuIcon('<path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 12.5h9l1-12.
 const GEAR_BACKUP = menuIcon('<path d="M12 4v11m0 0-4-4m4 4 4-4"/><path d="M4.5 16.5v2A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5v-2"/>');
 const GEAR_RESET = menuIcon('<path d="M4 12a8 8 0 1 0 2.34-5.66L4 8.5"/><path d="M4 3.5v5h5"/>');
 const FEEDBACK_EMAIL = 'feedback@leaguelayer.com', FEEDBACK_SUBJECT = 'League Layer feedback';
+// The League ID field: the connected league's ID to start, or one typed in (a league that won't connect,
+// or another one), sent along with the details; ui.fbLeague is what's typed (null: not touched yet)
+const feedbackLeagueId = () => (ui.fbLeague != null ? ui.fbLeague : (fxLeague() && fxLeague().id) || '').trim();
 function feedbackDetails() {
-  const L = fxLeague();
-  return [`League: ${L ? `${L.name} (${sourceName(L)} ${L.id})` : 'none connected'}`, `Page: ${location.hash || '#dashboard'}`,
+  const L = fxLeague(), id = feedbackLeagueId(), on = L && L.id === id;
+  const league = on ? `${L.name} (${sourceName(L)} ${L.id})` : id ? `ID ${id}` : 'none given';
+  return [`League: ${league}`, `Page: ${location.hash || '#dashboard'}`,
     `Version: ${BUILD}`, `Browser: ${navigator.userAgent}`].join('\n');
 }
 const feedbackBody = () => `What happened, or what would you like to see?\n\n\n\n--- (this helps look into it)\n${feedbackDetails()}`;
@@ -258,12 +262,21 @@ const feedbackHref = () => `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponen
 const feedbackGmail = () => `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(FEEDBACK_EMAIL)}&su=${encodeURIComponent(FEEDBACK_SUBJECT)}&body=${encodeURIComponent(feedbackBody())}`;
 function feedbackPopup() {
   return `<p style="margin-top:0">Email <b>${FEEDBACK_EMAIL}</b>: a problem, an idea, a league that doesn't look right. These details come along, to help look into it:</p>
+    <label class="field fb-league">League ID, if it's about a league
+      <input id="fbLeague" data-input="fb-league" value="${esc(feedbackLeagueId())}" placeholder="Fantrax, ESPN or Sleeper league ID" autocomplete="off" spellcheck="false"></label>
     <pre class="fb-details">${esc(feedbackDetails())}</pre>
     <div class="fb-actions">
-      <a class="btn primary" href="${esc(feedbackGmail())}" target="_blank" rel="noopener">Open in Gmail</a>
-      <a class="btn" href="${esc(feedbackHref())}">Your email app</a>
+      <a class="btn primary" id="fbGmail" href="${esc(feedbackGmail())}" target="_blank" rel="noopener">Open in Gmail</a>
+      <a class="btn" id="fbMail" href="${esc(feedbackHref())}">Your email app</a>
       <button type="button" class="btn" data-action="feedback-copy">Copy address and details</button>
     </div>`;
+}
+// as the League ID is typed: the details and both email links follow it, the box keeping its focus
+function feedbackFollow() {
+  const pre = $('#infoBody .fb-details'), g = $('#fbGmail'), m = $('#fbMail');
+  if (pre) pre.textContent = feedbackDetails();
+  if (g) g.href = feedbackGmail();
+  if (m) m.href = feedbackHref();
 }
 
 // The league's waiver order, in the popup the (i) buttons use

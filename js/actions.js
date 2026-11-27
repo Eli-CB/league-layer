@@ -193,6 +193,7 @@ const actions = {
   feedback() {
     $('#gearMenu details').removeAttribute('open');
     $('#infoTitle').textContent = 'Send feedback';
+    ui.fbLeague = null; // the League ID starts as the connected league's each time
     $('#infoBody').innerHTML = feedbackPopup();
     const d = $('#infoDialog');
     if (!d.open) d.showModal();
@@ -843,6 +844,9 @@ document.addEventListener('input', e => {
     render();
     const box = $('#perfQ');
     if (box) { box.focus(); box.setSelectionRange(at, at); }
+  } else if (el.dataset.input === 'fb-league') { // Send feedback's League ID (render.js)
+    ui.fbLeague = el.value;
+    feedbackFollow();
   } else if (el.dataset.input === 'sb-q') { // a sandbox search (sandbox.js): its matches as it's typed
     const key = el.dataset.key, at = el.selectionStart;
     ui.sbQ[key] = el.value;

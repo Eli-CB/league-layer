@@ -41,6 +41,15 @@ test('Send feedback: an email to feedback@leaguelayer.com with the league, page 
   assert.ok(pop.includes('https://mail.google.com/mail/?view=cm') && pop.includes('to=feedback%40leaguelayer.com'));
   assert.ok(pop.includes('href="mailto:feedback@leaguelayer.com') && pop.includes('data-action="feedback-copy"'));
   assert.ok(pop.includes(L.id), 'the details shown');
+  // the League ID field: the connected league's to start; one typed in (a league that won't connect) goes along instead
+  assert.ok(pop.includes(`data-input="fb-league" value="${L.id}"`), pop);
+  app.set('ui.fbLeague', ' 1715452380 ');
+  assert.ok(app.feedbackDetails().startsWith('League: ID 1715452380\n'), app.feedbackDetails());
+  assert.ok(decodeURIComponent(app.feedbackGmail()).includes('League: ID 1715452380'));
+  app.set('ui.fbLeague', '');
+  assert.ok(app.feedbackDetails().startsWith('League: none given'));
+  app.set('ui.fbLeague', null);
+  assert.ok(app.feedbackDetails().includes(`(Fantrax ${L.id})`));
 });
 
 test('the site installs to a home screen: its manifest, the offer in the menu, iPhone steps, and staying fresh', async () => {
