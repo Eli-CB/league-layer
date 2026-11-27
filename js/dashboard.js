@@ -134,7 +134,7 @@ function dashPace(S, D) {
 function lockInBadge(p, dates, mine) {
   const k = lockInCall(p, dates);
   if (!k || (k.call !== 'locked' && !mine)) return '';
-  const day = fmtDay(k.day).split(',')[0], fp = fmtFp(k.fp);
+  const day = fmtWeekday(k.day), fp = fmtFp(k.fp);
   const games = `${k.left} game${k.left === 1 ? '' : 's'}`;
   const tip = k.call === 'locked' ? `Locked in: Sleeper counts his ${day} game, ${fp} FP, for the week`
     : `${k.call === 'lock' ? 'Lock it in' : 'Keep going'}: his ${day} game, ${fp} FP, against about ${fmtFp(k.worth)} FP from waiting for his ${games} left`
@@ -185,7 +185,7 @@ function dashCell(C, p, right, counts, tag = '', cls = '') {
     const toCome = isGoalie(p) ? `about ${fmt(expectedGames(p, D.all.filter(d => d >= today && !gameFinal(p, d))), 1)}` : left;
     game = `${lines.length} G${counted && lines.length > 1 ? `, ${counts ? 'this one counts' : 'latest'}` : ''}${left && p.status !== 'Out' ? ` · ${toCome} left` : ''}${liveOn(p, today) && (lineOn(p, today) || onFloor(p, today)) ? ` · ${liveStatus(p, today)}` : ''}`;
     // football: his one game, or his bye
-    if (isFootball()) game = fbDay ? `${fmtDay(fbDay).split(',')[0]} ${dashGame(p, fbDay)}` : 'Bye';
+    if (isFootball()) game = fbDay ? `${fmtWeekday(fbDay)} ${dashGame(p, fbDay)}` : 'Bye';
   } else game = dashGame(p, dates[0]);
   game = linkTeams(game) + (counts && range === 'week' ? lockInBadge(p, D.all, C.mine && !right) : ''); // (its opponent's code opens that team's players)
   // (in a game on now, the dot by its clock says whether he's on the floor: liveStatus; no green row, the owner's ask)

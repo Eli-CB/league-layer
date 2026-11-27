@@ -102,7 +102,7 @@ function readStamp() {
   const reading = leagueReads.has(L.id);
   // (phones: the time, or the day when it wasn't today: "Mon")
   const day = isoDay(new Date(at)), today = day === isoDay(new Date()), when = today ? fmtTime(at) : `${fmtDay(day)}, ${fmtTime(at)}`;
-  const short = today ? when : new Date(day + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' });
+  const short = today ? when : fmtWeekday(day);
   const say = reading ? `Reading ${src}` : `Rosters from ${src} at ${when}. Tap to read them again`;
   return `<button type="button" class="read-stamp${reading ? ' reading' : ' old'}" data-action="league-reload" aria-label="${say}" title="${say}">${ICON_STAMP}${reading
     ? `<span class="rs-src">Reading </span><span class="rs-time">${src}…</span>` : `<span class="rs-src">Rosters from ${src} · </span><span class="rs-time">${when}</span><span class="rs-short">${short}</span>`}</button>`;

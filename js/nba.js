@@ -243,10 +243,13 @@ function fmtDay(d) {
   return Number.isNaN(dt.getTime()) ? d : dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
+// a day's weekday alone, "Wed": its own format, never fmtDay cut at a comma (en-GB writes "Wed 25 Nov", with none)
+const fmtWeekday = d => new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' });
+
 const fmtMonthDay = d => new Date(d + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
 function nextGame(next) {
-  return next ? `${fmtDay(next.date).split(',')[0]} ${next.home ? 'vs' : '@'} ${esc(next.opp)}` : '';
+  return next ? `${fmtWeekday(next.date)} ${next.home ? 'vs' : '@'} ${esc(next.opp)}` : '';
 }
 
 /* =========================================================

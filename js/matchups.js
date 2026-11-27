@@ -195,7 +195,7 @@ const dayCells = ctx => !SPORT.oneNumber && ctx.dates.length <= 7 && teamVs.size
 // The board's head over a team's column: its name, and the days over the bubbles
 function boardHead(name, ctx, show = true) {
   if (!dayCells(ctx) || !show) return name;
-  const days = ctx.dates.map(d => `<i>${esc(new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' }))}</i>`).join('');
+  const days = ctx.dates.map(d => `<i>${esc(fmtWeekday(d))}</i>`).join('');
   return `<span class="bhead"><span class="bhead-name">${name}</span><span class="dhead" aria-hidden="true">${days}</span></span>`;
 }
 // (a period longer than a week, the NBA Cup's or the All-Star break's, a row a week: .dots.wk; 14 in a line ran into the
@@ -602,12 +602,12 @@ function restOfPeriod(ctx) {
     const tile = x => {
       const cls = x.a > x.b ? 'up' : x.a < x.b ? 'down' : 'even';
       const tip = `${fmtDay(x.d)}: ${x.a} starter game${x.a === 1 ? '' : 's'} for ${esc(state.teamName)}, ${x.b} for ${esc(state.opp.name || 'them')}${x.past ? ' (played)' : x.d === today ? ' (today)' : ''}`;
-      return `<div class="rp-day ${cls}${x.past ? ' past' : ''}${x.d === today ? ' today' : ''}" title="${tip}"><span class="rp-dn">${x.d === today ? 'Today' : fmtDay(x.d).split(',')[0]}</span><span class="rp-n"><b>${x.a}</b><span class="rp-vs">${x.b}</span></span></div>`;
+      return `<div class="rp-day ${cls}${x.past ? ' past' : ''}${x.d === today ? ' today' : ''}" title="${tip}"><span class="rp-dn">${x.d === today ? 'Today' : fmtWeekday(x.d)}</span><span class="rp-n"><b>${x.a}</b><span class="rp-vs">${x.b}</span></span></div>`;
     };
     // the nights still to come with the most games over theirs, and the fewest
     const gap = x => x.a - x.b, best = ahead.length ? ahead.reduce((m, x) => (gap(x) > gap(m) ? x : m)) : null;
     const worst = ahead.length ? ahead.reduce((m, x) => (gap(x) < gap(m) ? x : m)) : null;
-    const night = x => `<b>${x.d === today ? 'today' : fmtDay(x.d).split(',')[0]}</b> (${x.a} to ${x.b})`;
+    const night = x => `<b>${x.d === today ? 'today' : fmtWeekday(x.d)}</b> (${x.a} to ${x.b})`;
     const notes = [best && gap(best) > 0 ? `Best night left: ${night(best)}` : '', worst && gap(worst) < 0 ? `Toughest: ${night(worst)}` : ''].filter(Boolean);
     strip = `<div class="rp-days${dates.length > 7 ? ' wk' : ''}">${days.map(tile).join('')}</div>
       ${notes.length ? `<p class="small muted" style="margin:8px 0 0">${notes.join(' · ')}</p>` : ''}`;
@@ -823,7 +823,7 @@ function pastWeekCard(start, top = '', nav = top) {
   const width = c => (share(c) !== 1 ? ` style="width:${(63 * share(c) / shares).toFixed(1)}%"` : '');
   const valLabel = pts ? (per ? 'FP/G' : 'FP') : 'VAL';
   const long = fxTime(period.endAt) - fxTime(period.lock) > 8 * 864e5; // (a period longer than a week: dates, not days)
-  const dayName = d => (long ? fmtMonthDay(d) : new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' }));
+  const dayName = d => (long ? fmtMonthDay(d) : fmtWeekday(d));
   const gamesWord = n => `${fmt(n, 0)} game${n === 1 ? '' : 's'}`;
   const pctShown = (c, v, d) => (c.rate ? fmt(v, 2) : fmtPct(v, d));
   // a number as a cell shows it: k, the share of the line shown (per game: 1 ÷ games); kind: 'row' a player's, 'avg' his

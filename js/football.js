@@ -85,7 +85,7 @@ function footballGame(p, dates, html) {
   const d = dates.find(x => playsOn(p, x)), T = teamInfo(p.team);
   if (!d) return 'Bye';
   const vs = T && T.opps ? T.opps[T.dates.indexOf(d)] : '';
-  return `${vs ? `${vs} ` : ''}${html ? '<span class="fb-day">' : ''}${fmtDay(d).split(',')[0]}${html ? '</span>' : ''}`;
+  return `${vs ? `${vs} ` : ''}${html ? '<span class="fb-day">' : ''}${fmtWeekday(d)}${html ? '</span>' : ''}`;
 }
 
 // Football's line under a player: his game, and his number for the week: projected, so far, or final

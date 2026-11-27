@@ -166,6 +166,14 @@ test('times follow the 24-hour setting', () => {
   } finally { ui.clock24 = was; }
 });
 
+test("a day's weekday is fmtWeekday, never fmtDay cut at a comma (en-GB has none: the Rest of the period tiles read \"Wed 25 Nov\")", () => {
+  assert.equal(app.fmtWeekday('2026-11-25'), 'Wed');
+  const fs = require('fs'), path = require('path'), dir = path.join(__dirname, '..', 'js');
+  for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.js'))) {
+    assert.ok(!/\.split\(['"],['"]\)\[0\]/.test(fs.readFileSync(path.join(dir, f), 'utf8')), `${f} cuts a date at its comma: use fmtWeekday`);
+  }
+});
+
 test('Player names: full (shortened on phones), last names or nicknames from the list, basketball only, kept on the device', async () => {
   const a = loadApp({ 'league-layer-names': 'nick' });
   await a.ready();
