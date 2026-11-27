@@ -261,8 +261,10 @@ function perfOwners() {
   const opp = L && owner.size && mine ? fxOpponentFor(weekStartAt(0), mine) : null;
   // where a player is: in a team's starting lineup (active), on its bench (IR included), or on no roster (waivers)
   const statusOf = id => (!spot.has(id) ? 'fa' : spot.get(id).st === 'ACTIVE' ? 'active' : 'bench');
-  // one small dot for every spot, the owner's ask (Nov 27, 2026: IR and Taxi were badges beside the dots): filled for the
-  // starting lineup, hollow for the bench, hollow in red for injured reserve, dashed for the taxi squad; its label on hover
+  // one small dot for every spot, the owner's ask (Nov 27, 2026: IR and Taxi were badges beside the dots), in grays alone (red
+  // stays the injury badge's): filled for the starting lineup, a ring for the bench, dotted for injured reserve, half filled for
+  // the taxi squad (dashed read as dotted); its label on hover. Drawn twice: by the team's name (phones, where the table has no photos) and on the photo's
+  // corner (computers): styles.css shows one
   const lineupBadge = id => {
     const x = spot.get(id);
     const [cls, t] = x.st === 'ACTIVE' ? ['active', `In the starting lineup${x.slot ? ` at ${esc(x.slot)}` : ''}`]
@@ -280,7 +282,9 @@ function perfOwners() {
   };
   // whose a row's player is: yours ('me'), the opponent's, another team's, or nobody's (null: waivers)
   const teamOf = r => { const tid = owner.get(r.raw.id); return !tid ? null : tid === mine ? 'me' : opp && tid === opp.id ? 'opp' : 'other'; };
-  return { owner, mine, opp, statusOf, who, teamOf };
+  // the photo with his spot's dot on its corner (computers); no roster, no dot
+  const photo = (raw, px) => `<span class="hs-spot">${headshot({ nbaId: raw.id, name: raw.name }, px)}${spot.has(raw.id) ? lineupBadge(raw.id) : ''}</span>`;
+  return { owner, mine, opp, statusOf, who, teamOf, photo };
 }
 
 // Everyone in range: Sleeper's projections, each player's average game (the season per game), a period's games per game
@@ -359,7 +363,7 @@ function perfValueScale({ football, range, avg, weekly, perWeek, dates }) {
 // The table: each player's games and minutes (perfCols), his line in the league's categories (its badges: the best and
 // worst of the range) and his Value or fantasy points, ranked among everyone in range; under his name only whose he is
 // (and a game on now: its clock or green dot); else why there's nothing (no games yet today, or nobody matches)
-function perfTable(rows, picked, shown, W, { opp, who, teamOf }) {
+function perfTable(rows, picked, shown, W, { opp, who, teamOf, photo }) {
   const { proj, avg, weekly, perWeek, day } = W;
   const today = todayIso();
   if (!rows.length) {
@@ -394,7 +398,7 @@ function perfTable(rows, picked, shown, W, { opp, who, teamOf }) {
   return `<div class="perf-wrap${shown.length > 5 ? ' scroll' : ''}"><table class="perf-table pl-table">
       <thead><tr>${th('name', 'Player', 'pf-name')}${has.gp ? th('gp', 'GP', 'sc pf-gp', 'Games played') : ''}${has.min ? th('min', 'MIN', 'sc pf-min', each ? 'Minutes a game' : 'Minutes played') : ''}${cats.map(c => th(c.key, c.label, 'sc')).join('')}${th('v', proj ? 'Proj' : pts ? 'FP' : 'VAL', 'num pf-v', pts ? '' : 'Value')}</tr></thead>
       <tbody>${shown.map(r => `<tr class="${teamOf(r) === 'me' ? 'pf-me' : teamOf(r) === 'opp' ? 'pf-opp' : ''}">
-        <td class="pf-name"${teamOf(r) === 'me' ? ' title="Your team"' : teamOf(r) === 'opp' ? ` title="Opponent: ${esc(opp.name)}"` : ''}><div class="bplayer"><span class="perf-rank">${rank.get(r)}</span>${headshot({ nbaId: r.raw.id, name: r.raw.name }, 34)}<div class="bmain">
+        <td class="pf-name"${teamOf(r) === 'me' ? ' title="Your team"' : teamOf(r) === 'opp' ? ` title="Opponent: ${esc(opp.name)}"` : ''}><div class="bplayer"><span class="perf-rank">${rank.get(r)}</span>${photo(r.raw, 34)}<div class="bmain">
           <div class="bname">${playerBtn(r.raw.id, r.raw.name)}${rookieBadge(r.raw, 'by-name')}${injBadge(r.raw.inj, 'by-name')}</div>
           <div class="pmeta">${weekly && r.on ? liveDot(r.raw, r.on) : ''}${[ // (" · " only between pieces: no team, no dot left over)
             proj ? esc(r.game) : !weekly && !each && day === today ? clock(r) : '', who(r.raw.id)].filter(Boolean).join(' · ')}</div></div>${sbAddBtn(r.raw.id)}</div></td>

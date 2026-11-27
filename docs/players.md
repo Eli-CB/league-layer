@@ -8,5 +8,7 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
 - A row's injury (O out, D day-to-day: one letter, the owner's ask, Nov 27, 2026) and rookie (a blue R, the owner's pick) badges always sit
   on the name's line, phones too, the name cut with "…" to make room (the owner's ask, Nov 27, 2026; before, they dropped to the line under a
   cut name, as a fantasy team's card still does: `fitNameBadges`, render.js).
-- A rostered row's lineup spot is one small dot by its team's name (`lineupBadge` in `perfOwners`), never a word: filled starter, hollow bench,
-  red-ringed injured reserve, dashed taxi (the owner's ask, Nov 27, 2026: IR and Taxi were badges, the only spots with a word).
+- A rostered row's lineup spot is one small gray dot (`lineupBadge` in `perfOwners`), never a word: filled starter, ring bench, dotted
+  injured reserve, half filled taxi (the owner's ask, Nov 27, 2026: IR and Taxi were badges; then no red, as the O/D badge already is,
+  and a dashed taxi ring read as IR's dotted one). On computers it sits on the photo's corner (`photo`, `.hs-spot`), on phones (≤640px,
+  no photos in the table) by the team's name: the owner's pick, as photos on phones cut names to "Jalen …".
