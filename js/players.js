@@ -395,7 +395,7 @@ function perfTable(rows, picked, shown, W, { opp, who, teamOf }) {
       <tbody>${shown.map(r => `<tr class="${teamOf(r) === 'me' ? 'pf-me' : teamOf(r) === 'opp' ? 'pf-opp' : ''}">
         <td class="pf-name"${teamOf(r) === 'me' ? ' title="Your team"' : teamOf(r) === 'opp' ? ` title="Opponent: ${esc(opp.name)}"` : ''}><div class="bplayer"><span class="perf-rank">${rank.get(r)}</span>${headshot({ nbaId: r.raw.id, name: r.raw.name }, 34)}<div class="bmain">
           <div class="bname">${playerBtn(r.raw.id, r.raw.name)}${rookieBadge(r.raw, 'by-name')}${injBadge(r.raw.inj, 'by-name')}</div>
-          <div class="pmeta">${rookieBadge(r.raw, 'in-meta')}${injBadge(r.raw.inj, 'in-meta')}${weekly && r.on ? liveDot(r.raw, r.on) : ''}${[ // (" · " only between pieces: no team, no dot left over)
+          <div class="pmeta">${weekly && r.on ? liveDot(r.raw, r.on) : ''}${[ // (" · " only between pieces: no team, no dot left over)
             proj ? esc(r.game) : !weekly && !each && day === today ? clock(r) : '', who(r.raw.id)].filter(Boolean).join(' · ')}</div></div>${sbAddBtn(r.raw.id)}</div></td>
         ${has.gp ? `<td class="sc pf-gp">${r.g}</td>` : ''}${has.min ? `<td class="sc pf-min">${fmt(r.tot.min || 0, r.per ? 1 : 0)}</td>` : ''}${cats.map(c => cell(r, c)).join('')}
         <td class="num pf-v" style="${value.shade(r)}" data-tip="${value.tip}">${val(r)}</td>

@@ -9,7 +9,7 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
 
 - Fantasy team names in the cards (the player card's team and its "Traded from" team: `cardHow`'s `out.from`, `howBadge`; a team card's opponent; a sport team card's owners) are `teamLink`s, with no underline (the owner's ask, Nov 27, 2026: one was tried for phones and dropped).
 
-- A fantasy team card's roster shows an injury as its letter (O, D...: `injBadge`, the note on hover and in his card), beside the name if it fits, as the Players tab (`fitNameBadges`, run by `showTeamCard`); not the report's words under the name (the owner's ask, Nov 27, 2026).
+- A fantasy team card's roster shows an injury as its letter (O, D...: `injBadge`, the note on hover and in his card), beside the name if it fits, else under it (`fitNameBadges`, run by `showTeamCard`); not the report's words under the name (the owner's ask, Nov 27, 2026).
 
 ## A sport team's card
 - `teamBtn(tri)` / `linkTeams(html)` open it ('sport-team', `showSportTeamCard` in players.js; its record from `teamRecord`: the box scores' finals, then today's once over on ESPN's scoreboard; hockey W-L-OT from each final's `last`; checked against ESPN's records; then, the owner's ask, "Playoff Games: 3-4-4-3-4", its games in each of the league's playoff periods still to play, `playoffSlate` in nba.js, a row of its own on phones; its foot links to the Players tab filtered by the team, 'team-players'). On phones its game tiles are drawn as the player card's (`:is(.pc-tiles, .tc-tiles)` in styles.css): Next game as wide as its game on one line ("Wed vs MEM" spilled out of a third of a 360 px phone, and the team card's broke as "Sat vs / POR", Nov 20, 2026), the other two its labels' two words a line.

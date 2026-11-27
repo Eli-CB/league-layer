@@ -448,11 +448,12 @@ function fitPerfLists() {
   });
 }
 
-// The Players table's and a fantasy team card's injury and rookie badges sit beside the name when it still shows whole beside them (phones too), else
+// A fantasy team card's injury and rookie badges sit beside the name when it still shows whole beside them (phones too), else
 // under it, in the line below (the owner's ask, Nov 27, 2026): a row marked "tight" has its name cut short beside them.
+// (The Players tab keeps them beside the name always, the name cut with "…": the owner's ask, Nov 27, 2026.)
 // Measured, as it hangs on each name's length; cleared first, so a wider window puts them back.
 function fitNameBadges() {
-  const cells = [...document.querySelectorAll('.pl-table td.pf-name, .tc-roster td.pf-name')].filter(td => td.querySelector('.bname .badge'));
+  const cells = [...document.querySelectorAll('.tc-roster td.pf-name')].filter(td => td.querySelector('.bname .badge'));
   cells.forEach(td => td.classList.remove('tight'));
   cells.filter(td => { const n = td.querySelector('.bname .pname'); return n && n.scrollWidth > n.clientWidth + 1; })
     .forEach(td => td.classList.add('tight'));
