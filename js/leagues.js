@@ -280,13 +280,13 @@ async function goHome() {
 
 // The page's foot: what the site does, a tab's icon each
 const LAND_FEATURES = [
-  ['dashboard', 'Matchup odds', 'Your chance to win the week and each category, live during games.'],
-  ['week', 'Best lineup', 'Who plays when, and the starters that give you the best chance to win.'],
-  ['trends', 'Trends', "Who's heating up and who's cooling off in each category, and the hottest still on waivers."],
-  ['standings', 'Standings', 'How your categories stack up against every team in the league.'],
-  ['recap', 'Weekly recap', "The week's awards, as a picture ready for the league chat."],
-  ['trade', 'Trades', 'What a deal does to each side, category by category.'],
-  ['draft', 'Draft recap', 'Which picks paid off, and how your draft is holding up.'],
+  ['dashboard', 'Matchup odds', 'Your odds to win the week and each category, live.'],
+  ['week', 'Best lineup', 'Who plays when, and the starters to win with.'],
+  ['trends', 'Trends', "Who's hot and cold in each category, and the best on waivers."],
+  ['standings', 'Standings', 'Your categories against every team.'],
+  ['recap', 'Weekly recap', "The week's awards, as a picture for the chat."],
+  ['trade', 'Trades', "What a deal does to each side's categories."],
+  ['draft', 'Draft recap', "Which picks paid off and which didn't."],
 ];
 /* ---------- A look inside: the tabs as they look, under the hero ---------- */
 // Made-up numbers, drawn with each tab's own pieces (.mu-cats, .mu-chip, .game-pill, .lv-dot, the board's
@@ -525,11 +525,11 @@ function landCards() {
 // The rows: the tab's icon and name, what it does, the picture, and a way into the demo at that tab (the cards': the
 // Players tab with his card open)
 const LAND_SHOW = [
-  ['dashboard', 'Matchup', 'Every game, live', "Each starter's game and line as it happens, who's on the floor, and the categories and the score moving as the games go.", landLive],
-  ['week', 'Plan Ahead', "Next period's lineup, planned", "Every player's games day by day, and the lineup that gives you the best chance to win: each swap with what it does to every category.", landPlan],
-  ['players', 'Cards', 'In-depth cards', "Tap any name for its card. A player's: who has him, each category against an average rostered player, his games ahead, his value and every game. An NBA team's: its record, its games ahead, who's out and who plays more without him, and its best free agents. A fantasy team's: its best players, its season week by week, each category against every team in the league, and how it was built.", landCards, { player: LAND_CARD.id }],
-  ['draft', 'Draft', 'Every pick on one board', "Your league's whole draft, each pick green or red by how he's playing against where he went. Then the Draft Recap's awards, from the biggest reach to the quickest trigger finger.", landBoard],
-  ['recap', 'Recap', 'Recaps for the league chat', "The period in awards, from the player of the period to the bench regret, with every final, and the draft's, from the biggest reach to the oldest roster. Share each as a picture, or as a link that opens with no sign-up.", landRecap],
+  ['dashboard', 'Matchup', 'Every game, live', "Every starter's line as it happens, and the categories and score moving with it.", landLive],
+  ['week', 'Plan Ahead', "Next period's lineup, planned", "Each player's games day by day, and the best lineup, with what each swap does.", landPlan],
+  ['players', 'Cards', 'In-depth cards', "Tap any name for its card: a player's games ahead and value, an NBA team's injuries, a fantasy team's season.", landCards, { player: LAND_CARD.id }],
+  ['draft', 'Draft', 'Every pick on one board', "Your whole draft, each pick green or red by how he's playing for where he went, then its awards.", landBoard],
+  ['recap', 'Recap', 'Recaps for the league chat', "The period's awards and finals, and the draft's. Share a picture, or a link that opens with no sign-up.", landRecap],
 ];
 function landShow(demo) {
   return `<section class="land-shows" aria-label="A look inside">${LAND_SHOW.map(([key, name, title, line, draw, { player } = {}], i) => `
@@ -586,13 +586,13 @@ function landHome(form) {
       <div class="land-copy">
         <p class="land-pill">Free · No sign-up</p>
         <h1><span class="sr-only">Plan your fantasy ${LAND_SPORTS.map(s => s[0]).join(' or ')} week</span><span aria-hidden="true">Plan your fantasy<br><span class="land-sport">${LAND_SPORTS.map(([s, icon], i) => `<span data-sport="${s}"${i ? '' : ' class="on"'}>${lineIcon(icon, 'ls-ico')}<span class="ls-w">${s}</span></span>`).join('')}</span> week</span></h1>
-        <p class="land-lead">Your odds for this week's matchup, the best starters, how your categories stack up and a recap the whole league can share.</p>
+        <p class="land-lead">Matchup odds, the best starters and a recap the whole league can share.</p>
       </div>
       <div class="land-connect">${form}</div>
       <div class="land-alt">
         <p class="land-alt-title">No league to connect?</p>
         <div class="land-options">
-          ${demo ? option('land-demo', TAB_ICONS.dashboard, 'Explore a basketball demo league', 'Every tab filled in, as one of its teams') : ''}
+          ${demo ? option('land-demo', TAB_ICONS.dashboard, 'Explore a basketball demo league', 'Every tab, as one of its teams') : ''}
           ${option('land-browse', TAB_ICONS.team, 'Try the sandbox', 'A team of any NBA or NHL players, followed live')}
         </div>
       </div>
@@ -600,7 +600,7 @@ function landHome(form) {
     ${landShow(demo)}
     <section class="land-features" aria-labelledby="landFeat">
       <h2 id="landFeat">Built around your league's own rules</h2>
-      <p class="muted">Categories or points, daily or weekly lineups, its own slots and playoffs.</p>
+      <p class="muted">Categories or points, daily or weekly, its slots and playoffs.</p>
       <div class="lf-grid">${LAND_FEATURES.map(([icon, title, line]) => `<div class="lf">${lineIcon(TAB_ICONS[icon], 'lf-ico')}<div><h3>${title}</h3><p>${line}</p></div></div>`).join('')}</div>
     </section>
   </div>`;
