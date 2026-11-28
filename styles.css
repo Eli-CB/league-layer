@@ -310,7 +310,7 @@ body:has(.mu-card.full) .container { padding-top: max(12px, env(safe-area-inset-
 .mu-chip { font-size: .72rem; padding: 1px 6px; border: 1px solid var(--border); border-radius: 999px; white-space: nowrap; color: var(--muted); }
 .mu-chip b { color: var(--text); font-variant-numeric: tabular-nums; }
 .mu-chip.fp { border-color: var(--muted); }
-/* a live update: the bubble that moved flashes green (helps) or red (hurts), then fades back */
+/* a live update: the bubble that moved flashes green (helps) or red (hurts), then fades back (5s: FLASH_MS, dashboard.js) */
 .mu-chip.flash-good { animation: chip-good 5s ease-out; }
 .mu-chip.flash-bad { animation: chip-bad 5s ease-out; }
 @keyframes chip-good { 0%, 35% { background: var(--good-soft); border-color: var(--good); color: var(--good); } }

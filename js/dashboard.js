@@ -53,7 +53,7 @@ function dashGame(p, d) {
 
 // A line in the league's own categories: makes/attempts for the percentages and a points league's shooting ("5/12 FG",
 // lineCats), fantasy points first in points leagues; nothing for a stat he didn't put up (no attempts, 0 blocks)
-// flash(key, value, makes): a class for a bubble whose number just changed (a live update)
+// flash(key, value, makes): a class for a bubble whose number just changed (a live update), with how far along its flash is on a redraw (chipFlash)
 function lineChips(line, flash = () => '') {
   const out = isPoints() ? [`<span class="mu-chip fp${flash('fp', lineFp(line))}"><b>${fmtFp(lineFp(line))}</b> FP</span>`] : [];
   for (const c of lineCats()) {
@@ -67,16 +67,27 @@ function lineChips(line, flash = () => '') {
 
 // Today's lines as last drawn (NBA id -> stat -> [number, makes]): a live update flashes each bubble that moved,
 // green for what helps (a make, a rebound) and red for what hurts (a miss, a turnover)
+// A flash lasts FLASH_MS (styles.css's .mu-chip.flash-good): a redraw meanwhile (the injury report or the league read
+// again, both landing a moment after the live update on coming back to the page) carries it on where it was, through a
+// negative animation-delay, rather than cutting it to a blink (chipLit: "NBA id stat" -> { cls, at })
 let chipWas = new Map();
+const FLASH_MS = 5000, chipLit = new Map();
 function chipFlash(id, line) {
   const was = chipWas.get(id);
   const now = { fp: [isPoints() ? lineFp(line) : 0, 0] };
   for (const c of lineCats()) if (!c.fp) now[c.key] = c.pct || c.shot ? [line[c.att] || 0, line[c.made] || 0] : [lineStat(line, c.key), 0];
   const flash = (k, v, made = 0) => {
-    if (!live.hold || !was || !was[k] || Math.abs(was[k][0] - v) < 1e-9) return '';
-    const c = lineCats().find(x => x.key === k);
-    const good = c && (c.pct || c.shot) ? made > was[k][1] : c && c.neg ? v < was[k][0] : v > was[k][0];
-    return good ? ' flash-good' : ' flash-bad';
+    const key = `${id} ${k}`, t = Date.now();
+    if (live.hold && was && was[k] && Math.abs(was[k][0] - v) >= 1e-9) {
+      const c = lineCats().find(x => x.key === k);
+      const good = c && (c.pct || c.shot) ? made > was[k][1] : c && c.neg ? v < was[k][0] : v > was[k][0];
+      const cls = good ? ' flash-good' : ' flash-bad';
+      chipLit.set(key, { cls, at: t });
+      return cls;
+    }
+    const lit = chipLit.get(key);
+    if (!lit || t - lit.at >= FLASH_MS) { chipLit.delete(key); return ''; }
+    return `${lit.cls}" style="animation-delay:-${t - lit.at}ms`; // (closes lineChips' class attribute)
   };
   return { now, flash };
 }

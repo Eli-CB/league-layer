@@ -159,7 +159,12 @@ test("performances: today's games from ESPN's box scores, read in the browser as
           assert.equal(chip('FT'), ' flash-bad', 'a missed free throw');
           assert.ok(!chip('REB'), "rebounds didn't move: no flash");
           live.hold = false;
-          assert.ok(!app.dashMatchupCard().includes('flash-'), 'only on a live update');
+          // a redraw before the flash is over (the injury report landing a moment later) carries it on where it was
+          const age = ms => { for (const v of app.get('chipLit').values()) v.at -= ms; }; // (onDay holds the clock: the flashes age instead)
+          age(2000);
+          assert.match(app.dashMatchupCard(), /<span class="mu-chip flash-good" style="animation-delay:-2000ms"><b>[^<]*<\/b> PTS</, 'carried on, two seconds in');
+          age(3000);
+          assert.ok(!app.dashMatchupCard().includes('flash-'), 'over after five seconds; only a live update starts one');
         } finally { live.hold = false; Object.assign(pl2, was2); }
         // Hide game scores: the clock and the opponent, no score
         const g0 = app.espnGames(sb).find(g => g.state === 'in');
