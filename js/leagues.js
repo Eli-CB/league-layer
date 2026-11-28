@@ -420,10 +420,7 @@ const LAND_CARD = { id: 1628983, name: 'Shai Gilgeous-Alexander', team: 'OKC', p
   games: [['18/11 vs ATL', 'W', '14/29', 3, 34, 5, '0.20'], ['15/11 @ SAC', 'W', '13/20', 4, 37, 2, '0.45'], ['13/11 @ LAC', 'L', '15/26', 2, 40, 4, '0.31'],
     ['11/11 vs MEM', 'W', '11/21', 1, 29, 6, '0.27'], ['9/11 @ POR', 'W', '12/22', 2, 33, 4, '0.36'], ['7/11 vs GSW', 'W', '10/19', 3, 31, 5, '0.38'],
     ['5/11 @ LAL', 'L', '9/23', 1, 26, 3, '0.08'], ['3/11 vs DEN', 'W', '13/24', 2, 35, 7, '0.41'], ['1/11 vs HOU', 'W', '12/25', 2, 30, 4, '0.22'],
-    ['30/10 @ DAL', 'W', '11/18', 3, 32, 6, '0.44'], ['28/10 vs PHX', 'W', '10/20', 1, 28, 5, '0.25'], ['26/10 @ UTA', 'W', '14/24', 4, 39, 3, '0.47'],
-    ['24/10 vs SAS', 'L', '10/22', 2, 27, 4, '0.15'], ['22/10 @ MIN', 'W', '12/21', 3, 33, 5, '0.39'], ['20/10 vs NOP', 'W', '11/19', 2, 30, 6, '0.33'],
-    ['18/10 @ CHI', 'W', '13/23', 1, 31, 4, '0.29'], ['16/10 vs SAC', 'W', '9/17', 2, 25, 5, '0.21'], ['14/10 @ BOS', 'L', '10/24', 1, 24, 3, '0.06'],
-    ['12/10 vs IND', 'W', '12/20', 3, 34, 6, '0.42'], ['10/10 vs ORL', 'W', '11/22', 2, 29, 5, '0.26']] };
+    ['30/10 @ DAL', 'W', '11/18', 3, 32, 6, '0.44'], ['28/10 vs PHX', 'W', '10/20', 1, 28, 5, '0.25'], ['26/10 @ UTA', 'W', '14/24', 4, 39, 3, '0.47']] };
 function landCard() {
   const { id, name, team, pos, prof, games } = LAND_CARD;
   const photo = playerPhoto({ id, name, team }).replace(/ data-photo="[^"]*"/g, '');
@@ -497,19 +494,18 @@ function landFantasyCard() {
     return `<tr><td><b>${k}</b></td><td><b>${v}</b></td><td class="${rank <= 3 ? 'pos-good' : rank > n - 3 ? 'pos-bad' : ''}"><b>${ordinal(rank)}</b></td>
       <td><div class="strip">${others.map(x => `<span class="sdot" style="left:${x}%"></span>`).join('')}<span class="sdot this me" style="left:${me}%"></span></div></td></tr>`;
   };
-  const star = ([id, name, pos, team, v]) => `<div class="tc-star">${landFace(id, name, 28)}<div class="bmain"><b>${name}</b><div>${posTags(pos)} · ${team}</div><div class="tc-worth"><b>${v}</b> Total</div></div></div>`;
+  // (a tile: his photo, name and total; the card's positions and team left out here, for height)
+  const star = ([id, name, , , v]) => `<div class="tc-star">${landFace(id, name, 22)}<div class="bmain"><b>${name}</b><div class="tc-worth"><b>${v}</b> Total</div></div></div>`;
   const wk = ([r, sc], i) => `<span class="tc-wk ${r === 'W' ? 'won' : 'lost'}"><span class="tc-wk-n">${i + 1}</span><b>${r}</b><span class="tc-wk-s">${sc}</span></span>`;
   return `<div class="pv-card pv-fcard" aria-hidden="true">
     <div class="pvc-head"><b class="pvc-team">Alley Oops</b><span><b>9-3</b> · 2nd of ${n} · This week vs Rim Rockers</span></div>
     ${landLink('your team')}
     <p class="pvt-sub">Best players <span>of 13</span></p>
     <div class="tc-stars">${stars.map(star).join('')}</div>
-    <p class="pvt-sub">Season so far</p>
+    <p class="pvt-sub">Season so far <span>against everyone <b>87-45</b> · <b class="pos-good">+1.1</b> wins: lucky</span></p>
     <div class="tc-weeks">${weeks.map(wk).join('')}</div>
-    <p class="pvf-allplay">Against every team each week: <b>87-45</b> (66%) · <b class="pos-good">+1.1</b> wins over its all-play: lucky</p>
-    <p class="pvt-sub">By category <span>top 8, against every team</span></p>
-    <table class="pvc-games pvf-table"><thead><tr><th>Cat</th><th>Per player</th><th>Rank</th><th>Every team (you in orange)</th></tr></thead>
-      <tbody>${cats.map(row).join('')}</tbody></table>
+    <p class="pvt-sub">By category <span>top 8 a player, against every team (you in orange)</span></p>
+    <table class="pvc-games pvf-table"><tbody>${cats.map(row).join('')}</tbody></table>
     <p class="pvt-sub">How it was built</p>
     <div class="pvf-built">${built.map(([g, who]) => tcHowRow(g, who.map(([id, n]) => landFace(id, n, 22)),
       who.map(([, n], i) => `<b class="tc-nw">${n}${i < who.length - 1 ? ',' : ''}</b>`).join(' ') + (g === 'trade' ? ' <span class="muted">from Rim Rockers</span>' : ''))).join('')}</div>

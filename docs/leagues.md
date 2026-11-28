@@ -28,7 +28,9 @@ Part of the repo's notes: CLAUDE.md says which file covers what and how to keep 
   its playoff games, a fantasy team's, taking turns 4 s each in a CSS loop, `landCards`; the team cards drawn as the real ones are since Nov 27, 2026,
   the owner's ask, a size down, with the cards' own `.tc-*` classes (How it was built with its names too, the owner's ask). The three end level (the
   owner's ask): the fantasy one, with nothing to cut, sets the height, and the player's games and the NBA team's Who's out fill the rest of theirs,
-  cut and faded at the bottom (`.pvx-fill`: the list sits absolutely inside, so it doesn't add to its card's height); each holds more than fits at any width; a tap on a name above them picks one and stops the turns,
+  cut and faded at the bottom (`.pvx-fill`: the list sits absolutely inside, so it doesn't add to its card's height); each holds more than fits at any width
+  (12 games are enough). The fantasy one is held near the NBA team's own height (the owner's ask, Nov 27, 2026: the deck was 888 px): its rows
+  tight, best players as photo, name and total, the all-play record in Season so far's heading, How it was built a line a row (phones: no photos); a tap on a name above them picks one and stops the turns,
   `land-card`/`ui.landCard`; Trends only in the grid at the foot, not here: the owner's asks), the draft board, and
   the Recap's picture with the Draft Recap's beside it (the owner's ask; a row to swipe on phones), made up too but drawn with each tab's own
   classes (`.mu-chip`, `.game-pill`, `.bmeta`/`.dots`, `.swap`, `.pc-photo`/`.cp-row`, `.strip`/`.sdot`, `.tc-per`/`.tc-out`/`.tc-star`/`.tc-wk`, `.dr-cell` + `shade`, `RC_IMG`), so check its row after restyling one of those. Players there are real, with their

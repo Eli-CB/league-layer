@@ -1815,7 +1815,7 @@ body.landing::before {
 .pv-tcard .tc-out .pmeta { font-size: .66rem; }
 .pv-tcard .tc-without { font-size: .68rem; }
 .pv-tcard .pvt-table { margin-top: 2px; }
-.pv-fcard .tc-stars { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.pv-fcard .tc-stars { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
 .pv-fcard .tc-star { flex-direction: column; align-items: center; gap: 4px; padding: 6px 4px; text-align: center; }
 .pv-fcard .tc-star .bmain { width: 100%; }
 .pv-fcard .tc-star .bmain > b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .72rem; font-weight: 600; }
@@ -1824,11 +1824,28 @@ body.landing::before {
 .pv-fcard .tc-wk { flex: 1 1 0; min-width: 0; padding: 3px 0 2px; }
 .pv-fcard .tc-wk b { font-size: .78rem; }
 .pv-fcard :is(.tc-wk-n, .tc-wk-s) { font-size: .56rem; }
-.pvf-allplay { margin: 6px 0 0; font-size: .7rem; color: var(--muted); }
-.pvf-allplay b:not(.pos-good) { color: var(--text); }
+/* the fantasy team's card held to about the other two's height (the owner's ask, Nov 27, 2026): its parts closer, its rows
+   tighter, How it was built a line a row (its names cut with "…"), the all-play record in Season so far's heading */
+.pv-fcard .pvt-sub { margin-top: 10px; }
+.pv-fcard .pvt-sub span b:not(.pos-good) { color: var(--text); font-weight: 600; }
+.pv-fcard .tc-star { flex-direction: row; align-items: center; gap: 4px; padding: 5px 3px; text-align: left; }
+.pv-fcard .tc-star .bmain { min-width: 0; }
+.pv-fcard .tc-star .hs { flex: none; }
+.pv-fcard .tc-star .bmain > b { white-space: normal; font-size: .66rem; letter-spacing: -.01em; line-height: 1.2; } /* (a double name on two lines, at its hyphen, not cut) */
+@media (max-width: 640px) { .pv-fcard .tc-stars { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pv-fcard .pvf-table th { padding-block: 3px; }
+.pv-fcard .pvf-table td { padding-block: 2px; line-height: 1.25; }
+.pv-fcard .pvf-table tr:first-child td { border-top: 0; }
+.pv-fcard .pvf-table .strip { height: 12px; }
 .pvf-built { margin: 4px 0 10px; }
-.pvf-built .tc-how { grid-template-columns: 76px minmax(0, 1fr); row-gap: 3px; padding: 5px 0; font-size: .72rem; }
-.pvf-built .tc-how-k { padding-top: 3px; }
+.pvf-built .tc-how { grid-template-columns: 76px auto minmax(0, 1fr); padding: 3px 0; font-size: .72rem; }
+.pvf-built .tc-how-k { grid-row: auto; align-self: center; padding-top: 0; }
+.pvf-built .tc-how-v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 640px) { /* (phones: the names whole, wrapping, beside the badge; the photos left out, for height) */
+  .pvf-built .tc-how { grid-template-columns: 76px minmax(0, 1fr); }
+  .pvf-built .tc-faces { display: none; }
+  .pvf-built .tc-how-k { align-self: start; }
+  .pvf-built .tc-how-v { white-space: normal; } }
 .pvf-built .badge { font-size: .64rem; padding: 0 5px; }
 .pvf-built .tc-faces > * + * { margin-left: -6px; }
 .pvf-built .tc-more { min-width: 22px; height: 22px; font-size: .6rem; }
