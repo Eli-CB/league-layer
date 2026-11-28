@@ -586,7 +586,6 @@ function landHome(form) {
       <div class="land-copy">
         <p class="land-pill">Free · No sign-up</p>
         <h1><span class="sr-only">Plan your fantasy ${LAND_SPORTS.map(s => s[0]).join(' or ')} week</span><span aria-hidden="true">Plan your fantasy<br><span class="land-sport">${LAND_SPORTS.map(([s, icon], i) => `<span data-sport="${s}"${i ? '' : ' class="on"'}>${lineIcon(icon, 'ls-ico')}<span class="ls-w">${s}</span></span>`).join('')}</span> week</span></h1>
-        <p class="land-lead">Matchup odds, the best starters and a recap the whole league can share.</p>
       </div>
       <div class="land-connect">${form}</div>
       <div class="land-alt">

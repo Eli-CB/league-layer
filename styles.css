@@ -1592,7 +1592,6 @@ body.landing::before {
   .land-sport > span.on { transition: opacity .4s ease; }
   .land-sport > span:not(.on), .land-sport > span.out { transform: none; filter: none; transition: none; }
 }
-.land-lead { font-size: 1.06rem; line-height: 1.6; color: var(--muted); margin: 0 0 22px; max-width: 46ch; text-wrap: pretty; }
 .land-connect { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 18px 16px; box-shadow: 0 1px 2px rgb(0 0 0 / .04), 0 16px 40px -20px rgb(0 0 0 / .18); }
 .land-connect .land-form { margin-top: 0; }
 .land-connect .land-help { margin-bottom: 12px; }
@@ -1908,7 +1907,6 @@ body.landing::before {
   .land-teams { grid-template-columns: minmax(0, 1fr); }
   .landing-wrap.land-home { padding-top: 12px; }
   .land-pill { font-size: .72rem; margin-bottom: 12px; }
-  .land-lead { font-size: 1rem; margin-bottom: 18px; }
   .land-connect { padding: 14px; border-radius: 14px; }
   .land-options { grid-template-columns: minmax(0, 1fr); }
   .land-features { margin-top: 40px; padding-top: 28px; }
