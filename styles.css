@@ -311,8 +311,8 @@ body:has(.mu-card.full) .container { padding-top: max(12px, env(safe-area-inset-
 .mu-chip b { color: var(--text); font-variant-numeric: tabular-nums; }
 .mu-chip.fp { border-color: var(--muted); }
 /* a live update: the bubble that moved flashes green (helps) or red (hurts), then fades back */
-.mu-chip.flash-good { animation: chip-good 2.4s ease-out; }
-.mu-chip.flash-bad { animation: chip-bad 2.4s ease-out; }
+.mu-chip.flash-good { animation: chip-good 5s ease-out; }
+.mu-chip.flash-bad { animation: chip-bad 5s ease-out; }
 @keyframes chip-good { 0%, 35% { background: var(--good-soft); border-color: var(--good); color: var(--good); } }
 @keyframes chip-bad { 0%, 35% { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); } }
 .mu-bench-btn { margin-top: 10px; }
